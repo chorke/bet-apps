@@ -9,6 +9,8 @@ package chorke.proprietary.bet.apps.core.calculators;
  * @author Chorke
  */
 public abstract class Yield {
+    public static enum BetPossibility {Home, Guest, Favorit, Looser, Tie};
+    
     protected YieldProperties properties;
 
     public Yield() {

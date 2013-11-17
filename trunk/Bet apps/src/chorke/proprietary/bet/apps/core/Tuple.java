@@ -9,13 +9,8 @@ package chorke.proprietary.bet.apps.core;
  * @author Chorke
  */
 public final class Tuple<X, Y> {
-    public X first;
-    public Y second;
-
-    public Tuple() {
-        first = null;
-        second = null;
-    }
+    public final X first;
+    public final Y second;
 
     public Tuple(X first, Y second) {
         this.first = first;

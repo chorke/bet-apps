@@ -11,7 +11,7 @@ import java.util.Calendar;
 import java.util.Collection;
 
 /**
- *
+ * Stiahne a rozparsuje stávky z web stránky.
  * @author Chorke
  */
 public interface HTMLBetParser {

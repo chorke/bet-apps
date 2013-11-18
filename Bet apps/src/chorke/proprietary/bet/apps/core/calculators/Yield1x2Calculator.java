@@ -5,11 +5,13 @@
 package chorke.proprietary.bet.apps.core.calculators;
 
 import chorke.proprietary.bet.apps.core.Tuple;
+import chorke.proprietary.bet.apps.core.bets.Bet1x2;
 import chorke.proprietary.bet.apps.core.match.Match;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -98,7 +100,7 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
             out.put(i, new LinkedList<Match>());
         }
         for(Match m : matches){
-            i = getIndex(m, ranges);
+            i = getIndex(m, ranges, properties);
             if(i != -1){
                 out.get(i).add(m);
             }
@@ -118,7 +120,22 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
      * @param ranges
      * @return 
      */
-    private int getIndex(Match m, List<Tuple<Double, Double>> ranges) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    private int getIndex(Match m, List<Tuple<Double, Double>> ranges, YieldProperties properties) {
+        Iterator<Bet1x2> iter = m.getBet(properties.getBetCompany(), Bet1x2.class).iterator();
+        if(!iter.hasNext()){
+            return -1;
+        }
+        Bet1x2 bet = iter.next();
+        for(int i = 0; i < ranges.size(); i++){
+            if(fitRange(bet.getFavoritBet(), ranges.get(i))){
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    private boolean fitRange(double value, Tuple<Double, Double> range){
+        return range.first.doubleValue() <= value 
+                && range.second.doubleValue() >= value;
     }
 }

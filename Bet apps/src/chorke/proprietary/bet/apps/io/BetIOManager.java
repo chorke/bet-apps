@@ -9,10 +9,10 @@ import chorke.proprietary.bet.apps.core.match.MatchProperties;
 import java.util.Collection;
 
 /**
- *
+ * Ukladá stávky.
  * @author Chorke
  */
-public interface BetIOManager extends Cloneable{
+public interface BetIOManager{
     
     void saveMatch(Match match) throws BetIOException;
     
@@ -25,6 +25,4 @@ public interface BetIOManager extends Cloneable{
     void deleteMatch(Match match) throws BetIOException;
     
     void deleteMatches(Collection<Match> matches);
-    
-    BetIOManager cloneBetIOManager();
 }

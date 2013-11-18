@@ -9,9 +9,9 @@ package chorke.proprietary.bet.apps.core.bets;
  * @author Chorke
  */
 public class BetDoubleChance extends Bet{
-    public double bet1X;
-    public double betX2;
-    public double bet12;
+    public final double bet1X;
+    public final double betX2;
+    public final double bet12;
 
     public BetDoubleChance(String betCompany, double bet1X, double bet12, double betX2) {
         super(betCompany);

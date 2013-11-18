@@ -10,10 +10,10 @@ package chorke.proprietary.bet.apps.core.bets;
  */
 public class BetAsianHandicap extends Bet{
    
-    public double bet1;
-    public double bet2;
-    public double handicap;
-    public String description;
+    public final double bet1;
+    public final double bet2;
+    public final double handicap;
+    public final String description;
 
     public BetAsianHandicap(String betCompany, double bet1, double bet2, double handicap, String description) {
         super(betCompany);

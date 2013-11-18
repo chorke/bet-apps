@@ -42,6 +42,17 @@ public class MainClass {
         l.add(new Double("1.01"));
         System.out.println(l.contains(new Double(1.01)));
         System.out.println(l.contains(new Double("1.01")));
+        
+        Match m = new Match(Sport.All);
+        MatchProperties mp = new MatchProperties();
+        mp.setDate(new GregorianCalendar(2013, 11, 2, 10, 00, 00));
+        MatchProperties mp1 = new MatchProperties();
+        mp1.setDate(new GregorianCalendar(2013, 11, 2, 11, 00, 00));
+        Match m1 = new Match(Sport.All);
+        m.setProperties(mp);
+        m1.setProperties(mp1);
+        System.out.println(m.compareTo(m1));
+        System.out.println(m1.compareTo(m));
 //        Match m = new Match(StaticConstants.Sport.Soccer);
 //        Bet b = new Bet1x2("bet", 0, 0, 0);
 //        Bet b1 = new BetOverUnder("bet", 10, 10, 10, "");

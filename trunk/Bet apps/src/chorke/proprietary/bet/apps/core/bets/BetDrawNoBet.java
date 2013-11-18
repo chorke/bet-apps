@@ -9,8 +9,8 @@ package chorke.proprietary.bet.apps.core.bets;
  * @author Chorke
  */
 public class BetDrawNoBet extends Bet{
-    public double bet1;
-    public double bet2;
+    public final double bet1;
+    public final double bet2;
 
     public BetDrawNoBet(String betCompany, double bet1, double bet2) {
         super(betCompany);

@@ -16,6 +16,7 @@ import chorke.proprietary.bet.apps.core.bets.BetDrawNoBet;
 import chorke.proprietary.bet.apps.core.bets.BetOverUnder;
 import chorke.proprietary.bet.apps.io.BetIOException;
 import chorke.proprietary.bet.apps.io.BetIOManager;
+import chorke.proprietary.bet.apps.io.CloneableBetIOManager;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,7 +29,8 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 /**
- *
+ * Stiahne, rozparsuje a uloží stávky z web stránky. 
+ * Pre ukladanie používa konkrétnu implementáciu {@link BetIOManager}
  * @author Chorke
  */
 public class BetexplorerComMultithreadParser implements HTMLBetParser{
@@ -72,9 +74,9 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
     private Collection<Tuple<Sport, Calendar>> undownloadedSports;
     private Collection<Match> unsavedMatches;
     
-    private BetIOManager IOManager;
+    private CloneableBetIOManager IOManager;
     
-    public BetexplorerComMultithreadParser(BetIOManager IOManager) {
+    public BetexplorerComMultithreadParser(CloneableBetIOManager IOManager) {
         startDate = new GregorianCalendar();
         endDate = new GregorianCalendar();
         startDate.set(Calendar.HOUR_OF_DAY, 0);
@@ -141,7 +143,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         return matches;
     }
 
-    private BetIOManager getCloneOfIOManager(){
+    private CloneableBetIOManager getCloneOfIOManager(){
         if(IOManager == null){
             return null;
         } else {

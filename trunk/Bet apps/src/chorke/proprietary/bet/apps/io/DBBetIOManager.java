@@ -29,7 +29,7 @@ import javax.sql.DataSource;
  *
  * @author Chorke
  */
-public class DBBetIOManager implements BetIOManager{
+public class DBBetIOManager implements CloneableBetIOManager{
 
     private DataSource dataSource;
 

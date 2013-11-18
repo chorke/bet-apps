@@ -9,10 +9,10 @@ package chorke.proprietary.bet.apps.core.bets;
  * @author Chorke
  */
 public class BetOverUnder extends Bet{
-    public double total;
-    public double over;
-    public double under;
-    public String description;
+    public final double total;
+    public final double over;
+    public final double under;
+    public final String description;
 
     public BetOverUnder(String betCompany, double total, double over, double under, String description) {
         super(betCompany);

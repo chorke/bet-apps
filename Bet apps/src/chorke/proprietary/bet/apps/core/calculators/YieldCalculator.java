@@ -26,4 +26,12 @@ public interface YieldCalculator<T extends Yield> {
     Map<Calendar, T> getPeriodicYieldYEAR(Collection<Match> matches, YieldProperties properties);
     
     T getCumulativeYield(Collection<Match> matches, CumulativeYieldProperties properties);
+    
+    Map<Calendar, T> getCumulativePeriodicYieldDAY(Collection<Match> matches, CumulativeYieldProperties properties);
+    
+    Map<Calendar, T> getCumulativePeriodicYieldWEEK(Collection<Match> matches, CumulativeYieldProperties properties);
+    
+    Map<Calendar, T> getCumulativePeriodicYieldMONTH(Collection<Match> matches, CumulativeYieldProperties properties);
+    
+    Map<Calendar, T> getCumulativePeriodicYieldYEAR(Collection<Match> matches, CumulativeYieldProperties properties);
 }

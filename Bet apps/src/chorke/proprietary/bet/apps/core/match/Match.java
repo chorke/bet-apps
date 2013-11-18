@@ -18,7 +18,7 @@ import java.util.Map;
  *
  * @author Chorke
  */
-public class Match {
+public class Match implements Comparable<Match>{
     
     private Long id = null;
     private MatchProperties properties;
@@ -29,7 +29,6 @@ public class Match {
 
     public Match(Sport sport) {
         bets = new HashMap<>();
-//        System.out.println(bets.keySet());
         score = new Score();
         this.sport = sport;
     }
@@ -119,12 +118,10 @@ public class Match {
     public void addBet(Bet bet){
         if(bets.containsKey(bet.betCompany)){
             bets.get(bet.betCompany).add(bet);
-//            System.out.println("old key found " + bet.betCompany);
         } else {
             Collection<Bet> c = new LinkedList<>();
             c.add(bet);
             bets.put(bet.betCompany, c);
-//            System.out.println("new key added " + bet.betCompany);
         }
     }
     
@@ -149,5 +146,10 @@ public class Match {
                     .append(System.lineSeparator());
         }
         return builder.toString();
+    }
+
+    @Override
+    public int compareTo(Match o) {
+       return this.properties.getDate().compareTo(o.properties.getDate());
     }
 }

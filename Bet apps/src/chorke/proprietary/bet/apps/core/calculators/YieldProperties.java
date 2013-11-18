@@ -104,9 +104,10 @@ public class YieldProperties {
      * 
      * @param index
      * @return 
-     * @throws IndexOutOfBoundsException Ak je {@code index > scale.size()}.
+     * @throws IndexOutOfBoundsException Ak je 
+     * {@code index > scale.size() || index < 0}.
      */
-    public Tuple<Double, Double> getScale(int index) throws IndexOutOfBoundsException{
+    public Tuple<Double, Double> getRangeForIndex(int index) throws IndexOutOfBoundsException{
         if(index > scale.size() || index < 0){
             throw new IndexOutOfBoundsException("Index out of bounds " + index);
         }
@@ -118,7 +119,45 @@ public class YieldProperties {
             return new Tuple<>(scale.get(index - 1) + 0.01, scale.get(index));
         }
     }
+    
+    /**
+     * Vráti všetky rozsahy podľa aktuálnych nastavení. 
+     * Poradie zodpovedná poradiu indexov (0, 1, 2, ...)
+     * 
+     * @return rozsahy pre aktuálne nastavenie
+     * 
+     * @see addScale(Double)
+     * @see removeScale(Double)
+     * @see getScale()
+     * @see setScale(List)
+     */
+    public List<Tuple<Double, Double>> getRanges(){
+        List<Tuple<Double, Double>> out = new ArrayList<>(scale.size() + 1);
+        for(int i = 0; i <= scale.size(); i++){
+            out.add(getRangeForIndex(i));
+        }
+        return out;
+    }
 
+    /**
+     * Vráti index pre rozsahy stávok podľa rozsahu {@code range}. 
+     * Rozsahy sú indexované od 0.
+     * 
+     * Napríklad, ak {@code scale} obsahuje prvky [1.45, 1.67],
+     * tak:
+     * <ul>
+     * <li>{@code getScale(<1.00, 1.45>)} vráti {@code 0} </li>
+     * <li>{@code getScale(<1.46, 1.67>)} vráti {@code 1} </li>
+     * <li>{@code getScale(<1.68, Double.MAX_VALUE>)} vráti {@code 2} </li>
+     * <li>iná kombinácia spôsobí {@link IllegalArgumentException}</li>
+     * </ul>
+     * 
+     * Ak je {@code scale} prázdna, tak {@code getScale(0)} vráti {@code <1.00, Double.MAX_VALUE>}
+     * 
+     * @param index
+     * @return 
+     * @throws IllegalArgumentException Ak {@code range} nie je platný rozsah.
+     */
     public int getIndexForRange(Tuple<Double, Double> range) throws IllegalArgumentException{
         if(range.second == Double.MAX_VALUE){
             if(scale.get(scale.size() -1) != range.first){

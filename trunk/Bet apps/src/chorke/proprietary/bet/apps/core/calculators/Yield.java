@@ -21,6 +21,11 @@ public abstract class Yield {
         return properties;
     }
 
+    /**
+     * Ak {@code properties == null}, tak vytvorí nové, prázdne properties.
+     * 
+     * @param properties 
+     */
     public void setProperties(YieldProperties properties) {
         if(properties == null){
             this.properties = new YieldProperties();

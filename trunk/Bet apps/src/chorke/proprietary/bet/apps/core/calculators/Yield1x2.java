@@ -196,4 +196,25 @@ public class Yield1x2 extends Yield{
         }
         throw new IllegalArgumentException("No yield for index [" + index + "]");
     }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * Ak sú nastavované nové properties 
+     * (presnejšie {@code !this.properties.equals(properties)}),
+     * vyčistí aktuálne hodnoty ziskov.
+     * 
+     * @param properties 
+     */
+    @Override
+    public void setProperties(YieldProperties properties) {
+        if(!this.properties.equals(properties)){
+            super.setProperties(properties);
+            home.clear();
+            guest.clear();
+            favorit.clear();
+            looser.clear();
+            tie.clear();
+        }
+    }
 }

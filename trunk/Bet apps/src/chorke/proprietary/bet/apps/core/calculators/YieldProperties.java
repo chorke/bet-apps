@@ -8,6 +8,8 @@ import chorke.proprietary.bet.apps.core.Tuple;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -17,22 +19,22 @@ import java.util.Collections;
 public class YieldProperties {
     private List<Double> scale;
     private String betCompany;
-    private double doubleNumber;
-    private String note;
+//    private double doubleNumber;
+//    private String note;
+    private Map<String, Object> properties;
     
     public YieldProperties(){
-        this(null, "", 0.0, "");
+        this(null, "", new HashMap<String, Object>());
     }
 
     public YieldProperties(List<Double> scale, String betCompany) {
-        this(scale, betCompany, 0.0, "");
+        this(scale, betCompany, new HashMap<String, Object>());
     }
 
-    public YieldProperties(List<Double> scale, String betCompany, double doubleNumber, String note) {
+    public YieldProperties(List<Double> scale, String betCompany, Map<String, Object> properties) {
         setScale(scale);
         this.betCompany = betCompany;
-        this.doubleNumber = doubleNumber;
-        this.note = note;
+        this.properties = properties;
     }
 
     
@@ -45,48 +47,76 @@ public class YieldProperties {
     }
 
     /**
-     * Môže byť použité pre akúkoľvek pomocnú informáciu.
-     * Každá implementácia {@code YieldCalculator} môže 
-     * použiť túto hodnotu k iným účelom. Zároveň by mala 
-     * v javadocu popisovať, na čo túto hodnotu používa.
-     */
-    public double getDoubleNumber() {
-        return doubleNumber;
-    }
-
-    /**
-     * Môže byť použité pre akúkoľvek pomocnú informáciu.
-     * Každá implementácia {@code YieldCalculator} môže 
-     * použiť túto hodnotu k iným účelom. Zároveň by mala 
-     * v javadocu popisovať, na čo túto hodnotu používa.
+     * Vráti property so špecifickým názvom alebo {@code null} ak neexistuje 
+     * {@code name}.
      * 
-     * @param doubleNumber 
+     * @param name
+     * @return 
      */
-    public void setDoubleNumber(double doubleNumber) {
-        this.doubleNumber = doubleNumber;
+    public Object getProperty(String name){
+        return properties.get(name);
     }
-
+    
     /**
-     * Môže byť použité pre akúkoľvek pomocnú informáciu.
-     * Každá implementácia {@code YieldCalculator} môže 
-     * použiť túto hodnotu k iným účelom. Zároveň by mala 
-     * v javadocu popisovať, na čo túto hodnotu používa.
-     */
-    public String getNote() {
-        return note;
-    }
-
-    /**
-     * Môže byť použité pre akúkoľvek pomocnú informáciu.
-     * Každá implementácia {@code YieldCalculator} môže 
-     * použiť túto hodnotu k iným účelom. Zároveň by mala 
-     * v javadocu popisovať, na čo túto hodnotu používa.
+     * Uloží property s názvom {@code name} a hodnotou {@code property}.
      * 
-     * @param note  
+     * @param name
+     * @param property 
      */
-    public void setNote(String note) {
-        this.note = note;
+    public void setProperty(String name, Object property){
+        properties.put(name, property);
     }
+    
+    /**
+     * Odstráni property s názvom {@code name}.
+     * @param name 
+     */
+    public void clearProperty(String name){
+        properties.remove(name);
+    }
+//    /**
+//     * Môže byť použité pre akúkoľvek pomocnú informáciu.
+//     * Každá implementácia {@code YieldCalculator} môže 
+//     * použiť túto hodnotu k iným účelom. Zároveň by mala 
+//     * v javadocu popisovať, na čo túto hodnotu používa.
+//     */
+//    public double getDoubleNumber() {
+//        return doubleNumber;
+//    }
+//
+//    /**
+//     * Môže byť použité pre akúkoľvek pomocnú informáciu.
+//     * Každá implementácia {@code YieldCalculator} môže 
+//     * použiť túto hodnotu k iným účelom. Zároveň by mala 
+//     * v javadocu popisovať, na čo túto hodnotu používa.
+//     * 
+//     * @param doubleNumber 
+//     */
+//    public void setDoubleNumber(double doubleNumber) {
+//        this.doubleNumber = doubleNumber;
+//    }
+//
+//    /**
+//     * Môže byť použité pre akúkoľvek pomocnú informáciu.
+//     * Každá implementácia {@code YieldCalculator} môže 
+//     * použiť túto hodnotu k iným účelom. Zároveň by mala 
+//     * v javadocu popisovať, na čo túto hodnotu používa.
+//     */
+//    public String getNote() {
+//        return note;
+//    }
+//
+//    /**
+//     * Môže byť použité pre akúkoľvek pomocnú informáciu.
+//     * Každá implementácia {@code YieldCalculator} môže 
+//     * použiť túto hodnotu k iným účelom. Zároveň by mala 
+//     * v javadocu popisovať, na čo túto hodnotu používa.
+//     * 
+//     * @param note  
+//     */
+//    public void setNote(String note) {
+//        this.note = note;
+//    }
     
     /**
      * Vráti hranice pre rozsahy stávok podľa {@code index}. 
@@ -219,5 +249,26 @@ public class YieldProperties {
                 addScale(d);
             }
         }
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null
+                || !(obj instanceof YieldProperties)){
+            return false;
+        }
+        YieldProperties yp = (YieldProperties) obj;
+        if(!this.betCompany.equals(yp.betCompany)
+                || !this.properties.equals(yp.properties)){
+            return false;
+        }
+        return this.scale.equals(yp.scale);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * this.betCompany.hashCode() 
+                * this.properties.hashCode()
+                * this.scale.hashCode();
     }
 }

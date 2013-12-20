@@ -26,8 +26,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import org.postgresql.ds.PGPoolingDataSource;
 
 
@@ -53,6 +57,23 @@ public class MainClass {
         m1.setProperties(mp1);
         System.out.println(m.compareTo(m1));
         System.out.println(m1.compareTo(m));
+        
+        List<Match> list = new LinkedList<>();
+        list.add(m1);
+        list.add(m);
+        for(Match ma : list){
+            System.out.println(ma.getProperties().getDate());
+        }
+        Collections.sort(list);
+        for(Match ma : list){
+            System.out.println(ma.getProperties().getDate());
+        }
+        
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", new Object());
+        System.out.println(map.containsKey("name"));
+        map.remove("name");
+        System.out.println(map.containsKey("name"));
 //        Match m = new Match(StaticConstants.Sport.Soccer);
 //        Bet b = new Bet1x2("bet", 0, 0, 0);
 //        Bet b1 = new BetOverUnder("bet", 10, 10, 10, "");

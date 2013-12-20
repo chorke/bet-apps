@@ -5,6 +5,7 @@
 package chorke.proprietary.bet.apps.core.calculators;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -20,8 +21,8 @@ public class CumulativeYieldProperties extends YieldProperties{
         super(scale, betCompany);
     }
 
-    public CumulativeYieldProperties(List<Double> scale, String betCompany, double doubleNumber, String note) {
-        super(scale, betCompany, doubleNumber, note);
+    public CumulativeYieldProperties(List<Double> scale, String betCompany, Map<String, Object> propeerties) {
+        super(scale, betCompany, propeerties);
     }
 
 }

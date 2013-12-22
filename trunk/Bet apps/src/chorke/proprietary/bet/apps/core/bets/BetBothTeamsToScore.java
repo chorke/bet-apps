@@ -4,15 +4,17 @@
  */
 package chorke.proprietary.bet.apps.core.bets;
 
+import java.math.BigDecimal;
+
 /**
  *
  * @author Chorke
  */
 public class BetBothTeamsToScore extends Bet{
-    public final double yes;
-    public final double no;
+    public final BigDecimal yes;
+    public final BigDecimal no;
 
-    public BetBothTeamsToScore(String betCompany, double yes, double no) {
+    public BetBothTeamsToScore(String betCompany, BigDecimal yes, BigDecimal no) {
         super(betCompany);
         this.yes = yes;
         this.no = no;

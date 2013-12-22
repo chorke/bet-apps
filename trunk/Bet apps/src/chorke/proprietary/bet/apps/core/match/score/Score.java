@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package chorke.proprietary.bet.apps.core.match.score;
 
 import java.util.ArrayList;
@@ -14,25 +11,27 @@ public class Score {
     private int scoreSecondParty = 0;
     private List<PartialScore> partialScore = new ArrayList<>();
 
+    public Score(){}
+    
+    private Score(Score score){
+        scoreFirstParty = score.scoreFirstParty;
+        scoreSecondParty = score.scoreSecondParty;
+        for(PartialScore ps : score.partialScore){
+            this.partialScore.add(new PartialScore(ps.firstParty, ps.secondParty));
+        }
+    }
+    
     public int getScoreFirstParty() {
         return scoreFirstParty;
-    }
-
-    public void setScoreFirstParty(int scoreFirstParty) {
-        this.scoreFirstParty = scoreFirstParty;
     }
 
     public int getScoreSecondParty() {
         return scoreSecondParty;
     }
 
-    public void setScoreSecondParty(int scoreSecondParty) {
-        this.scoreSecondParty = scoreSecondParty;
-    }
-
     public Score getScoreAfterPart(int part) {
-        if (part > partialScore.size()) {
-            return this;
+        if (part >= partialScore.size()) {
+            return new Score(this);
         }
         if (part <= 0) {
             return new Score();
@@ -40,9 +39,7 @@ public class Score {
         Score s = new Score();
         for (int i = 0; i < part; i++) {
             PartialScore ps = partialScore.get(i);
-            s.scoreFirstParty += ps.firstParty;
-            s.scoreSecondParty += ps.secondParty;
-            s.partialScore.add(ps);
+            s.addPartialScore(ps.firstParty, ps.secondParty);
         }
         return s;
     }
@@ -53,6 +50,8 @@ public class Score {
 
     public void addPartialScore(int firstParty, int secondParty) {
         partialScore.add(new PartialScore(firstParty, secondParty));
+        scoreFirstParty += firstParty;
+        scoreSecondParty += secondParty;
     }
 
     public List<PartialScore> getPartialScore(){

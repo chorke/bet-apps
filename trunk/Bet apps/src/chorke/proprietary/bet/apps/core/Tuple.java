@@ -30,29 +30,23 @@ public final class Tuple<X, Y> {
         }
         Tuple t = (Tuple) obj;
         
-        if(t.first == null && this.first != null){
-            return false;
-        }
-        if(t.first != null && this.first == null){
-            return false;
-        }
-        if(t.second == null && this.second != null){
-            return false;
-        }
-        if(t.second != null && this.second == null){
-            return false;
-        }
-        
-        if(t.first.getClass() != this.first.getClass()
-                || t.second.getClass() != this.second.getClass()){
-            return false;
-        }
-        return t.first.equals(this.first) && t.second.equals(this.second);
+        if(t.first == null && this.first != null){ return false; }
+        if(t.first != null && this.first == null){ return false; }
+        if(t.second == null && this.second != null){ return false; }
+        if(t.second != null && this.second == null){ return false; }
+        if(t.first != null 
+            && (t.first.getClass() != this.first.getClass() || !t.first.equals(this.first))
+                ){ return false; }
+        if(t.second != null 
+            && (t.second.getClass() != this.second.getClass() || !t.second.equals(this.second))
+                ){ return false; }
+        return true;
     }
 
     @Override
     public int hashCode() {
-        return this.first.hashCode() * this.second.hashCode();
+        return (first == null ? 0 : first.hashCode()) 
+                + (second == null ? 0 : second.hashCode());
     }
     
 }

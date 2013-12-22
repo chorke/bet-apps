@@ -127,9 +127,9 @@ public class DBBetIOManager implements CloneableBetIOManager{
                 + "VALUES (?,?,?,?,?)");
         ps.setLong(1, matchID);
         ps.setString(2, bet.betCompany);
-        ps.setDouble(3, bet.bet1);
-        ps.setDouble(4, bet.betX);
-        ps.setDouble(5, bet.bet2);
+        ps.setString(3, bet.bet1.toPlainString());
+        ps.setString(4, bet.betX.toPlainString());
+        ps.setString(5, bet.bet2.toPlainString());
         return ps;
     }
     
@@ -141,9 +141,9 @@ public class DBBetIOManager implements CloneableBetIOManager{
                 + "VALUES (?,?,?,?,?,?)");
         ps.setLong(1, matchID);
         ps.setString(2, bet.betCompany);
-        ps.setDouble(3, bet.bet1);
-        ps.setDouble(4, bet.bet2);
-        ps.setDouble(5, bet.handicap);
+        ps.setString(3, bet.bet1.toPlainString());
+        ps.setString(4, bet.bet2.toPlainString());
+        ps.setString(5, bet.handicap.toPlainString());
         ps.setString(6, bet.description);
         return ps; 
     }
@@ -156,8 +156,8 @@ public class DBBetIOManager implements CloneableBetIOManager{
                 + "VALUES (?,?,?,?)");
         ps.setLong(1, matchID);
         ps.setString(2, bet.betCompany);
-        ps.setDouble(3, bet.yes);
-        ps.setDouble(4, bet.no);
+        ps.setString(3, bet.yes.toPlainString());
+        ps.setString(4, bet.no.toPlainString());
         return ps;
     }
     
@@ -169,9 +169,9 @@ public class DBBetIOManager implements CloneableBetIOManager{
                 + "VALUES (?,?,?,?,?)");
         ps.setLong(1, matchID);
         ps.setString(2, bet.betCompany);
-        ps.setDouble(3, bet.bet1X);
-        ps.setDouble(4, bet.betX2);
-        ps.setDouble(5, bet.bet12);
+        ps.setString(3, bet.bet1X.toPlainString());
+        ps.setString(4, bet.betX2.toPlainString());
+        ps.setString(5, bet.bet12.toPlainString());
         return ps;
     }
     
@@ -183,8 +183,8 @@ public class DBBetIOManager implements CloneableBetIOManager{
                 + "VALUES (?,?,?,?)");
         ps.setLong(1, matchID);
         ps.setString(2, bet.betCompany);
-        ps.setDouble(3, bet.bet1);
-        ps.setDouble(4, bet.bet2);
+        ps.setString(3, bet.bet1.toPlainString());
+        ps.setString(4, bet.bet2.toPlainString());
         return ps;
     }
     
@@ -196,9 +196,9 @@ public class DBBetIOManager implements CloneableBetIOManager{
                 + "VALUES (?,?,?,?,?,?)");
         ps.setLong(1, matchID);
         ps.setString(2, bet.betCompany);
-        ps.setDouble(3, bet.total);
-        ps.setDouble(4, bet.over);
-        ps.setDouble(5, bet.under);
+        ps.setString(3, bet.total.toPlainString());
+        ps.setString(4, bet.over.toPlainString());
+        ps.setString(5, bet.under.toPlainString());
         ps.setString(6, bet.description);
         return ps;
     }

@@ -16,6 +16,7 @@ import chorke.proprietary.bet.apps.core.bets.BetDrawNoBet;
 import chorke.proprietary.bet.apps.core.bets.BetOverUnder;
 import chorke.proprietary.bet.apps.io.BetIOException;
 import chorke.proprietary.bet.apps.io.BetIOManager;
+import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
@@ -341,12 +342,12 @@ public class BetexplorerComParser implements HTMLBetParser{
         }
     }
     
-    private double parseDouble(String parse){
+    private BigDecimal parseNumber(String parse){
         try{
-            return Double.parseDouble(parse);
+            return new BigDecimal(parse);
         } catch (NumberFormatException ex){
             System.err.println("Double: " + ex);
-            return 0.0;
+            return BigDecimal.ZERO;
         }
     }
     
@@ -366,9 +367,9 @@ public class BetexplorerComParser implements HTMLBetParser{
             name = row.select("th").first().text();
             bets = row.select("td");
             match.addBet(new Bet1x2(name,
-                    parseDouble(bets.get(0).attr("data-odd")),
-                    parseDouble(bets.get(1).attr("data-odd")), 
-                    parseDouble(bets.get(2).attr("data-odd"))));
+                    parseNumber(bets.get(0).attr("data-odd")),
+                    parseNumber(bets.get(1).attr("data-odd")), 
+                    parseNumber(bets.get(2).attr("data-odd"))));
         }
     }
     
@@ -381,15 +382,15 @@ public class BetexplorerComParser implements HTMLBetParser{
             if(bets.get(0).select(".doublepar").isEmpty()){
                 String[] s = bets.get(0).select(".doublepar-w").first().text().split("[ ]+");
                 match.addBet(new BetOverUnder(name, 
-                    parseDouble(s[0]),
-                    parseDouble(bets.get(1).attr("data-odd")),
-                    parseDouble(bets.get(2).attr("data-odd")),
+                    parseNumber(s[0]),
+                    parseNumber(bets.get(1).attr("data-odd")),
+                    parseNumber(bets.get(2).attr("data-odd")),
                         s[1]));
             } else {
                 match.addBet(new BetOverUnder(name, 
-                        parseDouble(bets.get(0).select(".doublepar").first().text()),
-                        parseDouble(bets.get(1).attr("data-odd")),
-                        parseDouble(bets.get(2).attr("data-odd")),
+                        parseNumber(bets.get(0).select(".doublepar").first().text()),
+                        parseNumber(bets.get(1).attr("data-odd")),
+                        parseNumber(bets.get(2).attr("data-odd")),
                         ""));
             }
         }
@@ -407,30 +408,30 @@ public class BetexplorerComParser implements HTMLBetParser{
                 handicaps = bets.get(0).select(".doublepar").first().text().split("[ ,]+");
                 if(handicaps.length == 1){
                     match.addBet(new BetAsianHandicap(name,
-                            parseDouble(bets.get(1).attr("data-odd")),
-                            parseDouble(bets.get(2).attr("data-odd")),
-                            parseDouble(handicaps[0]),
+                            parseNumber(bets.get(1).attr("data-odd")),
+                            parseNumber(bets.get(2).attr("data-odd")),
+                            parseNumber(handicaps[0]),
                             ""));
                 } else {
                     match.addBet(new BetAsianHandicap(name,
-                            parseDouble(bets.get(1).attr("data-odd")),
-                            parseDouble(bets.get(2).attr("data-odd")),
-                            ((parseDouble(handicaps[0]) + parseDouble(handicaps[1])) / 2.0),
+                            parseNumber(bets.get(1).attr("data-odd")),
+                            parseNumber(bets.get(2).attr("data-odd")),
+                            parseNumber(handicaps[0]).add(parseNumber(handicaps[1])).divide(new BigDecimal("2")),
                             ""));
                 }
             } else {
                 handicaps = bets.get(0).select(".doublepar-w").first().text().split("[ ,]+");
                 if(handicaps.length == 2){
                     match.addBet(new BetAsianHandicap(name,
-                            parseDouble(bets.get(1).attr("data-odd")),
-                            parseDouble(bets.get(2).attr("data-odd")),
-                            parseDouble(handicaps[0]),
+                            parseNumber(bets.get(1).attr("data-odd")),
+                            parseNumber(bets.get(2).attr("data-odd")),
+                            parseNumber(handicaps[0]),
                             handicaps[1]));
                 } else {
                     match.addBet(new BetAsianHandicap(name,
-                            parseDouble(bets.get(1).attr("data-odd")),
-                            parseDouble(bets.get(2).attr("data-odd")),
-                            ((parseDouble(handicaps[0]) + parseDouble(handicaps[1])) / 2.0),
+                            parseNumber(bets.get(1).attr("data-odd")),
+                            parseNumber(bets.get(2).attr("data-odd")),
+                            parseNumber(handicaps[0]).add(parseNumber(handicaps[1])).divide(new BigDecimal("2")),
                             handicaps[2]));
                 }
             }
@@ -444,8 +445,8 @@ public class BetexplorerComParser implements HTMLBetParser{
             name = row.select("th").first().text();
             bets = row.select("td");
             match.addBet(new BetDrawNoBet(name,
-                    parseDouble(bets.get(0).attr("data-odd")),
-                    parseDouble(bets.get(1).attr("data-odd"))));
+                    parseNumber(bets.get(0).attr("data-odd")),
+                    parseNumber(bets.get(1).attr("data-odd"))));
         }
     }
     
@@ -456,9 +457,9 @@ public class BetexplorerComParser implements HTMLBetParser{
             name = row.select("th").first().text();
             bets = row.select("td");
             match.addBet(new BetDoubleChance(name,
-                    parseDouble(bets.get(0).attr("data-odd")),
-                    parseDouble(bets.get(1).attr("data-odd")), 
-                    parseDouble(bets.get(2).attr("data-odd"))));
+                    parseNumber(bets.get(0).attr("data-odd")),
+                    parseNumber(bets.get(1).attr("data-odd")), 
+                    parseNumber(bets.get(2).attr("data-odd"))));
         }
     }
     
@@ -469,8 +470,8 @@ public class BetexplorerComParser implements HTMLBetParser{
             name = row.select("th").first().text();
             bets = row.select("td");
             match.addBet(new BetBothTeamsToScore(name,
-                    parseDouble(bets.get(0).attr("data-odd")),
-                    parseDouble(bets.get(1).attr("data-odd"))));
+                    parseNumber(bets.get(0).attr("data-odd")),
+                    parseNumber(bets.get(1).attr("data-odd"))));
         }
     }
     
@@ -505,8 +506,8 @@ public class BetexplorerComParser implements HTMLBetParser{
             /* match score */
             split = score.split("[, ()]+");
             if(split.length > 1){
-                m.setScore(parseInt(removeEmptyCharacters(split[0])),
-                        parseInt(removeEmptyCharacters(split[1])));
+//                m.setScore(parseInt(removeEmptyCharacters(split[0])),
+//                        parseInt(removeEmptyCharacters(split[1])));
                 String[] scoreSplit;
                 for(int i = 2; i < split.length; i++){
                     scoreSplit = split[i].split(":");

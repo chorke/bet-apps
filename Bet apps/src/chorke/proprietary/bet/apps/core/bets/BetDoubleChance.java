@@ -4,16 +4,18 @@
  */
 package chorke.proprietary.bet.apps.core.bets;
 
+import java.math.BigDecimal;
+
 /**
  *
  * @author Chorke
  */
 public class BetDoubleChance extends Bet{
-    public final double bet1X;
-    public final double betX2;
-    public final double bet12;
+    public final BigDecimal bet1X;
+    public final BigDecimal betX2;
+    public final BigDecimal bet12;
 
-    public BetDoubleChance(String betCompany, double bet1X, double bet12, double betX2) {
+    public BetDoubleChance(String betCompany, BigDecimal bet1X, BigDecimal bet12, BigDecimal betX2) {
         super(betCompany);
         this.bet1X = bet1X;
         this.betX2 = betX2;

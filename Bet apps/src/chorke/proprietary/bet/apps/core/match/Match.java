@@ -30,6 +30,7 @@ public class Match implements Comparable<Match>{
     public Match(Sport sport) {
         bets = new HashMap<>();
         score = new Score();
+        properties = new MatchProperties();
         this.sport = sport;
     }
 
@@ -49,10 +50,10 @@ public class Match implements Comparable<Match>{
         this.score = score;
     }
     
-    public void setScore(int firstParty, int secondParty){
-        score.setScoreFirstParty(firstParty);
-        score.setScoreSecondParty(secondParty);
-    }
+//    public void setScore(int firstParty, int secondParty){
+//        score.setScoreFirstParty(firstParty);
+//        score.setScoreSecondParty(secondParty);
+//    }
 
     public Score getScore() {
         return score;
@@ -79,11 +80,11 @@ public class Match implements Comparable<Match>{
         switch (sport){
             case Soccer:
             case Handball:
-                getWinner(score.getScoreAfterPart(2));
+                return getWinner(score.getScoreAfterPart(2));
             case Basketball:
-                getWinner(score.getScoreAfterPart(4));
+                return getWinner(score.getScoreAfterPart(4));
             case Hockey:
-                getWinner(score.getScoreAfterPart(3));
+                return getWinner(score.getScoreAfterPart(3));
             case Volleyball:
             case Baseball:
             default: 
@@ -92,7 +93,11 @@ public class Match implements Comparable<Match>{
     }
     
     public void setProperties(MatchProperties properties) {
-        this.properties = properties;
+        if(properties == null){
+            this.properties = new MatchProperties();
+        } else {
+            this.properties = properties;
+        }
     }
 
     public MatchProperties getProperties() {

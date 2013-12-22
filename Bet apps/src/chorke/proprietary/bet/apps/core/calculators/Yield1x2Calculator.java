@@ -6,6 +6,7 @@ import chorke.proprietary.bet.apps.core.Tuple;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
 import chorke.proprietary.bet.apps.core.calculators.Yield.BetPossibility;
 import chorke.proprietary.bet.apps.core.match.Match;
+import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
@@ -123,28 +124,28 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         return yields;
     }
     
-    private double getYield(Collection<Match> matches, YieldProperties properties, 
+    private BigDecimal getYield(Collection<Match> matches, YieldProperties properties, 
             BetPossibility betPosibility){
-        double yield = 0.0;
+        BigDecimal yield = new BigDecimal("0");
         Iterator<Bet1x2> betIter;
         for(Match m : matches){
             betIter = m.getBet(properties.getBetCompany(), Bet1x2.class).iterator();
             if(betIter.hasNext()){
                 switch (betPosibility){
                     case Home: 
-                        yield += yieldHome(m.getRegularTimeWinner(), betIter.next());
+                        yield = yield.add(yieldHome(m.getRegularTimeWinner(), betIter.next()));
                         break;
                     case Guest:
-                        yield += yieldGuest(m.getRegularTimeWinner(), betIter.next());
+                        yield = yield.add(yieldGuest(m.getRegularTimeWinner(), betIter.next()));
                         break;
                     case Favorit:
-                        yield += yieldFavorit(m.getRegularTimeWinner(), betIter.next());
+                        yield = yield.add(yieldFavorit(m.getRegularTimeWinner(), betIter.next()));
                         break;
                     case Looser:
-                        yield += yieldLooser(m.getRegularTimeWinner(), betIter.next());
+                        yield = yield.add(yieldLooser(m.getRegularTimeWinner(), betIter.next()));
                         break;
                     case Tie:
-                        yield += yieldTie(m.getRegularTimeWinner(), betIter.next());
+                        yield = yield.add(yieldTie(m.getRegularTimeWinner(), betIter.next()));
                         break;
                 }
             }
@@ -152,41 +153,41 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         return yield;
     }
     
-    private double yieldHome(Winner winner, Bet1x2 bet){
+    private BigDecimal yieldHome(Winner winner, Bet1x2 bet){
         if(winner == Winner.Team1){
-            return bet.getHomeBet() - 1.0;
+            return bet.getHomeBet().subtract(BigDecimal.ONE);
         }
-        return -1.0;
+        return new BigDecimal("-1");
     }
     
-    private double yieldGuest(Winner winner, Bet1x2 bet){
+    private BigDecimal yieldGuest(Winner winner, Bet1x2 bet){
         if(winner == Winner.Team2){
-            return bet.getGuestBet() - 1.0;
+            return bet.getGuestBet().subtract(BigDecimal.ONE);
         }
-        return -1.0;
+        return new BigDecimal("-1");
     }
     
-    private double yieldFavorit(Winner winner, Bet1x2 bet){
-        if((winner == Winner.Team1 && bet.bet1 < bet.bet2)
-                || (winner == Winner.Team2 && bet.bet2 < bet.bet1)){
-            return bet.getFavoritBet() - 1.0;
+    private BigDecimal yieldFavorit(Winner winner, Bet1x2 bet){
+        if((winner == Winner.Team1 && bet.bet1.compareTo(bet.bet2) == -1)
+                || (winner == Winner.Team2 && bet.bet2.compareTo(bet.bet1) == -1)){
+            return bet.getFavoritBet().subtract(BigDecimal.ONE);
         }
-        return -1.0;
+        return new BigDecimal("-1");
     }
     
-    private double yieldLooser(Winner winner, Bet1x2 bet){
-        if((winner == Winner.Team1 && bet.bet1 > bet.bet2)
-                || (winner == Winner.Team2 && bet.bet2 > bet.bet1)){
-            return bet.getLooserBet() - 1.0;
+    private BigDecimal yieldLooser(Winner winner, Bet1x2 bet){
+        if((winner == Winner.Team1 && bet.bet1.compareTo(bet.bet2) == 1)
+                || (winner == Winner.Team2 && bet.bet2.compareTo(bet.bet1) == 1)){
+            return bet.getLooserBet().subtract(BigDecimal.ONE);
         }
-        return -1.0;
+        return new BigDecimal("-1");
     }
     
-    private double yieldTie(Winner winner, Bet1x2 bet){
+    private BigDecimal yieldTie(Winner winner, Bet1x2 bet){
         if(winner == Winner.Tie){
-            return bet.getTieBet() - 1.0;
+            return bet.getTieBet().subtract(BigDecimal.ONE);
         }
-        return -1.0;
+        return new BigDecimal("-1");
     }
     
     /**
@@ -198,7 +199,7 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
      * triedu a prepísať metódu a tým upraviť akceptujúce hodnoty stávok
      * (vhodné prepísať aj 
      * {@link #getIndex(Match, List, YieldProperties)} a 
-     * {@link #fitRange(double, Tuple)}). Táto metóda má základné chovanie a 
+     * {@link #fitRange(BigDecimal, Tuple)}). Táto metóda má základné chovanie a 
      * neberie do úvahy zápasy s rovnakými stávkami na oba tými.
      * 
      * @param matches
@@ -209,7 +210,7 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
                  YieldProperties properties){
         //TODO - musí brať do úvahy properties - betCompany
         splittedMatches = new HashMap<>();
-        List<Tuple<Double, Double>> ranges = properties.getRanges();
+        List<Tuple<BigDecimal, BigDecimal>> ranges = properties.getRanges();
         int i;
         for(i = 0; i < ranges.size(); i++){
             splittedMatches.put(i, new LinkedList<Match>());
@@ -235,7 +236,7 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
      * triedu a prepísať metódu a tým upraviť akceptujúce hodnoty stávok
      * (vhodné prepísať aj 
      * {@link #splitToScales(Collection, YieldProperties)} a 
-     * {@link #fitRange(double, Tuple)}). Táto metóda má základné chovanie a 
+     * {@link #fitRange(BigDecimal, Tuple)}). Táto metóda má základné chovanie a 
      * neberie do úvahy zápasy s rovnakými stávkami na oba tými.
      * 
      * @param m
@@ -243,7 +244,8 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
      * @return 
      * @see Bet1x2#getFavoritBet()
      */
-    protected int getIndex(Match m, List<Tuple<Double, Double>> ranges, YieldProperties properties) {
+    protected int getIndex(Match m, List<Tuple<BigDecimal, BigDecimal>> ranges,
+            YieldProperties properties) {
         Iterator<Bet1x2> iter = m.getBet(properties.getBetCompany(), Bet1x2.class).iterator();
         if(!iter.hasNext()){
             return -1;
@@ -258,9 +260,8 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
     }
     
     
-    protected boolean fitRange(double value, Tuple<Double, Double> range){
-        return range.first.doubleValue() <= value 
-                && range.second.doubleValue() >= value;
+    protected boolean fitRange(BigDecimal value, Tuple<BigDecimal, BigDecimal> range){
+        return range.first.compareTo(value) <= 0 && range.second.compareTo(value) >= 0;
     }
     
     private abstract class PeriodHolder{

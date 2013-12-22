@@ -6,6 +6,7 @@ package chorke.proprietary.bet.apps.core.calculators;
 
 import chorke.proprietary.bet.apps.core.Tuple;
 import chorke.proprietary.bet.apps.core.calculators.Yield.BetPossibility;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,11 +17,11 @@ import java.util.List;
  */
 public class Yield1x2 extends Yield{
     
-    private List<Tuple<Integer, Double>> home;
-    private List<Tuple<Integer, Double>> guest;
-    private List<Tuple<Integer, Double>> favorit;
-    private List<Tuple<Integer, Double>> looser;
-    private List<Tuple<Integer, Double>> tie;
+    private List<Tuple<Integer, BigDecimal>> home;
+    private List<Tuple<Integer, BigDecimal>> guest;
+    private List<Tuple<Integer, BigDecimal>> favorit;
+    private List<Tuple<Integer, BigDecimal>> looser;
+    private List<Tuple<Integer, BigDecimal>> tie;
 
     public Yield1x2() {
         super();
@@ -39,9 +40,9 @@ public class Yield1x2 extends Yield{
      * 
      * @param betPossibility
      * @return
-     * @throws IllegalArgumentException ak {@code betPossibility} nie je podporovaná
+     * @throws IllegalStateException ak {@code betPossibility} nie je podporovaná
      */
-    public List<Tuple<Integer, Double>> getYields(BetPossibility betPossibility)
+    public List<Tuple<Integer, BigDecimal>> getYields(BetPossibility betPossibility)
             throws IllegalArgumentException{
         switch(betPossibility){
             case Favorit:
@@ -55,7 +56,7 @@ public class Yield1x2 extends Yield{
             case Tie:
                 return Collections.unmodifiableList(tie);
             default :
-                throw new IllegalArgumentException("Unsupported enum value [" + betPossibility + "]");
+                throw new IllegalStateException("Unsupported enum value [" + betPossibility + "]");
         }
     }
     
@@ -71,26 +72,28 @@ public class Yield1x2 extends Yield{
      * @throws IndexOutOfBoundsException ak {@code index} nie je v medziach pre aktuálne 
      *      {@code properties} ({@link Yield#getProperties()}, 
      *          {@link Yield#setProperties(YieldProperties)})
-     * @throws IllegalArgumentException ak {@code betPossibility} nie je podporovaná
+     * @throws IllegalStateException ak {@code betPossibility} nie je podporovaná
      */
-    public void addYieldForScaleIndex(BetPossibility betPossibility, int index, double yield)
-            throws IndexOutOfBoundsException, IllegalArgumentException {
-        if(index > properties.getScale().size() || index < 0){
-            throw new IndexOutOfBoundsException("Index out of bounds [" + index + "]");
-        }
+    public void addYieldForScaleIndex(BetPossibility betPossibility, int index, BigDecimal yield)
+            throws IndexOutOfBoundsException, IllegalStateException {
         switch(betPossibility){
             case Favorit:
-                favorit.add(new Tuple<>(index, yield));
+                addYieldForScaleIndexInner(favorit, index, yield);
+                break;
             case Guest:
-                guest.add(new Tuple<>(index, yield));
+                addYieldForScaleIndexInner(guest, index, yield);
+                break;
             case Home:
-                home.add(new Tuple<>(index, yield));
+                addYieldForScaleIndexInner(home, index, yield);
+                break;
             case Looser:
-                looser.add(new Tuple<>(index, yield));
+                addYieldForScaleIndexInner(looser, index, yield);
+                break;
             case Tie:
-                tie.add(new Tuple<>(index, yield));
+                addYieldForScaleIndexInner(tie, index, yield);
+                break;
             default :
-                throw new IllegalArgumentException("Unsupported enum value [" + betPossibility + "]");
+                throw new IllegalStateException("Unsupported enum value [" + betPossibility + "]");
         }
     }
     
@@ -104,23 +107,45 @@ public class Yield1x2 extends Yield{
      * @param range 
      * @param yield
      * 
-     * @throws IllegalArgumentException ak {@code betPossibility} nie je podporovaná,
+     * @throws IllegalStateException ak {@code betPossibility} nie je podporovaná,
      *      alebo {@code range} nie je v danom rozsahu pre aktuálne 
      *      {@code properties} ({@link Yield#getProperties()}, 
      *          {@link Yield#setProperties(YieldProperties)})
      */
     public void addYieldForScaleRange(BetPossibility betPossibility,
-            Tuple<Double, Double> range, double yield)
-            throws IllegalArgumentException{
+            Tuple<BigDecimal, BigDecimal> range, BigDecimal yield)
+            throws IllegalStateException{
         try{
             addYieldForScaleIndex(betPossibility, properties.getIndexForRange(range), yield);
-        } catch (IllegalArgumentException ex){
-            throw new IllegalArgumentException("Exception while adding", ex);
+        } catch (IllegalStateException ex){
+            throw new IllegalStateException("Exception while adding", ex);
         } catch (IndexOutOfBoundsException ex){
             //should not happend
             throw new Error("Possible error in method YieldProperties.getIndexForRange(...).", ex);
         }
     }
+    
+    /**
+     * Pridá zisk do kolekcie. Ak kolekcia už obsahuje index, tak ho nahradí.
+     * 
+     * @param list
+     * @param index
+     * @throws IndexOutOfBoundsException
+     */
+    private void addYieldForScaleIndexInner(List<Tuple<Integer, BigDecimal>> list, 
+            int index, BigDecimal yield)
+            throws IndexOutOfBoundsException {
+        if(index > properties.getScale().size() || index < 0){
+            throw new IndexOutOfBoundsException("Index out of bounds [" + index + "]");
+        }
+        for(int i = 0; i < list.size(); i++){
+            if(list.get(i).first.equals(index)){
+                list.remove(i);
+            }
+        }
+        list.add(new Tuple<>(index, yield));
+    }
+    
     
     /**
      * Vráti zisk pre zvolenú možnosť stávky {@code betPossibility}.
@@ -131,27 +156,28 @@ public class Yield1x2 extends Yield{
      * @param betPossibility
      * @param index 
      * 
-     * @throws IllegalArgumentException ak {@code betPossibility} nie je podporovaná,
+     * @throws IllegalArgumentException ak 
      *      {@code index} nie je v danom rozsahu pre aktuálne 
      *      {@code properties} ({@link Yield#getProperties()}, 
      *          {@link Yield#setProperties(YieldProperties)}), alebo neexistuje
      *      zisk pre daný {@code index}
+     * @throws IllegalStateException ak {@code betPossibility} nie je podporovaná
      */
-    public Double getYieldForScaleIndex(BetPossibility betPossibility, int index)
-            throws IllegalArgumentException {
+    public BigDecimal getYieldForScaleIndex(BetPossibility betPossibility, int index)
+            throws IllegalArgumentException, IllegalStateException {
         switch(betPossibility){
             case Favorit:
-                return getYieldForScaleIndex(favorit, index);
+                return getYieldForScaleIndexInner(favorit, index);
             case Guest:
-                return getYieldForScaleIndex(guest, index);
+                return getYieldForScaleIndexInner(guest, index);
             case Home:
-                return getYieldForScaleIndex(home, index);
+                return getYieldForScaleIndexInner(home, index);
             case Looser:
-                return getYieldForScaleIndex(looser, index);
+                return getYieldForScaleIndexInner(looser, index);
             case Tie:
-                return getYieldForScaleIndex(tie, index);
+                return getYieldForScaleIndexInner(tie, index);
             default :
-                throw new IllegalArgumentException("Unsupported enum value [" + betPossibility + "]");
+                throw new IllegalStateException("Unsupported enum value [" + betPossibility + "]");
         }
     }
     
@@ -169,9 +195,11 @@ public class Yield1x2 extends Yield{
      *      {@code properties} ({@link Yield#getProperties()}, 
      *          {@link Yield#setProperties(YieldProperties)}), alebo neexistuje
      *      zisk pre daný {@code range}
+     * @throws IllegalStateException ak {@code betPossibility} nie je podporovaná
      */
-    public Double getYieldForScaleRange(BetPossibility possibleWinner, Tuple<Double, Double> range)
-            throws IllegalArgumentException {
+    public BigDecimal getYieldForScaleRange(BetPossibility possibleWinner, 
+            Tuple<BigDecimal, BigDecimal> range)
+            throws IllegalArgumentException, IllegalStateException {
         try{
             return getYieldForScaleIndex(possibleWinner, properties.getIndexForRange(range));
         } catch (IllegalArgumentException ex){
@@ -187,10 +215,10 @@ public class Yield1x2 extends Yield{
      * 
      * @throws IllegalArgumentException ak neexistuje zisk pre daný {@code index}
      */
-    private Double getYieldForScaleIndex(List<Tuple<Integer, Double>> list, int index)
+    private BigDecimal getYieldForScaleIndexInner(List<Tuple<Integer, BigDecimal>> list, int index)
             throws IllegalArgumentException {
-        for(Tuple<Integer, Double> t : list){
-            if(t.first == index){
+        for(Tuple<Integer, BigDecimal> t : list){
+            if(t.first.equals(index)){
                 return t.second;
             }
         }

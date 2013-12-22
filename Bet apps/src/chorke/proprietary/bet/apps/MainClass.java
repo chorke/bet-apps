@@ -22,6 +22,7 @@ import chorke.proprietary.bet.apps.core.match.score.Score;
 import chorke.proprietary.bet.apps.io.BetIOException;
 import chorke.proprietary.bet.apps.io.BetIOManager;
 import chorke.proprietary.bet.apps.io.DBBetIOManager;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -74,6 +75,14 @@ public class MainClass {
         System.out.println(map.containsKey("name"));
         map.remove("name");
         System.out.println(map.containsKey("name"));
+        
+        System.out.println(new BigDecimal("1.0").equals(BigDecimal.ONE));
+        System.out.println(new BigDecimal("1.000001").toEngineeringString());
+        System.out.println(new BigDecimal("-1.000001").toString());
+        System.out.println(new BigDecimal("1.000001").toPlainString());
+        System.out.println(new BigDecimal("-1.00000"));
+        System.out.println(new BigDecimal("1.000001"));
+        System.out.println(new BigDecimal("12312.1421"));
 //        Match m = new Match(StaticConstants.Sport.Soccer);
 //        Bet b = new Bet1x2("bet", 0, 0, 0);
 //        Bet b1 = new BetOverUnder("bet", 10, 10, 10, "");

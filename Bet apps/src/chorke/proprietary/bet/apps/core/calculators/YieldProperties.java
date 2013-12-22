@@ -1,14 +1,13 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package chorke.proprietary.bet.apps.core.calculators;
 
 import chorke.proprietary.bet.apps.core.Tuple;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 
@@ -17,21 +16,23 @@ import java.util.Map;
  * @author Chorke
  */
 public class YieldProperties {
-    private List<Double> scale;
+    
+    private static final BigDecimal ZERO_POINT_ZERO_ONE = new BigDecimal("0.01");
+    private static final BigDecimal MAX_VALUE = new BigDecimal(Double.MAX_VALUE);
+    
+    private List<BigDecimal> scale;
     private String betCompany;
-//    private double doubleNumber;
-//    private String note;
     private Map<String, Object> properties;
     
     public YieldProperties(){
         this(null, "", new HashMap<String, Object>());
     }
 
-    public YieldProperties(List<Double> scale, String betCompany) {
+    public YieldProperties(List<BigDecimal> scale, String betCompany) {
         this(scale, betCompany, new HashMap<String, Object>());
     }
 
-    public YieldProperties(List<Double> scale, String betCompany, Map<String, Object> properties) {
+    public YieldProperties(List<BigDecimal> scale, String betCompany, Map<String, Object> properties) {
         setScale(scale);
         this.betCompany = betCompany;
         this.properties = properties;
@@ -74,49 +75,6 @@ public class YieldProperties {
     public void clearProperty(String name){
         properties.remove(name);
     }
-//    /**
-//     * Môže byť použité pre akúkoľvek pomocnú informáciu.
-//     * Každá implementácia {@code YieldCalculator} môže 
-//     * použiť túto hodnotu k iným účelom. Zároveň by mala 
-//     * v javadocu popisovať, na čo túto hodnotu používa.
-//     */
-//    public double getDoubleNumber() {
-//        return doubleNumber;
-//    }
-//
-//    /**
-//     * Môže byť použité pre akúkoľvek pomocnú informáciu.
-//     * Každá implementácia {@code YieldCalculator} môže 
-//     * použiť túto hodnotu k iným účelom. Zároveň by mala 
-//     * v javadocu popisovať, na čo túto hodnotu používa.
-//     * 
-//     * @param doubleNumber 
-//     */
-//    public void setDoubleNumber(double doubleNumber) {
-//        this.doubleNumber = doubleNumber;
-//    }
-//
-//    /**
-//     * Môže byť použité pre akúkoľvek pomocnú informáciu.
-//     * Každá implementácia {@code YieldCalculator} môže 
-//     * použiť túto hodnotu k iným účelom. Zároveň by mala 
-//     * v javadocu popisovať, na čo túto hodnotu používa.
-//     */
-//    public String getNote() {
-//        return note;
-//    }
-//
-//    /**
-//     * Môže byť použité pre akúkoľvek pomocnú informáciu.
-//     * Každá implementácia {@code YieldCalculator} môže 
-//     * použiť túto hodnotu k iným účelom. Zároveň by mala 
-//     * v javadocu popisovať, na čo túto hodnotu používa.
-//     * 
-//     * @param note  
-//     */
-//    public void setNote(String note) {
-//        this.note = note;
-//    }
     
     /**
      * Vráti hranice pre rozsahy stávok podľa {@code index}. 
@@ -137,16 +95,16 @@ public class YieldProperties {
      * @throws IndexOutOfBoundsException Ak je 
      * {@code index > scale.size() || index < 0}.
      */
-    public Tuple<Double, Double> getRangeForIndex(int index) throws IndexOutOfBoundsException{
+    public Tuple<BigDecimal, BigDecimal> getRangeForIndex(int index) throws IndexOutOfBoundsException{
         if(index > scale.size() || index < 0){
             throw new IndexOutOfBoundsException("Index out of bounds " + index);
         }
         if(index == 0){
-            return new Tuple<>(1.00, scale.get(0));
+            return new Tuple<>(BigDecimal.ONE, scale.get(0));
         } else if(index == scale.size()){
-            return new Tuple<>(scale.get(index - 1) + 0.01, Double.MAX_VALUE);
+            return new Tuple<>(scale.get(index - 1).add(ZERO_POINT_ZERO_ONE), MAX_VALUE);
         } else {
-            return new Tuple<>(scale.get(index - 1) + 0.01, scale.get(index));
+            return new Tuple<>(scale.get(index - 1).add(ZERO_POINT_ZERO_ONE), scale.get(index));
         }
     }
     
@@ -156,13 +114,13 @@ public class YieldProperties {
      * 
      * @return rozsahy pre aktuálne nastavenie
      * 
-     * @see addScale(Double)
-     * @see removeScale(Double)
+     * @see addScale(BigDecimal)
+     * @see removeScale(BigDecimal)
      * @see getScale()
      * @see setScale(List)
      */
-    public List<Tuple<Double, Double>> getRanges(){
-        List<Tuple<Double, Double>> out = new ArrayList<>(scale.size() + 1);
+    public List<Tuple<BigDecimal, BigDecimal>> getRanges(){
+        List<Tuple<BigDecimal, BigDecimal>> out = new ArrayList<>(scale.size() + 1);
         for(int i = 0; i <= scale.size(); i++){
             out.add(getRangeForIndex(i));
         }
@@ -188,46 +146,53 @@ public class YieldProperties {
      * @return 
      * @throws IllegalArgumentException Ak {@code range} nie je platný rozsah.
      */
-    public int getIndexForRange(Tuple<Double, Double> range) throws IllegalArgumentException{
-        if(range.second == Double.MAX_VALUE){
-            if(scale.get(scale.size() -1) != range.first){
+    public int getIndexForRange(Tuple<BigDecimal, BigDecimal> range) throws IllegalArgumentException{
+        if(range.second.equals(MAX_VALUE)){
+            if(!scale.get(scale.size() - 1).add(ZERO_POINT_ZERO_ONE).equals(range.first)){
                 throw new IllegalArgumentException("Range not in scale " + range);
             }
             return scale.size();
         }
-        if(range.first == 1.00){
-            if(scale.get(0) != range.second){
+        if(range.first.equals(BigDecimal.ONE)){
+            if(!scale.get(0).equals(range.second)){
                 throw new IllegalArgumentException("Range not in scale " + range);
             }
+            return 0;
         }
         int idx = scale.indexOf(range.second);
         if(idx <= 0){
             throw new IllegalArgumentException("Range not in scale " + range);
         }
-        if(scale.get(idx - 1) + 0.01 != range.first){
+        if(!scale.get(idx - 1).add(ZERO_POINT_ZERO_ONE).equals(range.first)){
             throw new IllegalArgumentException("Range not in scale " + range);
         }
         return idx;
     }
     
-    public List<Double> getScale() {
+    public List<BigDecimal> getScale() {
         return Collections.unmodifiableList(scale);
     }
     
-    public void addScale(Double d){
+    public void addScale(BigDecimal d){
         if(!scale.contains(d)){
             for(int i = 0; i < scale.size(); i++){
-                if(scale.get(i) < d){
+                if(scale.get(i).compareTo(d) > 0){
                     scale.add(i, d);
                     return;
                 }
             }
+            scale.add(d);
         }
     }
     
-    public void removeScale(Double d){
+    public void removeScale(BigDecimal d){
         if(d != null){
-            scale.remove(d);
+            for(int i = 0; i < scale.size(); i++){
+                if(scale.get(i).compareTo(d) == 0){
+                    scale.remove(i);
+                    return;
+                }
+            }
         }
     }
     
@@ -236,7 +201,7 @@ public class YieldProperties {
      * 
      * @param scale 
      */
-    public final void setScale(List<Double> scale){
+    public final void setScale(List<BigDecimal> scale){
         if(scale == null){
             if(this.scale == null){
                 this.scale = new ArrayList<>();
@@ -244,8 +209,12 @@ public class YieldProperties {
                 this.scale.clear();
             }
         } else {
-            this.scale.clear();
-            for(Double d : scale){
+            if(this.scale == null){
+                this.scale = new LinkedList<>();
+            } else {
+                this.scale.clear();
+            }
+            for(BigDecimal d : scale){
                 addScale(d);
             }
         }

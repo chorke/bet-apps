@@ -41,7 +41,7 @@ public class Bet1x2 extends Bet{
     public BigDecimal getFavoritBet(){
         if(bet1.compareTo(bet2) == 1){
             return bet2;
-        } else if(bet2.compareTo(bet1) == -1){
+        } else if(bet2.compareTo(bet1) == 1){
             return bet1;
         } else {
             return BigDecimal.ZERO;
@@ -55,7 +55,7 @@ public class Bet1x2 extends Bet{
     public BigDecimal getLooserBet(){
         if(bet1.compareTo(bet2) == 1){
             return bet1;
-        } else if(bet2.compareTo(bet1) == -1){
+        } else if(bet2.compareTo(bet1) == 1){
             return bet2;
         } else {
             return BigDecimal.ZERO;

@@ -111,6 +111,7 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
                     yield = new Yield1x2();
                     yield.setProperties(properties);
                     yields.put((Calendar)periodHolder.date.clone(), yield);
+                    System.out.println("creating new " + periodHolder.date);
                 }
                 to = periodHolder.lastSuitedMatchIndex(from, rangeMatches);
                 sublist = rangeMatches.subList(from, to);
@@ -208,7 +209,6 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
      */
     protected void splitToScales(Collection<Match> matches,
                  YieldProperties properties){
-        //TODO - musí brať do úvahy properties - betCompany
         splittedMatches = new HashMap<>();
         List<Tuple<BigDecimal, BigDecimal>> ranges = properties.getRanges();
         int i;
@@ -318,9 +318,19 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         @Override
         boolean suits(Match m) {
             Calendar c = m.getProperties().getDate();
+            if(c.get(Calendar.MONTH) == 11 && c.get(Calendar.WEEK_OF_YEAR) == 1){
+                return c.get(Calendar.YEAR) == super.date.get(Calendar.YEAR) - 1;
+            }
             return c.get(Calendar.WEEK_OF_YEAR) == super.date.get(Calendar.WEEK_OF_YEAR)
                     && c.get(Calendar.YEAR) == super.date.get(Calendar.YEAR);
         }
+
+        @Override
+        void setDate(Calendar date) {
+            super.setDate(date);
+            super.date.set(Calendar.DAY_OF_WEEK, 1);
+        }
+        
     }
         
     private class PeriodHolderMONTH extends PeriodHolder{
@@ -339,7 +349,8 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
 
         @Override
         void setDate(Calendar date) {
-            super.date.set(Calendar.DATE, 0);
+            super.setDate(date);
+            super.date.set(Calendar.DATE, 1);
         }
     }
     
@@ -358,7 +369,8 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
 
         @Override
         void setDate(Calendar date) {
-            super.date.set(Calendar.DATE, 0);
+            super.setDate(date);
+            super.date.set(Calendar.DATE, 1);
             super.date.set(Calendar.MONTH, 0);
         }
     }

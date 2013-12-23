@@ -83,6 +83,14 @@ public class MainClass {
         System.out.println(new BigDecimal("-1.00000"));
         System.out.println(new BigDecimal("1.000001"));
         System.out.println(new BigDecimal("12312.1421"));
+        
+        
+        Calendar cal = new GregorianCalendar(2013, Calendar.DECEMBER, 29);
+        System.out.println(cal.get(Calendar.YEAR));
+        System.out.println(cal.get(Calendar.WEEK_OF_YEAR));
+        cal.add(Calendar.WEEK_OF_YEAR, 1);
+        System.out.println(cal.get(Calendar.YEAR));
+        System.out.println(cal.get(Calendar.WEEK_OF_YEAR));
 //        Match m = new Match(StaticConstants.Sport.Soccer);
 //        Bet b = new Bet1x2("bet", 0, 0, 0);
 //        Bet b1 = new BetOverUnder("bet", 10, 10, 10, "");

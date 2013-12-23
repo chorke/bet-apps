@@ -212,17 +212,15 @@ public class Yield1x2 extends Yield{
      * 
      * @param list 
      * @param index 
-     * 
-     * @throws IllegalArgumentException ak neexistuje zisk pre daný {@code index}
      */
-    private BigDecimal getYieldForScaleIndexInner(List<Tuple<Integer, BigDecimal>> list, int index)
-            throws IllegalArgumentException {
+    private BigDecimal getYieldForScaleIndexInner(List<Tuple<Integer, BigDecimal>> list, int index){
         for(Tuple<Integer, BigDecimal> t : list){
             if(t.first.equals(index)){
                 return t.second;
             }
         }
-        throw new IllegalArgumentException("No yield for index [" + index + "]");
+//        throw new IllegalArgumentException("No yield for index [" + index + "]");
+        return BigDecimal.ZERO;
     }
 
     /**
@@ -244,5 +242,24 @@ public class Yield1x2 extends Yield{
             looser.clear();
             tie.clear();
         }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("home: ").append(stringYield(home))
+                .append(" guest: ").append(stringYield(guest))
+                .append(" favorit: ").append(stringYield(favorit))
+                .append(" looser: ").append(stringYield(looser))
+                .append(" tie: ").append(stringYield(tie));
+        return sb.toString();
+    }
+    
+    private String stringYield(List<Tuple<Integer, BigDecimal>> toString){
+        StringBuilder sb = new StringBuilder();
+        for(Tuple tp : toString){
+            sb.append(tp + " ");
+        }
+        return sb.toString();
     }
 }

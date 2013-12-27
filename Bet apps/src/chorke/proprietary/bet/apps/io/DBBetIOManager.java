@@ -4,6 +4,8 @@
  */
 package chorke.proprietary.bet.apps.io;
 
+import chorke.proprietary.bet.apps.StaticConstants.Sport;
+import chorke.proprietary.bet.apps.core.Tuple;
 import chorke.proprietary.bet.apps.core.bets.Bet;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
 import chorke.proprietary.bet.apps.core.bets.BetAsianHandicap;
@@ -14,13 +16,19 @@ import chorke.proprietary.bet.apps.core.bets.BetOverUnder;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.core.match.MatchProperties;
 import chorke.proprietary.bet.apps.core.match.score.PartialScore;
+import chorke.proprietary.bet.apps.core.match.score.Score;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
@@ -204,21 +212,87 @@ public class DBBetIOManager implements CloneableBetIOManager{
     }
     
     @Override
-    public void saveMatches(Collection<Match> matches) throws BetIOException {
-//        int i = 0;
-        for(Match m : matches){
-            try{
-//                System.out.println(++i);
-                saveMatch(m);
-            } catch (IllegalArgumentException ex){}
+    public Collection<Match> loadAllMatches() throws BetIOException {
+        if(dataSource == null){
+            throw new BetIOException("No data source");
+        }
+        try(Connection con = dataSource.getConnection()){
+            Collection<Match> matches = getMatches(con);
+            Map<Long, Score> scores = getScores(con);
+            //TODO - stávky a spojiť to do zápasu
+            //TODO - get metódy pre jednotlivé časti zmeniť tak, aby brali ResultSet
+            //budú potom použiteľné pre loadMatches(MatchProperties)
+            throw new UnsupportedOperationException("Unfinished");
+        } catch (SQLException ex){
+            throw new BetIOException("Error while finding all matches.", ex);
         }
     }
 
-    @Override
-    public Collection<Match> loadAllMatches() throws BetIOException {
-        throw new UnsupportedOperationException("Not supported yet.");
+    private Map<Long, Score> getScores(Connection con) throws SQLException{
+        try(PreparedStatement ps = con.prepareStatement("SELECT * FROM scores")){
+            HashMap<Long, Score> out = new HashMap<>();
+            HashMap<Tuple<Integer, Integer>, PartialScore> handles = new HashMap<>();
+            ResultSet scores = ps.executeQuery();
+            Score score;
+            while(scores.next()){
+                if(scores.getInt("part") != -1){
+                    handles.put(new Tuple<>(scores.getInt("matchid"), scores.getInt("part")),
+                            new PartialScore(scores.getInt("team2"), scores.getInt("part")));
+                }
+            }
+            for(Tuple<Integer, Integer> tp : handles.keySet()){
+                if(tp.second.equals(1)){
+                    score = new Score();
+                    score.addPartialScore(handles.get(tp));
+                    out.put(new Long((long)tp.first), score);
+                    handles.remove(tp);
+                }
+            }
+            int part = 2;
+            while(!handles.isEmpty()){
+                Tuple<Integer, Integer> tp;
+                Iterator<Tuple<Integer, Integer>> iter = handles.keySet().iterator();
+                while(iter.hasNext()){
+                    tp = iter.next();
+                    if(tp.second.equals(part)){
+                        out.get(new Long((long)tp.first)).addPartialScore(handles.get(tp));
+                        iter.remove();
+                    }
+                }
+                part++;
+            }
+            return out;
+        } catch (SQLException ex){
+            throw new SQLException("Error while loading scores.", ex);
+        }
     }
-
+    
+    private Collection<Match> getMatches(Connection con) throws SQLException{
+        try(PreparedStatement ps = con.prepareCall("SELECT * FROM matches")){
+            ResultSet matches = ps.executeQuery();
+            Collection<Match> out = new LinkedList<>();
+            Match match;
+            MatchProperties prop;
+            Calendar cal;
+            while(matches.next()){
+                match = new Match(Sport.valueOf(matches.getString("sport")));
+                match.setId(matches.getLong("id"));
+                prop = new MatchProperties();
+                prop.setCountry(matches.getString("country"));
+                prop.setLeague(matches.getString("league"));
+                cal = new GregorianCalendar();
+                cal.setTimeInMillis(matches.getTimestamp("matchdate").getTime());
+                prop.setDate(cal);
+                match.setProperties(prop);
+                out.add(match);
+            }
+            return out;
+        } catch (SQLException ex){
+            throw new SQLException("Error while getting matches", ex);
+        }
+    }
+    
+    
     @Override
     public Collection<Match> loadMatches(MatchProperties properties) throws BetIOException {
         throw new UnsupportedOperationException("Not supported yet.");
@@ -226,11 +300,6 @@ public class DBBetIOManager implements CloneableBetIOManager{
 
     @Override
     public void deleteMatch(Match match) throws BetIOException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public void deleteMatches(Collection<Match> matches) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

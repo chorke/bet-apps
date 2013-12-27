@@ -32,7 +32,6 @@ public abstract class MatchInitializer {
     
     @Before
     public void init(){
-//        System.out.println("init");
         mX_1_1_2014_Hoc = new Match(Sport.Hockey);
         m1_24_12_2013_Hoc = new Match(Sport.Hockey);
         m1_26_12_2013_Hoc = new Match(Sport.Hockey);
@@ -67,8 +66,6 @@ public abstract class MatchInitializer {
         m2_2_1_2014_Soc.getProperties().setDate(new GregorianCalendar(2014, Calendar.JANUARY, 2));
         m2_30_11_2013_Soc.getProperties().setDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 30));
         m2_31_12_2013_Hoc.getProperties().setDate(new GregorianCalendar(2013, Calendar.DECEMBER, 31));
-        System.out.println(m2_31_12_2013_Hoc.getProperties().getDate().get(Calendar.YEAR));
-        System.out.println(m2_31_12_2013_Hoc.getProperties().getDate().get(Calendar.WEEK_OF_YEAR));
         m1_3_1_2014_Soc.getProperties().setDate(new GregorianCalendar(2014, Calendar.JANUARY, 3));
     }
     

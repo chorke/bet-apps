@@ -5,7 +5,6 @@
 package chorke.proprietary.bet.apps;
 
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
-import chorke.proprietary.bet.apps.core.calculators.Yield;
 import chorke.proprietary.bet.apps.core.calculators.Yield.BetPossibility;
 import chorke.proprietary.bet.apps.core.calculators.Yield1x2;
 import chorke.proprietary.bet.apps.core.calculators.Yield1x2Calculator;
@@ -17,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.Before;
 
 /**
  *
@@ -286,7 +284,6 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 1),
                         new BigDecimal("3.65"));
             } else {
-                System.out.println("in else");
                 if(!((c.get(Calendar.YEAR) == 2013  && c.get(Calendar.WEEK_OF_YEAR) == 49)
                         || (c.get(Calendar.YEAR) == 2013  && c.get(Calendar.WEEK_OF_YEAR) == 50)
                         || (c.get(Calendar.YEAR) == 2013  && c.get(Calendar.WEEK_OF_YEAR) == 51))){

@@ -48,10 +48,17 @@ public class Score {
         return scoreFirstParty + scoreSecondParty;
     }
 
+    public void addPartialScore(PartialScore ps){
+        partialScore.add(ps);
+        scoreFirstParty += ps.firstParty;
+        scoreSecondParty += ps.secondParty;
+    }
+    
     public void addPartialScore(int firstParty, int secondParty) {
-        partialScore.add(new PartialScore(firstParty, secondParty));
-        scoreFirstParty += firstParty;
-        scoreSecondParty += secondParty;
+//        partialScore.add(new PartialScore(firstParty, secondParty));
+//        scoreFirstParty += firstParty;
+//        scoreSecondParty += secondParty;
+        addPartialScore(new PartialScore(firstParty, secondParty));
     }
 
     public List<PartialScore> getPartialScore(){

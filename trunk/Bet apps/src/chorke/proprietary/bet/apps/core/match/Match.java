@@ -50,11 +50,6 @@ public class Match implements Comparable<Match>{
         this.score = score;
     }
     
-//    public void setScore(int firstParty, int secondParty){
-//        score.setScoreFirstParty(firstParty);
-//        score.setScoreSecondParty(secondParty);
-//    }
-
     public Score getScore() {
         return score;
     }

@@ -111,7 +111,7 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
                     yield = new Yield1x2();
                     yield.setProperties(properties);
                     yields.put((Calendar)periodHolder.date.clone(), yield);
-                    System.out.println("creating new " + periodHolder.date);
+//                    System.out.println("creating new " + periodHolder.date);
                 }
                 to = periodHolder.lastSuitedMatchIndex(from, rangeMatches);
                 sublist = rangeMatches.subList(from, to);

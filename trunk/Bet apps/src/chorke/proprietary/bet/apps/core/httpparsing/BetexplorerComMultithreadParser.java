@@ -1,10 +1,6 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package chorke.proprietary.bet.apps.core.httpparsing;
 
-import chorke.proprietary.bet.apps.StaticConstants.Sport;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.core.match.MatchProperties;
 import chorke.proprietary.bet.apps.core.Tuple;
@@ -14,6 +10,7 @@ import chorke.proprietary.bet.apps.core.bets.BetBothTeamsToScore;
 import chorke.proprietary.bet.apps.core.bets.BetDoubleChance;
 import chorke.proprietary.bet.apps.core.bets.BetDrawNoBet;
 import chorke.proprietary.bet.apps.core.bets.BetOverUnder;
+import chorke.proprietary.bet.apps.core.match.sports.Sport;
 import chorke.proprietary.bet.apps.io.BetIOException;
 import chorke.proprietary.bet.apps.io.BetIOManager;
 import chorke.proprietary.bet.apps.io.CloneableBetIOManager;
@@ -65,14 +62,14 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
     private Calendar startDate;
     private Calendar endDate;
     private Calendar actualProcessingDate;
-    private Sport sport = Sport.All;
+    private BettingSports sport = BettingSports.All;
 //    private String exploredSportString = SOCCER;
-    private List<Tuple<Sport, Calendar>> toDownload;
+    private List<Tuple<BettingSports, Calendar>> toDownload;
     private List<TextingMatch> toParse;
-    private ListIterator<Tuple<Sport, Calendar>> toDownloadIterator;
+    private ListIterator<Tuple<BettingSports, Calendar>> toDownloadIterator;
     private ListIterator<TextingMatch> toParseIterator;  
     private Collection<String> undownloadedMatches;
-    private Collection<Tuple<Sport, Calendar>> undownloadedSports;
+    private Collection<Tuple<BettingSports, Calendar>> undownloadedSports;
     private Collection<Match> unsavedMatches;
     
     private CloneableBetIOManager IOManager;
@@ -158,7 +155,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
     }
 
     @Override
-    public Collection<Tuple<Sport, Calendar>> getUndownloadedSports() {
+    public Collection<Tuple<BettingSports, Calendar>> getUndownloadedSports() {
         return Collections.unmodifiableCollection(undownloadedSports);
     }
     
@@ -193,7 +190,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         return matches;
     }
     
-    private Tuple<Sport, Calendar> getNextTuple(){
+    private Tuple<BettingSports, Calendar> getNextTuple(){
         synchronized(LOCK_FOR_TO_DOWNLOAD){
             if(toDownloadIterator.hasNext()){
                 return toDownloadIterator.next();
@@ -213,21 +210,21 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         }
     }
     
-    private List<Tuple<Sport, Calendar>> prepareSportsAndDates(){
-        List<Tuple<Sport, Calendar>> out = new LinkedList<>();
+    private List<Tuple<BettingSports, Calendar>> prepareSportsAndDates(){
+        List<Tuple<BettingSports, Calendar>> out = new LinkedList<>();
         Calendar c;
         for(long i = startDate.getTimeInMillis(); 
                 i <= endDate.getTimeInMillis();
                 i += 86_400_000){
             c = new GregorianCalendar();
             c.setTimeInMillis(i);
-            if(sport == Sport.All) {
-                out.add(new Tuple(Sport.Soccer, c));
-                out.add(new Tuple(Sport.Baseball, c));
-                out.add(new Tuple(Sport.Basketball, c));
-                out.add(new Tuple(Sport.Handball, c));
-                out.add(new Tuple(Sport.Hockey, c));
-                out.add(new Tuple(Sport.Volleyball, c));
+            if(sport == BettingSports.All) {
+                out.add(new Tuple(BettingSports.Soccer, c));
+                out.add(new Tuple(BettingSports.Baseball, c));
+                out.add(new Tuple(BettingSports.Basketball, c));
+                out.add(new Tuple(BettingSports.Handball, c));
+                out.add(new Tuple(BettingSports.Hockey, c));
+                out.add(new Tuple(BettingSports.Volleyball, c));
             } else {
                 out.add(new Tuple(sport, c));
             }
@@ -236,12 +233,12 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
     }
     
     @Override
-    public void setExploredSport(Sport sport) {
+    public void setExploredSport(BettingSports sport) {
         this.sport = sport;
     }
 
     @Override
-    public Sport getExploredSport() {
+    public BettingSports getExploredSport() {
         return sport;
     }
 
@@ -286,7 +283,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         public void run() {
             done = false;
             matches = new LinkedList<>();
-            Tuple<Sport, Calendar> tuple = getNextTuple();
+            Tuple<BettingSports, Calendar> tuple = getNextTuple();
             TextingMatchCollector tmc;
             while(tuple != null){
                 tmc = new TextingMatchCollector(tuple.first, tuple.second);
@@ -337,12 +334,12 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
     }
     
     private class TextingMatchCollector{
-        private final Sport exploredSport;
+        private final BettingSports exploredSport;
         private final String exploredSportString;
         private final Calendar date;
         private final DocumentDownloader docDwnl = new DocumentDownloader();
 
-        public TextingMatchCollector(Sport exploredSport, Calendar date) {
+        public TextingMatchCollector(BettingSports exploredSport, Calendar date) {
             this.exploredSport = exploredSport;
             switch (exploredSport){
                 case Baseball:
@@ -681,7 +678,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         private String match;
         private String matchID;
         private String score;
-        private Sport sport;
+        private BettingSports sport;
         private Calendar date = new GregorianCalendar();
 
         @Override
@@ -690,7 +687,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         }
         
         private Match getMatch(){
-            Match m = new Match(sport);
+            Match m = new Match(Sport.getSport(sport));
             MatchProperties prop = new MatchProperties();
             /* league */
             String[] split = league.split("[:]+");

@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package chorke.proprietary.bet.apps;
 
 import java.util.Locale;
@@ -16,7 +13,6 @@ public class StaticConstants {
     
     private StaticConstants(){}
     
-    public static enum Sport {Soccer, Hockey, Basketball, Handball, Volleyball, Baseball, All};
     public static enum Winner {Team1, Team2, Tie};
     
     public static final Locale SVK_LOCALE = new Locale("sk", "SK");

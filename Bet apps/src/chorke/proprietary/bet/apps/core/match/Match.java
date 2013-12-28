@@ -5,9 +5,9 @@
 package chorke.proprietary.bet.apps.core.match;
 
 import chorke.proprietary.bet.apps.core.bets.Bet;
-import chorke.proprietary.bet.apps.StaticConstants.Sport;
 import chorke.proprietary.bet.apps.StaticConstants.Winner;
 import chorke.proprietary.bet.apps.core.match.score.Score;
+import chorke.proprietary.bet.apps.core.match.sports.Sport;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,7 +47,11 @@ public class Match implements Comparable<Match>{
     }
 
     public void setScore(Score score) {
-        this.score = score;
+        if(score == null){
+            this.score = new Score();
+        } else {
+            this.score = score;
+        }
     }
     
     public Score getScore() {
@@ -58,33 +62,12 @@ public class Match implements Comparable<Match>{
         score.addPartialScore(firstParty, secondParty);
     }
     
-    public Winner getWinner(Score sc){
-        if(sc.getScoreFirstParty() > sc.getScoreSecondParty()){
-            return Winner.Team1;
-        } else if(sc.getScoreSecondParty() > sc.getScoreFirstParty()){
-            return Winner.Team2;
-        }
-        return Winner.Tie;
-    }
-    
     public Winner getWinner(){
-        return getWinner(score);
+        return sport.getWinner(score);
     }
     
     public Winner getRegularTimeWinner(){
-        switch (sport){
-            case Soccer:
-            case Handball:
-                return getWinner(score.getScoreAfterPart(2));
-            case Basketball:
-                return getWinner(score.getScoreAfterPart(4));
-            case Hockey:
-                return getWinner(score.getScoreAfterPart(3));
-            case Volleyball:
-            case Baseball:
-            default: 
-                return getWinner();
-        }
+        return sport.getRegularTimeWinner(score);
     }
     
     public void setProperties(MatchProperties properties) {
@@ -124,17 +107,11 @@ public class Match implements Comparable<Match>{
             bets.put(bet.betCompany, c);
         }
     }
-    
-//    public void removeBet(String betCompany, Bet bet){
-//        if(bets.containsKey(betCompany)){
-//            bets.get(betCompany).remove(bet);
-//        }
-//    }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("[").append(sport).append("] ")
+        builder.append("[").append(sport).append(" {").append(id.toString()).append("}] ")
                 .append(properties).append(" ").append(score);
         builder.append(System.lineSeparator());
         for(String com : bets.keySet()){

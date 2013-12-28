@@ -1,8 +1,9 @@
 
 package chorke.proprietary.bet.apps;
 
-import chorke.proprietary.bet.apps.StaticConstants.Sport;
+import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser.BettingSports;
 import chorke.proprietary.bet.apps.core.match.Match;
+import chorke.proprietary.bet.apps.core.match.sports.Sport;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.LinkedList;
@@ -32,15 +33,15 @@ public abstract class MatchInitializer {
     
     @Before
     public void init(){
-        mX_1_1_2014_Hoc = new Match(Sport.Hockey);
-        m1_24_12_2013_Hoc = new Match(Sport.Hockey);
-        m1_26_12_2013_Hoc = new Match(Sport.Hockey);
-        mX_28_12_2013_Soc = new Match(Sport.Soccer);
-        m1_29_11_2013_Soc = new Match(Sport.Soccer);
-        m2_2_1_2014_Soc = new Match(Sport.Soccer);
-        m2_30_11_2013_Soc = new Match(Sport.Soccer);
-        m2_31_12_2013_Hoc = new Match(Sport.Hockey);
-        m1_3_1_2014_Soc = new Match(Sport.Soccer);
+        mX_1_1_2014_Hoc = new Match(Sport.getSport(BettingSports.Hockey));
+        m1_24_12_2013_Hoc = new Match(Sport.getSport(BettingSports.Hockey));
+        m1_26_12_2013_Hoc = new Match(Sport.getSport(BettingSports.Hockey));
+        mX_28_12_2013_Soc = new Match(Sport.getSport(BettingSports.Soccer));
+        m1_29_11_2013_Soc = new Match(Sport.getSport(BettingSports.Soccer));
+        m2_2_1_2014_Soc = new Match(Sport.getSport(BettingSports.Soccer));
+        m2_30_11_2013_Soc = new Match(Sport.getSport(BettingSports.Soccer));
+        m2_31_12_2013_Hoc = new Match(Sport.getSport(BettingSports.Hockey));
+        m1_3_1_2014_Soc = new Match(Sport.getSport(BettingSports.Soccer));
         
         setDates();
         setScores();

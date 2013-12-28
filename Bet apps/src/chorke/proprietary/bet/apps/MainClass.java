@@ -4,7 +4,6 @@
  */
 package chorke.proprietary.bet.apps;
 
-import chorke.proprietary.bet.apps.StaticConstants.Sport;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.core.bets.Bet;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
@@ -16,9 +15,10 @@ import chorke.proprietary.bet.apps.core.bets.BetOverUnder;
 import chorke.proprietary.bet.apps.core.calculators.Yield;
 import chorke.proprietary.bet.apps.core.calculators.Yield1x2;
 import chorke.proprietary.bet.apps.core.httpparsing.BetexplorerComMultithreadParser;
-import chorke.proprietary.bet.apps.core.httpparsing.BetexplorerComParser;
+import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser.BettingSports;
 import chorke.proprietary.bet.apps.core.match.MatchProperties;
 import chorke.proprietary.bet.apps.core.match.score.Score;
+import chorke.proprietary.bet.apps.core.match.sports.Sport;
 import chorke.proprietary.bet.apps.io.BetIOException;
 import chorke.proprietary.bet.apps.io.BetIOManager;
 import chorke.proprietary.bet.apps.io.DBBetIOManager;
@@ -48,12 +48,12 @@ public class MainClass {
         System.out.println(l.contains(new Double(1.01)));
         System.out.println(l.contains(new Double("1.01")));
         
-        Match m = new Match(Sport.All);
+        Match m = new Match(Sport.getSport(BettingSports.Soccer));
         MatchProperties mp = new MatchProperties();
         mp.setDate(new GregorianCalendar(2013, 11, 2, 10, 00, 00));
         MatchProperties mp1 = new MatchProperties();
         mp1.setDate(new GregorianCalendar(2013, 11, 2, 11, 00, 00));
-        Match m1 = new Match(Sport.All);
+        Match m1 = new Match(Sport.getSport(BettingSports.Soccer));
         m.setProperties(mp);
         m1.setProperties(mp1);
         System.out.println(m.compareTo(m1));
@@ -91,6 +91,22 @@ public class MainClass {
         cal.add(Calendar.WEEK_OF_YEAR, 1);
         System.out.println(cal.get(Calendar.YEAR));
         System.out.println(cal.get(Calendar.WEEK_OF_YEAR));
+        
+        int i = 1;
+        System.out.println((long)i);
+        i = 2;
+        System.out.println((long)i);
+        i = 3;
+        System.out.println((long)i);
+        i = 1286414;
+        System.out.println((long)i);
+        
+        
+//        DBBetIOManager man = new DBBetIOManager(StaticConstants.DATA_SOURCE);
+//        for(Match toPrint : man.loadAllMatches()){
+//            System.out.println(toPrint);
+//            System.out.println("/////////////////////////////////////////////////////");
+//        }
 //        Match m = new Match(StaticConstants.Sport.Soccer);
 //        Bet b = new Bet1x2("bet", 0, 0, 0);
 //        Bet b1 = new BetOverUnder("bet", 10, 10, 10, "");
@@ -147,7 +163,9 @@ public class MainClass {
 //        betD.setStartDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 1));
 //        betD.setEndDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 1));
 //        betD.getMatches();
-//        BetexplorerComMultithreadParser parser = new BetexplorerComMultithreadParser(null);
+//        System.out.println("start parsing");
+//        BetexplorerComMultithreadParser parser = new BetexplorerComMultithreadParser(man);
+//        parser.setExploredSport(BettingSports.Hockey);
 //        parser.setStartDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 4));
 //        parser.setEndDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 4));
 //        Collection<Match> matches = parser.getMatches();

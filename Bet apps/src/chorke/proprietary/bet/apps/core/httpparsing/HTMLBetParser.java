@@ -4,7 +4,6 @@
  */
 package chorke.proprietary.bet.apps.core.httpparsing;
 
-import chorke.proprietary.bet.apps.StaticConstants.Sport;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.core.Tuple;
 import java.util.Calendar;
@@ -16,6 +15,8 @@ import java.util.Collection;
  */
 public interface HTMLBetParser {
     
+    public static enum BettingSports {Soccer, Hockey, Basketball, Handball, Volleyball, Baseball, All};
+    
     Collection<Match> getMatchesOfDay(Calendar cal);
     
     Collection<Match> previousDay();
@@ -24,9 +25,9 @@ public interface HTMLBetParser {
     
     Collection<Match> getMatches();
     
-    void setExploredSport(Sport sport);
+    void setExploredSport(BettingSports sport);
     
-    Sport getExploredSport();
+    BettingSports getExploredSport();
     
     Calendar getActualProccessingDate();
     
@@ -38,7 +39,7 @@ public interface HTMLBetParser {
     
     Collection<String> getUndownloadedMatches();
     
-    Collection<Tuple<Sport, Calendar>> getUndownloadedSports();
+    Collection<Tuple<BettingSports, Calendar>> getUndownloadedSports();
     
     Collection<Match> getUnsavedMatches();
 }

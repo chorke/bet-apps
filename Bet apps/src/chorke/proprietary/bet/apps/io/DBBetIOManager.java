@@ -1,10 +1,6 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package chorke.proprietary.bet.apps.io;
 
-import chorke.proprietary.bet.apps.StaticConstants.Sport;
 import chorke.proprietary.bet.apps.core.Tuple;
 import chorke.proprietary.bet.apps.core.bets.Bet;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
@@ -17,6 +13,8 @@ import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.core.match.MatchProperties;
 import chorke.proprietary.bet.apps.core.match.score.PartialScore;
 import chorke.proprietary.bet.apps.core.match.score.Score;
+import chorke.proprietary.bet.apps.core.match.sports.Sport;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -216,80 +214,204 @@ public class DBBetIOManager implements CloneableBetIOManager{
         if(dataSource == null){
             throw new BetIOException("No data source");
         }
-        try(Connection con = dataSource.getConnection()){
-            Collection<Match> matches = getMatches(con);
-            Map<Long, Score> scores = getScores(con);
-            //TODO - stávky a spojiť to do zápasu
-            //TODO - get metódy pre jednotlivé časti zmeniť tak, aby brali ResultSet
-            //budú potom použiteľné pre loadMatches(MatchProperties)
-            throw new UnsupportedOperationException("Unfinished");
+        try(Connection con = dataSource.getConnection();
+                PreparedStatement matchesPS = con.prepareStatement("SELECT * FROM matches");
+                PreparedStatement scoresPS = con.prepareStatement("SELECT * FROM scores");
+                PreparedStatement bet1x2PS = con.prepareStatement("SELECT * FROM bet1x2");
+                PreparedStatement betahPS = con.prepareStatement("SELECT * FROM betah");
+                PreparedStatement betbttsPS = con.prepareStatement("SELECT * FROM betbtts");
+                PreparedStatement betdcPS = con.prepareStatement("SELECT * FROM betdc");
+                PreparedStatement betdnbPS = con.prepareStatement("SELECT * FROM betdnb");
+                PreparedStatement betouPS = con.prepareStatement("SELECT * FROM betou");){
+            return getMatchesFromPreparedStatements(matchesPS, scoresPS, 
+                    bet1x2PS, betahPS, betbttsPS, betdcPS, betdnbPS, betouPS);
         } catch (SQLException ex){
             throw new BetIOException("Error while finding all matches.", ex);
         }
     }
-
-    private Map<Long, Score> getScores(Connection con) throws SQLException{
-        try(PreparedStatement ps = con.prepareStatement("SELECT * FROM scores")){
-            HashMap<Long, Score> out = new HashMap<>();
-            HashMap<Tuple<Integer, Integer>, PartialScore> handles = new HashMap<>();
-            ResultSet scores = ps.executeQuery();
-            Score score;
-            while(scores.next()){
-                if(scores.getInt("part") != -1){
-                    handles.put(new Tuple<>(scores.getInt("matchid"), scores.getInt("part")),
-                            new PartialScore(scores.getInt("team2"), scores.getInt("part")));
+    
+    private Collection<Match> getMatchesFromPreparedStatements(
+            PreparedStatement matchesPS,
+            PreparedStatement scoresPS,
+            PreparedStatement bet1x2PS,
+            PreparedStatement betahPS,
+            PreparedStatement betbttsPS,
+            PreparedStatement betdcPS,
+            PreparedStatement betdnbPS,
+            PreparedStatement betouPS) throws SQLException {
+        Map<Long, Match> matches = getMatches(matchesPS.executeQuery());
+        Map<Long, Score> scores = getScores(scoresPS.executeQuery());
+        Map<Long, Collection<Bet>> bets = new HashMap<>();
+        getBet1x2(bet1x2PS.executeQuery(), bets);
+        getBetAH(betahPS.executeQuery(), bets);
+        getBetBTTS(betbttsPS.executeQuery(), bets);
+        getBetDC(betdcPS.executeQuery(), bets);
+        getBetDNB(betdnbPS.executeQuery(), bets);
+        getBetOU(betouPS.executeQuery(), bets);
+        return merge(matches, scores, bets);
+    }
+    
+    private Collection<Match> merge(Map<Long, Match> matches, 
+            Map<Long, Score> scores, Map<Long, Collection<Bet>> bets){
+        Collection<Match> merged = new LinkedList<>();
+        Match match;
+        Iterator<Long> iter = matches.keySet().iterator();
+        Long l;
+        while(iter.hasNext()){
+            l = iter.next();
+            match = matches.get(l);
+            match.setScore(scores.get(l));
+            if(bets.containsKey(l)){
+                for(Bet b : bets.get(l)){
+                    match.addBet(b);
                 }
             }
-            for(Tuple<Integer, Integer> tp : handles.keySet()){
-                if(tp.second.equals(1)){
-                    score = new Score();
-                    score.addPartialScore(handles.get(tp));
-                    out.put(new Long((long)tp.first), score);
-                    handles.remove(tp);
-                }
-            }
-            int part = 2;
-            while(!handles.isEmpty()){
-                Tuple<Integer, Integer> tp;
-                Iterator<Tuple<Integer, Integer>> iter = handles.keySet().iterator();
-                while(iter.hasNext()){
-                    tp = iter.next();
-                    if(tp.second.equals(part)){
-                        out.get(new Long((long)tp.first)).addPartialScore(handles.get(tp));
-                        iter.remove();
-                    }
-                }
-                part++;
-            }
-            return out;
-        } catch (SQLException ex){
-            throw new SQLException("Error while loading scores.", ex);
+            merged.add(match);
+            iter.remove();
+            scores.remove(l);
+            bets.remove(l);
+        }
+        return merged;
+    }
+    
+    private void putBetToStorage(Bet bet, Map<Long, Collection<Bet>> storage, Long idx){
+        Collection<Bet> betsCollection;
+        if(storage.containsKey(idx)){
+            betsCollection = storage.get(idx);
+        } else {
+            betsCollection = new LinkedList<>();
+            storage.put(idx, betsCollection);
+        }
+        betsCollection.add(bet);
+    }
+    
+    private void getBet1x2(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+        while(bet.next()){
+            putBetToStorage(
+                    new Bet1x2(bet.getString("betcompany"),
+                        new BigDecimal(bet.getString("bet1")), 
+                        new BigDecimal(bet.getString("betx")),
+                        new BigDecimal(bet.getString("bet2"))),
+                    storage, 
+                    bet.getLong("matchid"));
         }
     }
     
-    private Collection<Match> getMatches(Connection con) throws SQLException{
-        try(PreparedStatement ps = con.prepareCall("SELECT * FROM matches")){
-            ResultSet matches = ps.executeQuery();
-            Collection<Match> out = new LinkedList<>();
-            Match match;
-            MatchProperties prop;
-            Calendar cal;
-            while(matches.next()){
-                match = new Match(Sport.valueOf(matches.getString("sport")));
-                match.setId(matches.getLong("id"));
-                prop = new MatchProperties();
-                prop.setCountry(matches.getString("country"));
-                prop.setLeague(matches.getString("league"));
-                cal = new GregorianCalendar();
-                cal.setTimeInMillis(matches.getTimestamp("matchdate").getTime());
-                prop.setDate(cal);
-                match.setProperties(prop);
-                out.add(match);
-            }
-            return out;
-        } catch (SQLException ex){
-            throw new SQLException("Error while getting matches", ex);
+    private void getBetAH(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+        while(bet.next()){
+            putBetToStorage(
+                    new BetAsianHandicap(bet.getString("betcompany"),
+                        new BigDecimal(bet.getString("bet1")), 
+                        new BigDecimal(bet.getString("bet2")),
+                        new BigDecimal(bet.getString("handicap")),
+                        bet.getString("description")),
+                    storage, 
+                    bet.getLong("matchid"));
         }
+    }
+    
+    private void getBetBTTS(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+        while(bet.next()){
+            putBetToStorage(
+                    new BetBothTeamsToScore(bet.getString("betcompany"),
+                        new BigDecimal(bet.getString("yesbet")), 
+                        new BigDecimal(bet.getString("nobet"))),
+                    storage, 
+                    bet.getLong("matchid"));
+        }
+    }
+    
+    private void getBetDC(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+        while(bet.next()){
+            putBetToStorage(
+                    new BetDoubleChance(bet.getString("betcompany"),
+                        new BigDecimal(bet.getString("bet1x")), 
+                        new BigDecimal(bet.getString("bet12")),
+                        new BigDecimal(bet.getString("bet2x"))),
+                    storage, 
+                    bet.getLong("matchid"));
+        }
+    }
+    
+    private void getBetDNB(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+        while(bet.next()){
+            putBetToStorage(
+                    new BetDrawNoBet(bet.getString("betcompany"),
+                        new BigDecimal(bet.getString("bet1")), 
+                        new BigDecimal(bet.getString("bet2"))),
+                    storage, 
+                    bet.getLong("matchid"));
+        }
+    }
+    
+    private void getBetOU(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+        while(bet.next()){
+            putBetToStorage(
+                    new BetOverUnder(bet.getString("betcompany"),
+                        new BigDecimal(bet.getString("total")), 
+                        new BigDecimal(bet.getString("overbet")),
+                        new BigDecimal(bet.getString("underbet")),
+                        bet.getString("description")),
+                    storage, 
+                    bet.getLong("matchid"));
+        }
+    }
+    
+    private Map<Long, Score> getScores(ResultSet scores) throws SQLException{
+        HashMap<Long, Score> out = new HashMap<>();
+        HashMap<Tuple<Integer, Integer>, PartialScore> handles = new HashMap<>();
+        Score score;
+        while(scores.next()){
+            if(scores.getInt("part") != -1){
+                handles.put(new Tuple<>(scores.getInt("matchid"), scores.getInt("part")),
+                        new PartialScore(scores.getInt("team1"), scores.getInt("team2")));
+            }
+        }
+        int i = 0;
+        Iterator<Tuple<Integer, Integer>> iter = handles.keySet().iterator();
+        Tuple<Integer, Integer> tp;
+        while(iter.hasNext()){
+            tp = iter.next();
+            if(tp.second.equals(1)){
+                score = new Score();
+                score.addPartialScore(handles.get(tp));
+                out.put(new Long((long)tp.first), score);
+                iter.remove();
+            }
+        }
+        int part = 2;
+        while(!handles.isEmpty()){
+            iter = handles.keySet().iterator();
+            while(iter.hasNext()){
+                tp = iter.next();
+                if(tp.second.equals(part)){
+                    out.get(new Long((long)tp.first)).addPartialScore(handles.get(tp));
+                    iter.remove();
+                }
+            }
+            part++;
+        }
+        return out;
+    }
+    
+    private Map<Long, Match> getMatches(ResultSet matches) throws SQLException{
+        Map<Long, Match> out = new HashMap<>();
+        Match match;
+        MatchProperties prop;
+        Calendar cal;
+        while(matches.next()){
+            match = new Match(Sport.getSport(matches.getString("sport")));
+            match.setId(matches.getLong("id"));
+            prop = new MatchProperties();
+            prop.setCountry(matches.getString("country"));
+            prop.setLeague(matches.getString("league"));
+            cal = new GregorianCalendar();
+            cal.setTimeInMillis(matches.getTimestamp("matchdate").getTime());
+            prop.setDate(cal);
+            match.setProperties(prop);
+            out.put(match.getId(), match);
+        }
+        return out;
     }
     
     

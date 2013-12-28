@@ -8,7 +8,7 @@ package chorke.proprietary.bet.apps.io;
  *
  * @author Chorke
  */
-public class BetIOException extends Exception {
+public class BetIOException extends RuntimeException {
 
     public BetIOException() {
     }

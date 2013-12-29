@@ -1,18 +1,18 @@
 
 package chorke.proprietary.bet.apps;
 
+import chorke.proprietary.bet.apps.io.BetIOManager;
+import chorke.proprietary.bet.apps.io.DBBetIOManager;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Properties;
-import javax.sql.DataSource;
+import org.apache.derby.jdbc.EmbeddedConnectionPoolDataSource40;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.BeforeClass;
-import org.postgresql.ds.PGPoolingDataSource;
 
 /**
  *
@@ -20,13 +20,19 @@ import org.postgresql.ds.PGPoolingDataSource;
  */
 public class BetIOManagerTest {
     
-    private static Connection con;
+    private static Connection connection;
+    private static BetIOManager testingManager;
     
     @BeforeClass
     public static void initClass(){
         try{
-            con = DriverManager.getConnection("jdbc:derby:memory:testDB;create=true");
-            Statement st = con.createStatement();
+            connection = DriverManager.getConnection("jdbc:derby:memory:testDB;create=true");
+            
+            EmbeddedConnectionPoolDataSource40 ds = new EmbeddedConnectionPoolDataSource40();
+            ds.setDatabaseName("memory:testDB");
+            testingManager = new DBBetIOManager(ds);
+            
+            Statement st = connection.createStatement();
             st.addBatch("CREATE TABLE matches(" +
                 "id integer GENERATED ALWAYS AS IDENTITY," +
                 "sport varchar(20)," +
@@ -86,13 +92,13 @@ public class BetIOManagerTest {
             st.close();
         } catch (SQLException ex){
             System.out.println("BEFORE CLASS: " + ex);
-            con = null;
+            connection = null;
         }
     }
     
     @AfterClass
     public static void tearDownClass() throws SQLException{
-        try(Statement st = con.createStatement()){
+        try(Statement st = connection.createStatement()){
             st.addBatch("DROP TABLE matches");
             st.addBatch("DROP TABLE scores");
             st.addBatch("DROP TABLE bet1x2");
@@ -102,8 +108,8 @@ public class BetIOManagerTest {
             st.addBatch("DROP TABLE betdnb");
             st.addBatch("DROP TABLE betou");
             st.executeBatch();
-            con.close();
-            con = null;
+            connection.close();
+            connection = null;
         } catch (SQLException ex){
             System.out.println("AFTER CLASS: " + ex);
         }
@@ -111,7 +117,7 @@ public class BetIOManagerTest {
     
     @After
     public void tearDownTest(){
-        try(Statement st = con.createStatement()){
+        try(Statement st = connection.createStatement()){
             st.addBatch("DELETE FROM matches");
             st.addBatch("DELETE FROM scores");
             st.addBatch("DELETE FROM bet1x2");

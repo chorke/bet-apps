@@ -7,6 +7,7 @@ import org.postgresql.jdbc2.optional.PoolingDataSource;
 
 /**
  *
+ * Statické konštanty, enumerácie a iniciálne hodnoty pre aplikáciu.
  * @author Chorke
  */
 public class StaticConstants {

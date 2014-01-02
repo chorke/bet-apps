@@ -9,24 +9,31 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 /**
- *
+ * Stiahne document z webu.
  * @author Chorke
  */
 public class DocumentDownloader {
 
+    /**
+     * Aktuálne 5
+     */
     public static final int CONNECTION_TRIES = 5;
     
+    /**
+     * Pokúsi sa stiahnuť web stránku. Počet pokusov je {@link #CONNECTION_TRIES}.
+     * Time out je 5 000. V prípade núspechu vracia null;
+     * @param url
+     * @return 
+     */
     public Document getDocument(String url){
-        Document doc = null;
         for(int i = 1; i <= CONNECTION_TRIES; i++){
             try{
-                doc = Jsoup.connect(url).timeout(5_000).get();
-                return doc;
+                return Jsoup.connect(url).timeout(5_000).get();
             } catch (IOException ex){
                 System.err.println("Time out [" + i + "] by connecting: " + url);
                 System.err.println(ex);
             }
         }
-        return doc;
+        return null;
     }
 }

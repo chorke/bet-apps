@@ -33,6 +33,10 @@ import javax.sql.DataSource;
 
 /**
  *
+ * Implementácia {@link BetIOManager} pre ukladanie stávok. Iniciálne je implementácia
+ * robená pre PostgreSQL databázu. Obsahuje však iba jednoduché SELECT, INSERT, DELETE
+ * SQL príkazy, ktoré by mali podporovať všetky databázi.
+ * 
  * @author Chorke
  */
 public class DBBetIOManager implements CloneableBetIOManager{
@@ -126,6 +130,14 @@ public class DBBetIOManager implements CloneableBetIOManager{
         
     }
     
+    /**
+     * Vytvorí {@link PreparedStatement} pre {@link Bet1x2} stávku.
+     * @param con
+     * @param bet
+     * @param matchID
+     * @return
+     * @throws SQLException 
+     */
     private PreparedStatement prepareStatementBet1x2(Connection con, Bet1x2 bet, Long matchID)
             throws SQLException{
         PreparedStatement ps = con.prepareStatement("INSERT INTO bet1x2 "
@@ -139,6 +151,14 @@ public class DBBetIOManager implements CloneableBetIOManager{
         return ps;
     }
     
+    /**
+     * Vytvorí {@link PreparedStatement} pre {@link BetAsianHandicap} stávku.
+     * @param con
+     * @param bet
+     * @param matchID
+     * @return
+     * @throws SQLException 
+     */
     private PreparedStatement prepareStatementBetAsianHandicap(
             Connection con, BetAsianHandicap bet, Long matchID)
             throws SQLException{
@@ -154,6 +174,14 @@ public class DBBetIOManager implements CloneableBetIOManager{
         return ps; 
     }
     
+    /**
+     * Vytvorí {@link PreparedStatement} pre {@link BetBothTeamsToScore} stávku.
+     * @param con
+     * @param bet
+     * @param matchID
+     * @return
+     * @throws SQLException 
+     */
     private PreparedStatement prepareStatementBetBothTeamsToScore(
             Connection con, BetBothTeamsToScore bet, Long matchID)
             throws SQLException{
@@ -167,6 +195,14 @@ public class DBBetIOManager implements CloneableBetIOManager{
         return ps;
     }
     
+    /**
+     * Vytvorí {@link PreparedStatement} pre {@link BetDoubleChance} stávku.
+     * @param con
+     * @param bet
+     * @param matchID
+     * @return
+     * @throws SQLException 
+     */
     private PreparedStatement prepareStatementBetDoubleChance(
             Connection con, BetDoubleChance bet, Long matchID)
             throws SQLException{
@@ -181,6 +217,14 @@ public class DBBetIOManager implements CloneableBetIOManager{
         return ps;
     }
     
+    /**
+     * Vytvorí {@link PreparedStatement} pre {@link BetDrawNoBet} stávku.
+     * @param con
+     * @param bet
+     * @param matchID
+     * @return
+     * @throws SQLException 
+     */
     private PreparedStatement prepareStatementBetDrawNoBet(
             Connection con, BetDrawNoBet bet, Long matchID)
             throws SQLException{
@@ -194,6 +238,14 @@ public class DBBetIOManager implements CloneableBetIOManager{
         return ps;
     }
     
+    /**
+     * Vytvorí {@link PreparedStatement} pre {@link BetOverUnder} stávku.
+     * @param con
+     * @param bet
+     * @param matchID
+     * @return
+     * @throws SQLException 
+     */
     private PreparedStatement prepareStatementBetOverUnder(
             Connection con, BetOverUnder bet, Long matchID)
             throws SQLException{
@@ -230,6 +282,20 @@ public class DBBetIOManager implements CloneableBetIOManager{
         }
     }
     
+    /**
+     * Obecná metóda, ktorá vráti zápasy pre vhodne pripravené {@link PreparedStatement}.
+     * Load metódam preto stačí vytvoriť príslušné príkazy.
+     * @param matchesPS
+     * @param scoresPS
+     * @param bet1x2PS
+     * @param betahPS
+     * @param betbttsPS
+     * @param betdcPS
+     * @param betdnbPS
+     * @param betouPS
+     * @return
+     * @throws SQLException 
+     */
     private Collection<Match> getMatchesFromPreparedStatements(
             PreparedStatement matchesPS,
             PreparedStatement scoresPS,
@@ -243,14 +309,22 @@ public class DBBetIOManager implements CloneableBetIOManager{
         Map<Long, Score> scores = getScores(scoresPS.executeQuery());
         Map<Long, Collection<Bet>> bets = new HashMap<>();
         getBet1x2(bet1x2PS.executeQuery(), bets);
-        getBetAH(betahPS.executeQuery(), bets);
-        getBetBTTS(betbttsPS.executeQuery(), bets);
-        getBetDC(betdcPS.executeQuery(), bets);
-        getBetDNB(betdnbPS.executeQuery(), bets);
-        getBetOU(betouPS.executeQuery(), bets);
+        getBetAsianHandicap(betahPS.executeQuery(), bets);
+        getBetBothTeamsToScore(betbttsPS.executeQuery(), bets);
+        getBetDoubleChance(betdcPS.executeQuery(), bets);
+        getBetDrawNoBet(betdnbPS.executeQuery(), bets);
+        getBetOverUnder(betouPS.executeQuery(), bets);
         return merge(matches, scores, bets);
     }
     
+    /**
+     * Priradí skóre a stávky ku zápasom. Predané mapy sú vo forme
+     * {@code <idZápasu, zápas/skóre/stávky>}
+     * @param matches
+     * @param scores
+     * @param bets
+     * @return 
+     */
     private Collection<Match> merge(Map<Long, Match> matches, 
             Map<Long, Score> scores, Map<Long, Collection<Bet>> bets){
         Collection<Match> merged = new LinkedList<>();
@@ -274,6 +348,14 @@ public class DBBetIOManager implements CloneableBetIOManager{
         return merged;
     }
     
+    /**
+     * Pomocná metóda pre ukladanie stávok do mapy.
+     * Obecné zásady sú, že ak už mapa obsahuje kľúč, je pridaná stávka ku 
+     * príslušnej kolekcii, inak je vytvorená nová stávka a kolekcia.
+     * @param bet
+     * @param storage
+     * @param idx 
+     */
     private void putBetToStorage(Bet bet, Map<Long, Collection<Bet>> storage, Long idx){
         Collection<Bet> betsCollection;
         if(storage.containsKey(idx)){
@@ -285,6 +367,14 @@ public class DBBetIOManager implements CloneableBetIOManager{
         betsCollection.add(bet);
     }
     
+    /**
+     * Z {@link ResultSet} {@code bet} získa všetky stávky {@link Bet1x2}
+     * a uloží do {@code storage}. {@code bet} nie je nijako kontrolovaná
+     * a mala by obsahovať iba korektná stávky {@link Bet1x2}.
+     * @param bet
+     * @param storage
+     * @throws SQLException 
+     */
     private void getBet1x2(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
         while(bet.next()){
             putBetToStorage(
@@ -297,7 +387,15 @@ public class DBBetIOManager implements CloneableBetIOManager{
         }
     }
     
-    private void getBetAH(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+    /**
+     * Z {@link ResultSet} {@code bet} získa všetky stávky {@link BetAsianHandicap}
+     * a uloží do {@code storage}. {@code bet} nie je nijako kontrolovaná
+     * a mala by obsahovať iba korektná stávky {@link BetAsianHandicap}.
+     * @param bet
+     * @param storage
+     * @throws SQLException 
+     */
+    private void getBetAsianHandicap(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
         while(bet.next()){
             putBetToStorage(
                     new BetAsianHandicap(bet.getString("betcompany"),
@@ -310,7 +408,15 @@ public class DBBetIOManager implements CloneableBetIOManager{
         }
     }
     
-    private void getBetBTTS(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+    /**
+     * Z {@link ResultSet} {@code bet} získa všetky stávky {@link BetBothTeamsToScore}
+     * a uloží do {@code storage}. {@code bet} nie je nijako kontrolovaná
+     * a mala by obsahovať iba korektná stávky {@link BetBothTeamsToScore}.
+     * @param bet
+     * @param storage
+     * @throws SQLException 
+     */
+    private void getBetBothTeamsToScore(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
         while(bet.next()){
             putBetToStorage(
                     new BetBothTeamsToScore(bet.getString("betcompany"),
@@ -321,7 +427,15 @@ public class DBBetIOManager implements CloneableBetIOManager{
         }
     }
     
-    private void getBetDC(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+    /**
+     * Z {@link ResultSet} {@code bet} získa všetky stávky {@link BetDoubleChance}
+     * a uloží do {@code storage}. {@code bet} nie je nijako kontrolovaná
+     * a mala by obsahovať iba korektná stávky {@link BetDoubleChance}.
+     * @param bet
+     * @param storage
+     * @throws SQLException 
+     */
+    private void getBetDoubleChance(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
         while(bet.next()){
             putBetToStorage(
                     new BetDoubleChance(bet.getString("betcompany"),
@@ -333,7 +447,15 @@ public class DBBetIOManager implements CloneableBetIOManager{
         }
     }
     
-    private void getBetDNB(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+    /**
+     * Z {@link ResultSet} {@code bet} získa všetky stávky {@link BetDrawNoBet}
+     * a uloží do {@code storage}. {@code bet} nie je nijako kontrolovaná
+     * a mala by obsahovať iba korektná stávky {@link BetDrawNoBet}.
+     * @param bet
+     * @param storage
+     * @throws SQLException 
+     */
+    private void getBetDrawNoBet(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
         while(bet.next()){
             putBetToStorage(
                     new BetDrawNoBet(bet.getString("betcompany"),
@@ -344,7 +466,15 @@ public class DBBetIOManager implements CloneableBetIOManager{
         }
     }
     
-    private void getBetOU(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+    /**
+     * Z {@link ResultSet} {@code bet} získa všetky stávky {@link BetOverUnder}
+     * a uloží do {@code storage}. {@code bet} nie je nijako kontrolovaná
+     * a mala by obsahovať iba korektná stávky {@link BetOverUnder}.
+     * @param bet
+     * @param storage
+     * @throws SQLException 
+     */
+    private void getBetOverUnder(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
         while(bet.next()){
             putBetToStorage(
                     new BetOverUnder(bet.getString("betcompany"),
@@ -357,6 +487,13 @@ public class DBBetIOManager implements CloneableBetIOManager{
         }
     }
     
+    /**
+     * Vráti skóre z {@link ResultSet} {@code scores}. {@code scores} nie je 
+     * nijako kontrolovaná a mala by obsahovať iba korektné {@link Score} záznamy.
+     * @param scores
+     * @return
+     * @throws SQLException 
+     */
     private Map<Long, Score> getScores(ResultSet scores) throws SQLException{
         HashMap<Long, Score> out = new HashMap<>();
         HashMap<Tuple<Integer, Integer>, PartialScore> handles = new HashMap<>();
@@ -367,7 +504,6 @@ public class DBBetIOManager implements CloneableBetIOManager{
                         new PartialScore(scores.getInt("team1"), scores.getInt("team2")));
             }
         }
-        int i = 0;
         Iterator<Tuple<Integer, Integer>> iter = handles.keySet().iterator();
         Tuple<Integer, Integer> tp;
         while(iter.hasNext()){
@@ -394,6 +530,13 @@ public class DBBetIOManager implements CloneableBetIOManager{
         return out;
     }
     
+    /**
+     * Vráti zápasy z {@link ResultSet} {@code matches}. {@code matches} nie je 
+     * nijako kontrolovaná a mala by obsahovať iba korektné {@link Match} záznamy.
+     * @param scores
+     * @return
+     * @throws SQLException 
+     */
     private Map<Long, Match> getMatches(ResultSet matches) throws SQLException{
         Map<Long, Match> out = new HashMap<>();
         Match match;
@@ -416,7 +559,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
     
     
     @Override
-    public Collection<Match> loadMatches(MatchProperties properties) throws BetIOException {
+    public Collection<Match> loadMatches(LoadProperties properties) throws BetIOException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

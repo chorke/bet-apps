@@ -24,6 +24,7 @@ public class BetIOManagerTest {
     private static BetIOManager testingManager;
     
     @BeforeClass
+    @SuppressWarnings("ConvertToTryWithResources")
     public static void initClass(){
         try{
             connection = DriverManager.getConnection("jdbc:derby:memory:testDB;create=true");

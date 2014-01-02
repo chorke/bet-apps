@@ -63,7 +63,6 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
     private Calendar endDate;
     private Calendar actualProcessingDate;
     private BettingSports sport = BettingSports.All;
-//    private String exploredSportString = SOCCER;
     private List<Tuple<BettingSports, Calendar>> toDownload;
     private List<TextingMatch> toParse;
     private ListIterator<Tuple<BettingSports, Calendar>> toDownloadIterator;
@@ -141,6 +140,12 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         return matches;
     }
 
+    /**
+     * Vytovrí klon {@link CloneableBetIOManager}, aby každé vlákno mohlo 
+     * používať vlastného manažéra.
+     * @return 
+     */
+   
     private CloneableBetIOManager getCloneOfIOManager(){
         if(IOManager == null){
             return null;
@@ -190,7 +195,14 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         return matches;
     }
     
-    private Tuple<BettingSports, Calendar> getNextTuple(){
+    /**
+     * Vráti ďalší šport a deň, ktorý sa má stiahnuť. Metóda je vláknovo bezpečná,
+     * môže byť teda volaná viacerými {@link TMCThread}
+     * Vracia {@code null} ak nie je ďalší šport a deň.
+     * @return 
+     * @see TMCThread
+     */
+    private Tuple<BettingSports, Calendar> getNextSportForDownload(){
         synchronized(LOCK_FOR_TO_DOWNLOAD){
             if(toDownloadIterator.hasNext()){
                 return toDownloadIterator.next();
@@ -200,6 +212,13 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         }
     }
     
+    /**
+     * Vráti ďalší zápas, ktorý sa má stiahnuť. Metóda je vláknovo bezpečná,
+     * môže byť teda volaná viacerými {@link MFTMCThread}.
+     * Vracia {@code null} ak nie je ďalší zápas.
+     * @return 
+     * @see MFTMCThread
+     */
     private TextingMatch getNextTextingMatch(){
         synchronized(LOCK_FOR_TO_PARSE){
             if(toParseIterator.hasNext()){
@@ -210,6 +229,11 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         }
     }
     
+    /**
+     * Pripraví potrebné športy a dátumy na stiahnutie podľa zvoleného
+     * športu a začiatočného a koncového dátumu
+     * @return 
+     */
     private List<Tuple<BettingSports, Calendar>> prepareSportsAndDates(){
         List<Tuple<BettingSports, Calendar>> out = new LinkedList<>();
         Calendar c;
@@ -270,10 +294,18 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         endDate.set(Calendar.MILLISECOND, 1);
     }
 
-//    private static synchronized Connection getConnection(String url){
-//        return Jsoup.connect(url).timeout(5_000);
-//    }
-    
+    /**
+     * TMC - Texting Match Collector. Vlákno pre získavanie {@link TextingMatch}
+     * zo stránky. Podľa zvoleného športu a dňa stiahne a pripravý všetky zápasy.
+     * Pre získanie {@link TextingMatch} používa {@link TextingMatchCollector}.
+     * Šport a deň získava metódou {@link #getNextSportForDownload()} pokiaľ 
+     * táto metóda nevráti null. Jej vykonávanie potom končí a výsledky sú 
+     * dostupné v premennej {@code matches}.
+     * 
+     * @see TextingMatch
+     * @see TextingMatchCollector
+     * @see #getNextSportForDownload()
+     */
     private class TMCThread implements Runnable{
 
         private List<TextingMatch> matches;
@@ -283,18 +315,31 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         public void run() {
             done = false;
             matches = new LinkedList<>();
-            Tuple<BettingSports, Calendar> tuple = getNextTuple();
+            Tuple<BettingSports, Calendar> tuple = getNextSportForDownload();
             TextingMatchCollector tmc;
             while(tuple != null){
                 tmc = new TextingMatchCollector(tuple.first, tuple.second);
                 matches.addAll(tmc.getMatchesList());
-                tuple = getNextTuple();
+                tuple = getNextSportForDownload();
             }
             done = true;
             System.err.println("Done TMC");
         }
     }
     
+    /**
+     * MFTMC - Match From Texting Match Collector. Vlákno pre získanie zápasov
+     * z {@link TextingMatch}. Stihane všetky infomácie o zápase zo stránky.
+     * Pre získanie ďalšieho {@link TextingMatch} používa metódu {@link #getNextTextingMatch()}.
+     * Ak metóda vráti {@code null}, metóda končí a výsledok je prístupný
+     * v premennej {@code matches}. Pre získanie zápasu používa triedu
+     * {@link MatchFromTextingMatchCollector}.
+     * 
+     * @see MatchFromTextingMatchCollector
+     * @see TextingMatch
+     * @see #getNextTextingMatch()
+     * 
+     */
     private class MFTMCThread implements Runnable{
 
         private List<Match> matches;
@@ -333,6 +378,9 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         
     }
     
+    /**
+     * Stiahne stránku so zvoleným dňom a zápasom a vytvorí z nich {@link TextingMatch}.
+     */
     private class TextingMatchCollector{
         private final BettingSports exploredSport;
         private final String exploredSportString;
@@ -363,6 +411,11 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             this.date = date;
         }
 
+        /**
+         * Stiahne a vráti všetky zápasy športu vo zvolenom dni vo forme 
+         * {@link TextingMatch}.
+         * @return 
+         */
         private List<TextingMatch> getMatchesList(){
             List<TextingMatch> out = new LinkedList<>();
             Document document = docDwnl.getDocument(getURLForMatchesPageByDate());
@@ -373,7 +426,6 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             String href;
             if(document.select("div.nr-nodata-info").isEmpty()){
                 Elements tableElements = document.getElementsByTag("table");
-    //            Document doc;
                 for(Element table : tableElements){
                     Elements rtitle = table.select("tr.rtitle");
                     if(!rtitle.isEmpty()){
@@ -405,6 +457,10 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             return out;
         }
         
+        /**
+         * Pripraví url adresu pre zvolený deň a šport.
+         * @return 
+         */
         private String getURLForMatchesPageByDate(){
             return STRING_URL 
                     + RESULTS 
@@ -412,6 +468,10 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
                     + exploredDateURLString();
         }
         
+        /**
+         * Pripraví argument v url adrese zodpovedajúci zvolenému dátumu.
+         * @return 
+         */
         private String exploredDateURLString(){
             StringBuilder builder = new StringBuilder(26);
             builder.append("?year=")
@@ -423,6 +483,10 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             return builder.toString();
         }
         
+        /**
+         * Pripraví argument dátumu vo forme používanej na stránke v tabuľke.
+         * @return 
+         */
         private String exploredDateTableAttributeString(){
             StringBuilder builder = new StringBuilder(27);
             builder.append(date.get(Calendar.DAY_OF_MONTH))
@@ -433,48 +497,30 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             return builder.toString();
         }
         
+        /**
+         * Vytvorí url odkaz pre konkrétny zápas.
+         * @param matchURL
+         * @return 
+         */
         private String getURLForMatchScore(String matchURL){
             return STRING_URL + matchURL;
         }
         
+        /**
+         * Získa id zápasu na stránke z odkazu v texte.
+         * @param url
+         * @return 
+         */
         private String getMatchID(String url){
             int startIdx = url.indexOf("matchid") + 8;
             return url.substring(startIdx, startIdx + 8);
         }
         
-//        private Document getDocument(String url){
-//            /* vyhnutie sa NullPointerException */
-//            Document doc = new Document(url);
-//            for(int i = 1; i <= CONNECTION_TRIES; i++){
-//                try{
-//                    doc = getConnection(url).get();
-//                    return doc;
-//                } catch (IOException ex){
-//                    System.err.println("Time out [" + i + "] by connecting: " + url);
-//                    System.err.println(ex);
-//                }
-//            }
-//            return doc;
-//        }
     }
     
-//    private class DocumentDownloader {
-//        
-//        private Document getDocument(String url){
-//            Document doc = null;
-//            for(int i = 1; i <= CONNECTION_TRIES; i++){
-//                try{
-//                    doc = getConnection(url).get();
-//                    return doc;
-//                } catch (IOException ex){
-//                    System.err.println("Time out [" + i + "] by connecting: " + url);
-//                    System.err.println(ex);
-//                }
-//            }
-//            return doc;
-//        }
-//    }
-    
+    /**
+     * Z príslušného {@link TextingMatch} vytvorí {@link Match}. 
+     */
     private class MatchFromTextingMatchCollector{
         private final TextingMatch textingMatch;
         private final DocumentDownloader docDwnl = new DocumentDownloader();
@@ -483,6 +529,10 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             this.textingMatch = textingMatch;
         }
         
+        /**
+         * Stiahne detail zápasu a vytovrí z neho {@link Match}.
+         * @return 
+         */
         private Match parseMatchDetails(){
             Document doc;
             Elements tableRows;
@@ -499,32 +549,28 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
                     }
                 }
             }
-    //        System.out.println(match);
             return outputMatch;
         }
         
+        /**
+         * Pripraví adresu pre stiahnutie detailu zápasu podľa id zápasu a typu stávky.
+         * 
+         * @param matchID
+         * @param betType
+         * @return 
+         */
         private String getURLForMatchDetails(String matchID, String betType){
             return STRING_URL 
                     + "/gres/ajax-matchodds.php/?t=d&e="
-//                    + "ribex9H5&b=" + betType;
                     + matchID + "&b=" + betType;
         }
         
-//        private Document getDocument(String url){
-//            /* vyhnutie sa NullPointerException */
-//            Document doc = new Document(url);
-//            for(int i = 1; i <= CONNECTION_TRIES; i++){
-//                try{
-//                    doc = getConnection(url).get();
-//                    return doc;
-//                } catch (IOException ex){
-//                    System.err.println("Time out [" + i + "] by connecting: " + url);
-//                    System.err.println(ex);
-//                }
-//            }
-//            return doc;
-//        }
-        
+        /**
+         * Spracuje tabuľku stávok a pridá ich ku {@code match}
+         * @param tableRows
+         * @param match
+         * @param betType 
+         */
         private void processBetTable(Elements tableRows, Match match, String betType){
             switch (betType){
                 case BET_1X2:
@@ -547,6 +593,11 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             }
         }
         
+        /**
+         * Spracuje tabuľku stávok 1x2
+         * @param tableRows
+         * @param match 
+         */
         private void process1x2Bet(Elements tableRows, Match match){
             String name;
             Elements bets;
@@ -559,7 +610,12 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
                         parseNumber(bets.get(2).attr("data-odd"))));
             }
         }
-
+        
+        /**
+         * Spracuje tabuľku stávok Over Under
+         * @param tableRows
+         * @param match 
+         */
         private void processOverUnderBet(Elements tableRows, Match match){
             String name;
             Elements bets;
@@ -582,12 +638,16 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
                 }
             }
         }
-
+        
+        /**
+         * Spracuje tabuľku stávok Asian Handicap
+         * @param tableRows
+         * @param match 
+         */
         private void processAsianHandicapBet(Elements tableRows, Match match){
             String name;
             Elements bets;
             String[] handicaps;
-//            System.out.println(match.getProperties().getLeague() + " - in");
             for(Element row : tableRows){
                 name = row.select("th").first().text();
                 bets = row.select("td");
@@ -623,9 +683,13 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
                     }
                 }
             }
-//            System.out.println(match.getProperties().getLeague() + " - out");
         }
-
+        
+        /**
+         * Spracuje tabuľku stávok Draw No Bet
+         * @param tableRows
+         * @param match 
+         */
         private void processDrawNoBetBet(Elements tableRows, Match match){
             String name;
             Elements bets;
@@ -637,7 +701,12 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
                         parseNumber(bets.get(1).attr("data-odd"))));
             }
         }
-
+        
+        /**
+         * Spracuje tabuľku stávok Double Chance
+         * @param tableRows
+         * @param match 
+         */
         private void processDoubleChanceBet(Elements tableRows, Match match){
             String name;
             Elements bets;
@@ -650,7 +719,12 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
                         parseNumber(bets.get(2).attr("data-odd"))));
             }
         }
-
+        
+        /**
+         * Spracuje tabuľku stávok Both Teams To Score
+         * @param tableRows
+         * @param match 
+         */
         private void processBothTeamsToScoreBet(Elements tableRows, Match match){
             String name;
             Elements bets;
@@ -663,16 +737,25 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             }
         }
         
+        /**
+         * Vráti {@link BigDecimal} zo stringu, alebo {@link BigDecimal#ZERO}
+         * v prípade chyby.
+         * @param parse
+         * @return 
+         */
         private BigDecimal parseNumber(String parse){
             try{
                 return new BigDecimal(parse);
             } catch (NumberFormatException ex){
-//                System.err.println("Double: " + ex);
                 return BigDecimal.ZERO;
             }
         }
     }
     
+    /**
+     * Trieda pre udržiavanie informácií pre stiahnutie detailu zápasu.
+     * Obsahuje ligu, id zápasu, zápas, skóre, šport a deň.
+     */
     private class TextingMatch{
         private String league;
         private String match;
@@ -686,6 +769,10 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             return match + " " + score;
         }
         
+        /**
+         * Vytvorí zápas podľa aktuálnych nastavení parametrov.
+         * @return 
+         */
         private Match getMatch(){
             Match m = new Match(Sport.getSport(sport));
             MatchProperties prop = new MatchProperties();
@@ -704,8 +791,6 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             /* match score */
             split = score.split("[, ()]+");
             if(split.length > 1){
-//                m.setScore(parseInt(removeEmptyCharacters(split[0])),
-//                        parseInt(removeEmptyCharacters(split[1])));
                 String[] scoreSplit;
                 for(int i = 2; i < split.length; i++){
                     scoreSplit = split[i].split(":");
@@ -716,6 +801,13 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             return m;
         }
         
+        /**
+         * Odstráni prázdne znaky, ktoré sú používané na stránke a nie sú zachytené
+         * metódou {@link String#trim()}.
+         * @param s
+         * @return 
+         * @see String#trim()
+         */
         private String removeEmptyCharacters(String s){
             byte[] newB = new byte[s.length()];
             int i = 0;
@@ -728,11 +820,17 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             }
             return builder.toString();
         }
+        
+        /**
+         * Parsuje {@code int} hodnotu príslušného {@code parse}. V prípade chyby
+         * vracia 0.
+         * @param parse
+         * @return 
+         */
         private int parseInt(String parse){
             try{
                 return Integer.parseInt(parse);
             } catch (NumberFormatException ex){
-//                System.err.println("Integer: " + ex);
                 return 0;
             }
         }

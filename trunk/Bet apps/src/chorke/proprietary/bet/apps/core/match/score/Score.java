@@ -55,9 +55,6 @@ public class Score {
     }
     
     public void addPartialScore(int firstParty, int secondParty) {
-//        partialScore.add(new PartialScore(firstParty, secondParty));
-//        scoreFirstParty += firstParty;
-//        scoreSecondParty += secondParty;
         addPartialScore(new PartialScore(firstParty, secondParty));
     }
 

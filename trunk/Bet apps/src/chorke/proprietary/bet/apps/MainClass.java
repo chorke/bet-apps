@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package chorke.proprietary.bet.apps;
 
 import chorke.proprietary.bet.apps.core.match.Match;
@@ -165,13 +162,15 @@ public class MainClass {
 //        betD.getMatches();
 //        System.out.println("start parsing");
 //        BetexplorerComMultithreadParser parser = new BetexplorerComMultithreadParser(man);
+//        parser.setExploredSport(BettingSports.All);
 //        parser.setExploredSport(BettingSports.Hockey);
 //        parser.setStartDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 4));
-//        parser.setEndDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 4));
+//        parser.setEndDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 10));
 //        Collection<Match> matches = parser.getMatches();
 //        System.out.println(matches.size());
+//        System.out.println(matches);
 //        System.out.println("matches");
-//        System.out.println(parser.getUndownloadedMatches());
+//        System.out.println(parser.getUndownloadedMatches().size());
 //        System.out.println("sports");
 //        System.out.println(parser.getUndownloadedSports());
 //        System.out.println("Saving to DB");

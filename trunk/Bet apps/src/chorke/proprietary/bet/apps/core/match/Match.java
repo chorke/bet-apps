@@ -111,7 +111,7 @@ public class Match implements Comparable<Match>{
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("[").append(sport).append(" {").append(id.toString()).append("}] ")
+        builder.append("[").append(sport).append(" {").append(id).append("}] ")
                 .append(properties).append(" ").append(score);
         builder.append(System.lineSeparator());
         for(String com : bets.keySet()){

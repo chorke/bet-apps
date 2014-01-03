@@ -15,6 +15,7 @@ import chorke.proprietary.bet.apps.io.BetIOException;
 import chorke.proprietary.bet.apps.io.BetIOManager;
 import chorke.proprietary.bet.apps.io.CloneableBetIOManager;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
@@ -55,18 +56,25 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
     
     private final Object LOCK_FOR_TO_DOWNLOAD = new Object();
     private final Object LOCK_FOR_TO_PARSE = new Object();
+    private List<Tuple<BettingSports, Calendar>> toDownload;
+    private ListIterator<Tuple<BettingSports, Calendar>> toDownloadIterator;
+    private List<TextingMatch> toParse;
+    private ListIterator<TextingMatch> toParseIterator;  
+    
+    private final Object WAITING_OBJECK = new Object();
+    private final boolean[] TMCThreadsDoneStatus = new boolean[NUM_OF_TMCTHREAD];
+    private final boolean[] MFTMCThreadsDoneStatus = new boolean[NUM_OF_MFTMCTHREAD];
+    private boolean areAllTMCDone;
+    private boolean areAllMFTMCDone;
     
     private static final int NUM_OF_TMCTHREAD = 12;
     private static final int NUM_OF_MFTMCTHREAD = 20;
     
     private Calendar startDate;
     private Calendar endDate;
-    private Calendar actualProcessingDate;
+    
     private BettingSports sport = BettingSports.All;
-    private List<Tuple<BettingSports, Calendar>> toDownload;
-    private List<TextingMatch> toParse;
-    private ListIterator<Tuple<BettingSports, Calendar>> toDownloadIterator;
-    private ListIterator<TextingMatch> toParseIterator;  
+    
     private Collection<String> undownloadedMatches;
     private Collection<Tuple<BettingSports, Calendar>> undownloadedSports;
     private Collection<Match> unsavedMatches;
@@ -81,7 +89,6 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         startDate.set(Calendar.SECOND, 0);
         startDate.set(Calendar.MILLISECOND, 1);
         endDate.setTimeInMillis(startDate.getTimeInMillis());
-        actualProcessingDate = new GregorianCalendar();
         undownloadedMatches = new LinkedList<>();
         undownloadedSports = new LinkedList<>();
         unsavedMatches = new LinkedList<>();
@@ -110,7 +117,6 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
     }
 
     @Override
-    @SuppressWarnings("SleepWhileInLoop")
     public Collection<Match> getMatches() {
         undownloadedMatches.clear();
         undownloadedSports.clear();
@@ -118,23 +124,23 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         toParse = getAllTextingMatches();
         toParseIterator = toParse.listIterator();
         MFTMCThread[] mftmcThreads = new MFTMCThread[NUM_OF_MFTMCTHREAD];
-        int i;
-        for(i = 0; i < NUM_OF_MFTMCTHREAD; i++){
-            mftmcThreads[i] = new MFTMCThread(getCloneOfIOManager());
+        areAllMFTMCDone = false;
+        Arrays.fill(MFTMCThreadsDoneStatus, false);
+        for(int i = 0; i < NUM_OF_MFTMCTHREAD; i++){
+            mftmcThreads[i] = new MFTMCThread(getCloneOfIOManager(), i);
             Thread t = new Thread(mftmcThreads[i]);
             t.start();
         }
-        List<Match> matches = new LinkedList<>();
-        i = 0;
-        while(i < NUM_OF_MFTMCTHREAD){
-            if(mftmcThreads[i].done){
-                matches.addAll(mftmcThreads[i].matches);
-                i++;
-            } else {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException ex) {}
+        synchronized(WAITING_OBJECK){
+            while(!areAllMFTMCDone){
+                try{
+                    WAITING_OBJECK.wait();
+                } catch (InterruptedException ex){}
             }
+        }
+        List<Match> matches = new LinkedList<>();
+        for(MFTMCThread th : mftmcThreads){
+            matches.addAll(th.matches);
         }
         toParseIterator = null;
         return matches;
@@ -169,30 +175,66 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         return Collections.unmodifiableCollection(unsavedMatches);
     }
     
-    @SuppressWarnings("SleepWhileInLoop")
     private List<TextingMatch> getAllTextingMatches(){
         toDownload = prepareSportsAndDates();
         toDownloadIterator = toDownload.listIterator();
         TMCThread[] tmcThreads = new TMCThread[NUM_OF_TMCTHREAD];
+        Arrays.fill(TMCThreadsDoneStatus, false);
+        areAllTMCDone = false;
         for(int i = 0; i < NUM_OF_TMCTHREAD; i++){
-            tmcThreads[i] = new TMCThread();
+            tmcThreads[i] = new TMCThread(i);
             Thread t = new Thread(tmcThreads[i]);
             t.start();
         }
-        List<TextingMatch> matches = new LinkedList<>();
-        int i = 0;
-        while(i < NUM_OF_TMCTHREAD){
-            if(tmcThreads[i].done){
-                matches.addAll(tmcThreads[i].matches);
-                i++;
-            } else {
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException ex) {}
+        synchronized(WAITING_OBJECK){
+            while(!areAllTMCDone){
+                try{
+                    WAITING_OBJECK.wait();
+                } catch (InterruptedException ex){}
             }
+        }
+        List<TextingMatch> matches = new LinkedList<>();
+        for(TMCThread th : tmcThreads){
+            matches.addAll(th.matches);
         }
         toDownloadIterator = null;
         return matches;
+    }
+    
+    private void TMCThreadIsDone(int threadId){
+        synchronized(TMCThreadsDoneStatus){
+            TMCThreadsDoneStatus[threadId] = true;
+            areAllTMCDone = true;
+            for(boolean b : TMCThreadsDoneStatus){
+                if(!b){
+                    areAllTMCDone = false;
+                    break;
+                }
+            }
+        }
+        if(areAllTMCDone){
+            synchronized(WAITING_OBJECK){
+                WAITING_OBJECK.notifyAll();
+            }
+        }
+    }
+    
+    private void MFTMCThreadIsDone(int threadiId){
+        synchronized(MFTMCThreadsDoneStatus){
+            MFTMCThreadsDoneStatus[threadiId] = true;
+            areAllMFTMCDone = true;
+            for(boolean b : MFTMCThreadsDoneStatus){
+                if(!b){
+                    areAllMFTMCDone = false;
+                    break;
+                }
+            }
+        }
+        if(areAllMFTMCDone){
+            synchronized(WAITING_OBJECK){
+                WAITING_OBJECK.notifyAll();
+            }
+        }
     }
     
     /**
@@ -267,16 +309,6 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
     }
 
     @Override
-    public Calendar getActualProccessingDate() {
-        return actualProcessingDate;
-    }
-
-    @Override
-    public void setActualProccessingDate(Calendar date) {
-        this.actualProcessingDate.setTimeInMillis(date.getTimeInMillis());
-    }
-
-    @Override
     public void setStartDate(Calendar start) {
         this.startDate.setTimeInMillis(start.getTimeInMillis());
         startDate.set(Calendar.HOUR_OF_DAY, 0);
@@ -307,13 +339,16 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
      * @see #getNextSportForDownload()
      */
     private class TMCThread implements Runnable{
-
+        
+        private final int id;
         private List<TextingMatch> matches;
-        private volatile boolean done = false;
+
+        public TMCThread(int id) {
+            this.id = id;
+        }
         
         @Override
         public void run() {
-            done = false;
             matches = new LinkedList<>();
             Tuple<BettingSports, Calendar> tuple = getNextSportForDownload();
             TextingMatchCollector tmc;
@@ -322,8 +357,8 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
                 matches.addAll(tmc.getMatchesList());
                 tuple = getNextSportForDownload();
             }
-            done = true;
-            System.err.println("Done TMC");
+            TMCThreadIsDone(id);
+            System.err.println("Done TMC(" + id + ")");
         }
     }
     
@@ -343,16 +378,16 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
     private class MFTMCThread implements Runnable{
 
         private List<Match> matches;
-        private volatile boolean done = false;
+        private final int id;
         private BetIOManager manager;
 
-        public MFTMCThread(BetIOManager manager) {
+        public MFTMCThread(BetIOManager manager, int id) {
             this.manager = manager;
+            this.id = id;
         }
 
         @Override
         public void run() {
-            done = false;
             matches = new LinkedList<>();
             TextingMatch tm = getNextTextingMatch();
             MatchFromTextingMatchCollector mftmc;
@@ -372,8 +407,8 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
                 }
                 tm = getNextTextingMatch();
             }
-            done = true;
-            System.err.println("Done MFTMC");
+            MFTMCThreadIsDone(id);
+            System.err.println("Done MFTMC (" + id + ")");
         }
         
     }

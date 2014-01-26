@@ -165,7 +165,7 @@ public class MainClass {
 //        parser.setExploredSport(BettingSports.All);
 //        parser.setExploredSport(BettingSports.Hockey);
 //        parser.setStartDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 4));
-//        parser.setEndDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 10));
+//        parser.setEndDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 4));
 //        Collection<Match> matches = parser.getMatches();
 //        System.out.println(matches.size());
 //        System.out.println(matches);

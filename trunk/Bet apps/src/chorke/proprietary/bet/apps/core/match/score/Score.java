@@ -47,13 +47,34 @@ public class Score {
     public int getSumScore() {
         return scoreFirstParty + scoreSecondParty;
     }
-
-    public void addPartialScore(PartialScore ps){
-        partialScore.add(ps);
-        scoreFirstParty += ps.firstParty;
-        scoreSecondParty += ps.secondParty;
+    
+    public void setScoreFirstParty(int firstParty){
+        this.scoreFirstParty = firstParty;
     }
     
+    public void setScoreSecondParty(int secondParty){
+        this.scoreSecondParty = secondParty;
+    }
+    
+    /**
+     * Pridá skóre. Neupravuje finálne skóre, a preto môže po zavolaní tejto metódy 
+     * nastať nekonzistencia. Je lepšie použiť metódu {@link
+     * chorke.proprietary.bet.apps.core.match.sports.Sport#addPartialScore(PartialScore)},
+     * ktorá príslušne upraví aj výsledné skóre.
+     * @param ps 
+     * @see  chorke.proprietary.bet.apps.core.match.sports.Sport#addPartialScore(PartialScore) 
+     */
+    public void addPartialScore(PartialScore ps){
+        partialScore.add(ps);
+    }
+    
+    /**
+     * Pozri metódu {@link #addPartialScore(PartialScore)}
+     * @param firstParty
+     * @param secondParty 
+     * @see  #addPartialScore(PartialScore)
+     * @see  chorke.proprietary.bet.apps.core.match.sports.Sport#addPartialScore(PartialScore) 
+     */
     public void addPartialScore(int firstParty, int secondParty) {
         addPartialScore(new PartialScore(firstParty, secondParty));
     }

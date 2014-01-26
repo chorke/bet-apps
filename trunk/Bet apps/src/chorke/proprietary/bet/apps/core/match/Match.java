@@ -6,6 +6,7 @@ package chorke.proprietary.bet.apps.core.match;
 
 import chorke.proprietary.bet.apps.core.bets.Bet;
 import chorke.proprietary.bet.apps.StaticConstants.Winner;
+import chorke.proprietary.bet.apps.core.match.score.PartialScore;
 import chorke.proprietary.bet.apps.core.match.score.Score;
 import chorke.proprietary.bet.apps.core.match.sports.Sport;
 import java.util.Collection;
@@ -58,8 +59,12 @@ public class Match implements Comparable<Match>{
         return score;
     }
     
+    public void addPartialScore(PartialScore partialScore){
+        sport.addPartialScore(partialScore, score);
+    }
+    
     public void addPartialScore(int firstParty, int secondParty){
-        score.addPartialScore(firstParty, secondParty);
+        addPartialScore(new PartialScore(firstParty, secondParty));
     }
     
     public Winner getWinner(){

@@ -331,10 +331,17 @@ public class DBBetIOManager implements CloneableBetIOManager{
         Match match;
         Iterator<Long> iter = matches.keySet().iterator();
         Long l;
+        Score score;
         while(iter.hasNext()){
             l = iter.next();
             match = matches.get(l);
-            match.setScore(scores.get(l));
+            score = scores.get(l);
+            match.setScore(null);
+            if(score != null){
+                for(PartialScore ps : score.getPartialScore()){
+                    match.addPartialScore(ps);
+                }
+            }
             if(bets.containsKey(l)){
                 for(Bet b : bets.get(l)){
                     match.addBet(b);
@@ -390,7 +397,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
     /**
      * Z {@link ResultSet} {@code bet} získa všetky stávky {@link BetAsianHandicap}
      * a uloží do {@code storage}. {@code bet} nie je nijako kontrolovaná
-     * a mala by obsahovať iba korektná stávky {@link BetAsianHandicap}.
+     * a mala by obsahovať iba korektné stávky {@link BetAsianHandicap}.
      * @param bet
      * @param storage
      * @throws SQLException 

@@ -3,6 +3,7 @@ package chorke.proprietary.bet.apps.core.match.sports;
 
 import chorke.proprietary.bet.apps.StaticConstants.Winner;
 import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser.BettingSports;
+import chorke.proprietary.bet.apps.core.match.score.PartialScore;
 import chorke.proprietary.bet.apps.core.match.score.Score;
 
 /**
@@ -11,12 +12,12 @@ import chorke.proprietary.bet.apps.core.match.score.Score;
  */
 public abstract class Sport {
     
-    private static final String SOCCER_STRING = "soccer";
-    private static final String HOCKEY_STRING = "hockey";
-    private static final String BASKETBALL_STRING = "basketball";
-    private static final String HANDBALL_STRING = "handball";
-    private static final String VOLLEYBALL_STRING = "volleyball";
-    private static final String BASEBALL_STRING = "baseball";
+    public static final String SOCCER_STRING = "soccer";
+    public static final String HOCKEY_STRING = "hockey";
+    public static final String BASKETBALL_STRING = "basketball";
+    public static final String HANDBALL_STRING = "handball";
+    public static final String VOLLEYBALL_STRING = "volleyball";
+    public static final String BASEBALL_STRING = "baseball";
     
     public Winner getWinner(Score score){
         if(score.getScoreFirstParty() > score.getScoreSecondParty()){
@@ -28,6 +29,17 @@ public abstract class Sport {
     }
     
     public abstract Winner getRegularTimeWinner(Score score);
+    
+    abstract void updateScore(PartialScore partialScore, Score score);
+    
+    public void addPartialScore(PartialScore partialScore, Score score){
+        score.addPartialScore(partialScore);
+        updateScore(partialScore, score);
+    }
+    
+    public void addPartialScore(int firstParty, int secondParty, Score score){
+        addPartialScore(new PartialScore(firstParty, secondParty), score);
+    }
     
     public static Sport getSport(BettingSports sport){
         switch (sport){
@@ -78,6 +90,20 @@ public abstract class Sport {
         public String toString() {
             return SOCCER_STRING;
         }
+
+        @Override
+        void updateScore(PartialScore partialScore, Score score) {
+            if(score.getPartialScore().size() <= 4){
+                score.setScoreFirstParty(score.getScoreFirstParty() + partialScore.firstParty);
+                score.setScoreSecondParty(score.getScoreSecondParty()+ partialScore.secondParty);
+            } else {
+                if(partialScore.firstParty < partialScore.secondParty){
+                    score.setScoreSecondParty(score.getScoreSecondParty() + 1);
+                } else {
+                    score.setScoreFirstParty(score.getScoreFirstParty() + 1);
+                }
+            }
+        }
     }
     
     private static class Hockey extends Sport{
@@ -90,6 +116,21 @@ public abstract class Sport {
         public String toString() {
             return HOCKEY_STRING;
         }
+
+        @Override
+        void updateScore(PartialScore partialScore, Score score) {
+            if(score.getPartialScore().size() <= 4){
+                score.setScoreFirstParty(score.getScoreFirstParty() + partialScore.firstParty);
+                score.setScoreSecondParty(score.getScoreSecondParty()+ partialScore.secondParty);
+            } else {
+                if(partialScore.firstParty < partialScore.secondParty){
+                    score.setScoreSecondParty(score.getScoreSecondParty() + 1);
+                } else {
+                    score.setScoreFirstParty(score.getScoreFirstParty() + 1);
+                }
+            }
+        }
+        
     }
     
     private static class Basketball extends Sport{
@@ -101,6 +142,20 @@ public abstract class Sport {
         @Override
         public String toString() {
             return BASKETBALL_STRING;
+        }
+
+        @Override
+        void updateScore(PartialScore partialScore, Score score) {
+            if(score.getPartialScore().size() <= 5){
+                score.setScoreFirstParty(score.getScoreFirstParty() + partialScore.firstParty);
+                score.setScoreSecondParty(score.getScoreSecondParty()+ partialScore.secondParty);
+            } else {
+                if(partialScore.firstParty < partialScore.secondParty){
+                    score.setScoreSecondParty(score.getScoreSecondParty() + 1);
+                } else {
+                    score.setScoreFirstParty(score.getScoreFirstParty() + 1);
+                }
+            }
         }
     }
     
@@ -114,6 +169,20 @@ public abstract class Sport {
         public String toString() {
             return HANDBALL_STRING;
         }
+        
+        @Override
+        void updateScore(PartialScore partialScore, Score score) {
+            if(score.getPartialScore().size() <= 4){
+                score.setScoreFirstParty(score.getScoreFirstParty() + partialScore.firstParty);
+                score.setScoreSecondParty(score.getScoreSecondParty()+ partialScore.secondParty);
+            } else {
+                if(partialScore.firstParty < partialScore.secondParty){
+                    score.setScoreSecondParty(score.getScoreSecondParty() + 1);
+                } else {
+                    score.setScoreFirstParty(score.getScoreFirstParty() + 1);
+                }
+            }
+        }
     }
     
     private static class Volleyball extends Sport{
@@ -126,6 +195,15 @@ public abstract class Sport {
         public String toString() {
             return VOLLEYBALL_STRING;
         }
+
+        @Override
+        void updateScore(PartialScore partialScore, Score score) {
+            if(partialScore.firstParty < partialScore.secondParty){
+                score.setScoreSecondParty(score.getScoreSecondParty() + 1);
+            } else {
+                score.setScoreFirstParty(score.getScoreFirstParty() + 1);
+            }
+        }
     }
     
     private static class Baseball extends Sport{
@@ -137,6 +215,12 @@ public abstract class Sport {
         @Override
         public String toString() {
             return BASEBALL_STRING;
+        }
+        
+        @Override
+        void updateScore(PartialScore partialScore, Score score) {
+            score.setScoreFirstParty(score.getScoreFirstParty() + partialScore.firstParty);
+            score.setScoreSecondParty(score.getScoreSecondParty()+ partialScore.secondParty);
         }
     }
 }

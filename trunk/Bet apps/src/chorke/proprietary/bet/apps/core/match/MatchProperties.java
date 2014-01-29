@@ -39,8 +39,14 @@ public class MatchProperties {
         return date;
     }
 
+    /**
+     * Ak je {@code null}, tak sa nestane nič.
+     * @param date 
+     */
     public void setDate(Calendar date) {
-        this.date.setTimeInMillis(date.getTimeInMillis());
+        if(date != null){
+            this.date.setTimeInMillis(date.getTimeInMillis());
+        }
     }
 
     @Override
@@ -50,5 +56,23 @@ public class MatchProperties {
                 + date.getDisplayName(Calendar.MONTH, Calendar.LONG, StaticConstants.SVK_LOCALE)
                 + " " 
                 + date.get(Calendar.YEAR);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null || !obj.getClass().equals(this.getClass())){
+            return false;
+        }
+        MatchProperties mp = (MatchProperties)obj;
+        return mp.country.equals(this.country)
+                && mp.league.equals(this.league)
+                && mp.date.getTimeInMillis() == this.date.getTimeInMillis();
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * (country == null ? 0 : country.hashCode() 
+                + league == null ? 0 : league.hashCode()
+                + (int)date.getTimeInMillis());
     }
 }

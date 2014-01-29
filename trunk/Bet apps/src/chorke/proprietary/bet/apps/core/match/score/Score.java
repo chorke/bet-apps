@@ -96,4 +96,34 @@ public class Score {
         b.append(")");
         return b.toString();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null || !obj.getClass().equals(this.getClass())){
+            return false;
+        }
+        Score sc = (Score) obj;
+        if(sc.scoreFirstParty != this.scoreFirstParty
+                || sc.scoreSecondParty != this.scoreSecondParty){
+            return false;
+        }
+        if(sc.partialScore.size() != this.partialScore.size()){
+            return false;
+        }
+        for(int i = 0; i < this.partialScore.size(); i++){
+            if(!this.partialScore.get(i).equals(sc.partialScore.get(i))){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hc = 0;
+        for(PartialScore ps : partialScore){
+            hc += ps.hashCode();
+        }
+        return hc * (scoreFirstParty * 1000 + scoreSecondParty);
+    }
 }

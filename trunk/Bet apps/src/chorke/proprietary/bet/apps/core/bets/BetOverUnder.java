@@ -28,4 +28,26 @@ public class BetOverUnder extends Bet{
     public String toString() {
         return "O/U ["+ total + "]: " + over + "/" + under;
     }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null || !obj.getClass().equals(this.getClass())){
+            return false;
+        }
+        BetOverUnder b = (BetOverUnder)obj;
+        return this.betCompany != null && this.betCompany.equals(b.betCompany)
+                && (this.description != null && this.description.equals(b.description))
+                && (this.over != null && this.over.compareTo(b.over) == 0)
+                && (this.under != null && this.under.compareTo(b.under) == 0)
+                && (this.total != null && this.total.compareTo(b.total) == 0);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * (betCompany == null ? 0 : betCompany.hashCode()
+                + (description == null ? 0 : description.hashCode())
+                + (over == null ? 0 : over.hashCode())
+                + (under == null ? 0 : under.hashCode())
+                + (total == null ? 0 : total.hashCode()));
+    }
 }

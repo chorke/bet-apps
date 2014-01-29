@@ -78,6 +78,19 @@ public abstract class Sport {
                 throw new IllegalArgumentException("Unsupported sport");
         }
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null || !obj.getClass().equals(this.getClass())){
+            return false;
+        }
+        return toString().equals(obj.toString());
+    }
+
+    @Override
+    public int hashCode() {
+        return toString().hashCode();
+    }
     
     // implementácie
     private static class Soccer extends Sport{

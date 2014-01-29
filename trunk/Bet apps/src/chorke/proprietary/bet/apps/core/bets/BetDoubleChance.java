@@ -27,4 +27,23 @@ public class BetDoubleChance extends Bet{
         return "DC: " + bet1X + " " + bet12 + " " + betX2;
     }
     
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null || !obj.getClass().equals(this.getClass())){
+            return false;
+        }
+        BetDoubleChance b = (BetDoubleChance)obj;
+        return this.betCompany != null && this.betCompany.equals(b.betCompany)
+                && (this.bet1X != null && this.bet1X.compareTo(b.bet1X) == 0)
+                && (this.betX2 != null && this.betX2.compareTo(b.betX2) == 0)
+                && (this.bet12 != null && this.bet12.compareTo(b.bet12) == 0);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * (betCompany == null ? 0 : betCompany.hashCode()
+                + (bet1X == null ? 0 : bet1X.hashCode())
+                + (bet12 == null ? 0 : bet12.hashCode())
+                + (betX2 == null ? 0 : betX2.hashCode()));
+    }
 }

@@ -63,4 +63,24 @@ public class Bet1x2 extends Bet{
     public String toString() {
         return "1x2: " + bet1 + " " + betX + " " + bet2;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null || !obj.getClass().equals(this.getClass())){
+            return false;
+        }
+        Bet1x2 b = (Bet1x2)obj;
+        return this.betCompany != null && this.betCompany.equals(b.betCompany)
+                && (this.bet1 != null && this.bet1.compareTo(b.bet1) == 0)
+                && (this.bet2 != null && this.bet2.compareTo(b.bet2) == 0)
+                && (this.betX != null && this.betX.compareTo(b.betX) == 0);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * (betCompany == null ? 0 : betCompany.hashCode()
+                + (bet1 == null ? 0 : bet1.hashCode())
+                + (bet2 == null ? 0 : bet2.hashCode())
+                + (betX == null ? 0 : betX.hashCode()));
+    }
 }

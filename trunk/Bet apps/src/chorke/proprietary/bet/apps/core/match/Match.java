@@ -47,6 +47,10 @@ public class Match implements Comparable<Match>{
         return sport;
     }
 
+    /**
+     * Ak {@code score == null}, potom je skóore resetované.
+     * @param score 
+     */
     public void setScore(Score score) {
         if(score == null){
             this.score = new Score();
@@ -55,6 +59,10 @@ public class Match implements Comparable<Match>{
         }
     }
     
+    /**
+     * Nikdy {@code null}.
+     * @return 
+     */
     public Score getScore() {
         return score;
     }
@@ -75,6 +83,10 @@ public class Match implements Comparable<Match>{
         return sport.getRegularTimeWinner(score);
     }
     
+    /**
+     * Ak {@code properties == null}, potom sú properties resetované.
+     * @param properties 
+     */
     public void setProperties(MatchProperties properties) {
         if(properties == null){
             this.properties = new MatchProperties();
@@ -83,6 +95,10 @@ public class Match implements Comparable<Match>{
         }
     }
 
+    /**
+     * Nikdy {@code null}.
+     * @return 
+     */
     public MatchProperties getProperties() {
         return properties;
     }
@@ -133,5 +149,31 @@ public class Match implements Comparable<Match>{
     @Override
     public int compareTo(Match o) {
        return this.properties.getDate().compareTo(o.properties.getDate());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null || !obj.getClass().equals(this.getClass())){
+            return false;
+        }
+        Match m = (Match) obj;
+        if(this.id == null){
+            return false;
+        }
+        if(this.sport == null){
+            return false;
+        }
+        return this.id.equals(m.id)
+                && this.sport.equals(m.sport)
+                && this.score.equals(m.score)
+                && this.properties.equals(m.properties);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * ((id == null ? 0 : id.hashCode())
+                + (sport == null ? 0 : sport.hashCode())
+                + properties.hashCode()
+                + score.hashCode());
     }
 }

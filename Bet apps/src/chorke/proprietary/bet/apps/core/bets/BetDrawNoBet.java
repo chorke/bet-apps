@@ -25,4 +25,21 @@ public class BetDrawNoBet extends Bet{
         return "DNB: " + bet1 + " " + bet2;
     }
     
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null || !obj.getClass().equals(this.getClass())){
+            return false;
+        }
+        BetDrawNoBet b = (BetDrawNoBet)obj;
+        return this.betCompany != null && this.betCompany.equals(b.betCompany)
+                &&(this.bet1 != null && this.bet1.compareTo(b.bet1) == 0)
+                && (this.bet2 != null && this.bet2.compareTo(b.bet2) == 0);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * (betCompany == null ? 0 : betCompany.hashCode()
+                + (bet1 == null ? 0 : bet1.hashCode())
+                + (bet2 == null ? 0 : bet2.hashCode()));
+    }
 }

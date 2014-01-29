@@ -22,4 +22,19 @@ public class PartialScore {
     public String toString() {
         return firstParty + ":" + secondParty;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null || !obj.getClass().equals(this.getClass())){
+            return false;
+        }
+        PartialScore ps = (PartialScore) obj;
+        return ps.firstParty == this.firstParty
+                && ps.secondParty == this.secondParty;
+    }
+
+    @Override
+    public int hashCode() {
+        return firstParty * 100 + secondParty;
+    }
 }

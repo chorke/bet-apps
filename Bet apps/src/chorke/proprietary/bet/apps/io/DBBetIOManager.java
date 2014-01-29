@@ -49,6 +49,9 @@ public class DBBetIOManager implements CloneableBetIOManager{
     
     @Override
     public void saveMatch(Match match) throws BetIOException {
+        if(dataSource == null){
+            throw new BetIOException("No data source");
+        }
         if(match == null){
             throw new IllegalArgumentException("Match can no be null.");
         }
@@ -63,6 +66,9 @@ public class DBBetIOManager implements CloneableBetIOManager{
                 || match.getProperties().getLeague() == null
                 || match.getProperties().getLeague().isEmpty()){
             throw new IllegalArgumentException("Invalid match properties.");
+        }
+        if(match.getSport() == null){
+            throw new IllegalArgumentException("Sport can not be null");
         }
         try(Connection con = dataSource.getConnection()){
             PreparedStatement ps = con.prepareStatement(
@@ -572,7 +578,52 @@ public class DBBetIOManager implements CloneableBetIOManager{
 
     @Override
     public void deleteMatch(Match match) throws BetIOException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        if(dataSource == null){
+            throw new BetIOException("No data source");
+        }
+        if(match == null){
+            throw new IllegalArgumentException("Match can no be null.");
+        }
+        if(match.getId() == null){
+            throw new IllegalArgumentException("Matchs ID is null");
+        }
+        try(Connection con = dataSource.getConnection();
+                PreparedStatement matchesPS = 
+                        con.prepareStatement("DELETE FROM matches WHERE id=?");
+                PreparedStatement scoresPS = 
+                        con.prepareStatement("DELETE FROM scores WHERE matchid=?");
+                PreparedStatement bet1x2PS = 
+                        con.prepareStatement("DELETE FROM bet1x2 WHERE matchid=?");
+                PreparedStatement betahPS = 
+                        con.prepareStatement("DELETE FROM betah WHERE matchid=?");
+                PreparedStatement betbttsPS = 
+                        con.prepareStatement("DELETE FROM betbtts WHERE matchid=?");
+                PreparedStatement betdcPS = 
+                        con.prepareStatement("DELETE FROM betdc WHERE matchid=?");
+                PreparedStatement betdnbPS = 
+                        con.prepareStatement("DELETE FROM betdnb WHERE matchid=?");
+                PreparedStatement betouPS = 
+                        con.prepareStatement("DELETE FROM betou WHERE matchid=?");){
+            matchesPS.setLong(1, match.getId());
+            scoresPS.setLong(1, match.getId());
+            bet1x2PS.setLong(1, match.getId());
+            betahPS.setLong(1, match.getId());
+            betbttsPS.setLong(1, match.getId());
+            betdcPS.setLong(1, match.getId());
+            betdnbPS.setLong(1, match.getId());
+            betouPS.setLong(1, match.getId());
+            
+            matchesPS.executeUpdate();
+            scoresPS.executeUpdate();
+            bet1x2PS.executeUpdate();
+            betahPS.executeUpdate();
+            betbttsPS.executeUpdate();
+            betdcPS.executeUpdate();
+            betdnbPS.executeUpdate();
+            betouPS.executeUpdate();
+        } catch (SQLException ex){
+            throw new BetIOException("Error while deleting match.", ex);
+        }
     }
 
     @Override

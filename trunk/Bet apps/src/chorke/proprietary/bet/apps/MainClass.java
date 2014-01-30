@@ -98,7 +98,8 @@ public class MainClass {
         i = 1286414;
         System.out.println((long)i);
         
-        
+        StringBuilder builder = new StringBuilder("ddd OR ");
+        System.out.println(builder.delete(builder.length() - 4, builder.length()).toString());
 //        DBBetIOManager man = new DBBetIOManager(StaticConstants.DATA_SOURCE);
 //        for(Match toPrint : man.loadAllMatches()){
 //            System.out.println(toPrint);

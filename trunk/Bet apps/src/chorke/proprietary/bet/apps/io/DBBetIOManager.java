@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.sql.DataSource;
 
 /**
@@ -358,6 +359,12 @@ public class DBBetIOManager implements CloneableBetIOManager{
             scores.remove(l);
             bets.remove(l);
         }
+        Iterator<Match> cleanUp = merged.iterator();
+        while(cleanUp.hasNext()){
+            if(cleanUp.next().getBets().isEmpty()){
+                cleanUp.remove();
+            }
+        }
         return merged;
     }
     
@@ -573,9 +580,113 @@ public class DBBetIOManager implements CloneableBetIOManager{
     
     @Override
     public Collection<Match> loadMatches(LoadProperties properties) throws BetIOException {
-        throw new UnsupportedOperationException("Not supported yet.");
+        if(dataSource == null){
+            throw new BetIOException("No data source");
+        }
+        if(properties == null){
+            throw new IllegalArgumentException("Load properties can not be null");
+        }
+        if(properties.isEmpty()){
+            return loadAllMatches();
+        }
+        try(Connection con = dataSource.getConnection();
+                PreparedStatement matchesPS = prepareMatchStatement(con, 
+                        properties.getStartDate(),
+                        properties.getEndDate(),
+                        properties.getLeagues());
+                PreparedStatement scoresPS = con.prepareStatement("SELECT * FROM scores");
+                PreparedStatement bet1x2PS = prepareBetStatement(con,
+                        properties.getBetCompanies(), "bet1x2");
+                PreparedStatement betahPS = prepareBetStatement(con,
+                        properties.getBetCompanies(), "betah");
+                PreparedStatement betbttsPS = prepareBetStatement(con,
+                        properties.getBetCompanies(), "betbtts");
+                PreparedStatement betdcPS = prepareBetStatement(con,
+                        properties.getBetCompanies(), "betdc");
+                PreparedStatement betdnbPS = prepareBetStatement(con,
+                        properties.getBetCompanies(), "betdnb");
+                PreparedStatement betouPS = prepareBetStatement(con,
+                        properties.getBetCompanies(), "betou");){
+            return getMatchesFromPreparedStatements(matchesPS, scoresPS, 
+                    bet1x2PS, betahPS, betbttsPS, betdcPS, betdnbPS, betouPS);
+        } catch (SQLException ex){
+            throw new BetIOException("Error while finding all matches.", ex);
+        }
     }
 
+    /**
+     * Bet - konkrétny typ stávky.
+     * @param betCompanies
+     * @param bet
+     * @return
+     * @throws SQLException 
+     */
+    private PreparedStatement prepareBetStatement(
+            Connection con, Set<String> betCompanies, String bet) throws SQLException{
+        StringBuilder out = new StringBuilder("SELECT * FROM ").append(bet);
+        if(betCompanies == null || betCompanies.isEmpty()){
+            return con.prepareStatement(out.toString());
+        }
+        out.append(" WHERE ");
+        for(String betCompany : betCompanies){
+            out.append("betcompany LIKE ? OR ");
+        }
+        out.delete(out.length() - 4, out.length());
+        PreparedStatement ps = con.prepareStatement(out.toString());
+        int i = 1;
+        for(String betCompany : betCompanies){
+            ps.setString(i, betCompany);
+            i++;
+        }
+        return ps;
+    }
+    
+    private PreparedStatement prepareMatchStatement(
+            Connection con, Calendar start, Calendar end, Set<String> leagues) throws SQLException{
+        StringBuilder out = new StringBuilder("SELECT * FROM matches");
+        if(start == null && end == null && (leagues == null || leagues.isEmpty())){
+            return con.prepareStatement(out.toString());
+        }
+        out.append(" WHERE ");
+        if(start != null){
+            out.append("matchdate >= ?");
+            if(end != null){
+                out.append(" AND ");
+            }
+        }
+        if(end != null){
+            out.append("matchdate <= ?");
+            if(leagues != null && !leagues.isEmpty()){
+                out.append(" AND ");
+            }
+        }
+        if(leagues != null && !leagues.isEmpty()){
+            out.append("(");
+            for(String league : leagues){
+                out.append("league LIKE ? OR ");
+            }
+            out.delete(out.length() - 4, out.length());
+            out.append(")");
+        }
+        PreparedStatement ps = con.prepareStatement(out.toString());
+        int i = 1;
+        if(start != null){
+            ps.setTimestamp(i, new Timestamp(start.getTimeInMillis()));
+            i++;
+        }
+        if(end != null){
+            ps.setTimestamp(i, new Timestamp(end.getTimeInMillis()));
+            i++;
+        }
+        if(leagues != null && !leagues.isEmpty()){
+            for(String league : leagues){
+                ps.setString(i, league);
+                i++;
+            }
+        }
+        return ps;
+    }
+    
     @Override
     public void deleteMatch(Match match) throws BetIOException {
         if(dataSource == null){

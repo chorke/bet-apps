@@ -9,7 +9,6 @@ import chorke.proprietary.bet.apps.core.bets.BetBothTeamsToScore;
 import chorke.proprietary.bet.apps.core.bets.BetDoubleChance;
 import chorke.proprietary.bet.apps.core.bets.BetDrawNoBet;
 import chorke.proprietary.bet.apps.core.bets.BetOverUnder;
-import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.core.match.MatchProperties;
 import chorke.proprietary.bet.apps.core.match.sports.Sport;
@@ -27,6 +26,7 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -670,20 +670,217 @@ public class BetIOManagerTest {
         cal = new GregorianCalendar(2014, Calendar.OCTOBER, 31);
         loadWithProperties(expetcedMatches, new Tuple(LoadProperties.END_DATE, cal));
             //betCompany
+        expetcedMatches.clear();
+        
+        Match m1 = getMatchCopyWithoutBets(match1);
+        Match m2 = getMatchCopyWithoutBets(match2);
+        Match m3 = getMatchCopyWithoutBets(match3);
+        
+        m1.addBet(bet1x2_Tipsport_Match1);
+        m1.addBet(betou_Tipsport_1p0_Match1);
+        m1.addBet(betou_Tipsport_1p5_Match1);
+        
+        m2.addBet(bet1x2_Tipsport_Match2);
+        
+        m3.addBet(bet1x2_Tipsport_Match3);
+        m3.addBet(betdc_Tipsport_Match3);
+        m3.addBet(betdnb_Tipsport_Match3);
+        
+        expetcedMatches.add(m1);
+        expetcedMatches.add(m2);
+        expetcedMatches.add(m3);
+        Collection<String> stringSet = new HashSet<>();
+        stringSet.add("tipsport");
+        loadWithProperties(expetcedMatches, new Tuple(LoadProperties.BET_COMPANY, stringSet));
+        
+        m1.addBet(betah_Doublebet_Plus0p75_Match1);
+        m1.addBet(betah_Doublebet_Plus1p5_Match1);
+        
+        stringSet.add("doublebet");
+        loadWithProperties(expetcedMatches, new Tuple(LoadProperties.BET_COMPANY, stringSet));
             //league
+        expetcedMatches.clear();
+        stringSet.clear();
+        stringSet.add("1. liga");
+        expetcedMatches.add(match3);
+        loadWithProperties(expetcedMatches, new Tuple(LoadProperties.LEAGUE, stringSet));
+        stringSet.add("Extraliga");
+        expetcedMatches.add(match2);
+        loadWithProperties(expetcedMatches, new Tuple(LoadProperties.LEAGUE, stringSet));
         //2 properties
             //startDate, endDate
+        GregorianCalendar start = new GregorianCalendar(2013, Calendar.NOVEMBER, 15);
+        GregorianCalendar end = new GregorianCalendar(2013, Calendar.DECEMBER, 31);
+        loadWithProperties(expetcedMatches, new Tuple(LoadProperties.START_DATE, start),
+                new Tuple(LoadProperties.END_DATE, end));
             //startDate, betCompany
+        expetcedMatches.clear();
+        m2 = getMatchCopyWithoutBets(match2);
+        m2.addBet(bet1x2_Tipsport_Match2);
+        
+        m3 = getMatchCopyWithoutBets(match3);
+        m3.addBet(bet1x2_Tipsport_Match3);
+        m3.addBet(betdc_Tipsport_Match3);
+        m3.addBet(betdnb_Tipsport_Match3);
+        expetcedMatches.add(m3);
+        expetcedMatches.add(m2);
+        stringSet.clear();
+        stringSet.add("tipsport");
+        loadWithProperties(expetcedMatches, new Tuple(LoadProperties.START_DATE, start),
+                new Tuple(LoadProperties.BET_COMPANY, stringSet));
             //startDate, league
+        expetcedMatches.clear();
+        stringSet.clear();
+        stringSet.add("2. league");
+        stringSet.add("1. liga");
+        expetcedMatches.add(match4);
+        expetcedMatches.add(match3);
+        loadWithProperties(expetcedMatches, new Tuple(LoadProperties.START_DATE, start),
+                new Tuple(LoadProperties.LEAGUE, stringSet));
             //endDate, betCompany
+        expetcedMatches.clear();
+        stringSet.clear();
+        stringSet.add("tipsport");
+        stringSet.add("fortuna");
+        stringSet.add("bet365");
+        m1 = getMatchCopyWithoutBets(match1);
+        m1.addBet(bet1x2_Tipsport_Match1);
+        m1.addBet(bet1x2_Fortuna_Match1);
+        m1.addBet(bet1x2_Bet365_Match1);
+        m1.addBet(betah_Bet365_Minus0p5_Match1);
+        m1.addBet(betah_Bet365_Minus0p75_Match1);
+        m1.addBet(betah_Fortuna_Minus0p5_Match1);
+        m1.addBet(betah_Fortuna_Minus0p75_Match1);
+        m1.addBet(betdc_Bet365_Match1);
+        m1.addBet(betou_Tipsport_1p0_Match1);
+        m1.addBet(betou_Tipsport_1p5_Match1);
+        m1.addBet(betou_Fortuna_1p5_Match1);
+        expetcedMatches.add(m1);
+        expetcedMatches.add(match2);
+        expetcedMatches.add(match3);
+        loadWithProperties(expetcedMatches, new Tuple(LoadProperties.END_DATE, end),
+                new Tuple(LoadProperties.BET_COMPANY, stringSet));
             //endDate, league
+        expetcedMatches.clear();
+        stringSet.clear();
+        stringSet.add("Corgoň liga");
+        stringSet.add("1. liga");
+        expetcedMatches.add(match1);
+        expetcedMatches.add(match3);
+        loadWithProperties(expetcedMatches, new Tuple(LoadProperties.END_DATE, end),
+                new Tuple(LoadProperties.LEAGUE, stringSet));
             //betCompany, league
+        expetcedMatches.clear();
+        stringSet.clear();
+        stringSet.add("doublebet");
+        stringSet.add("tipsport");
+        stringSet.add("Corgoň liga");
+        stringSet.add("2. league");
+        m1 = getMatchCopyWithoutBets(match1);
+        m1.addBet(bet1x2_Tipsport_Match1);
+        m1.addBet(betou_Tipsport_1p0_Match1);
+        m1.addBet(betou_Tipsport_1p5_Match1);
+        m1.addBet(betah_Doublebet_Plus0p75_Match1);
+        m1.addBet(betah_Doublebet_Plus1p5_Match1);
+        Match m4 = getMatchCopyWithoutBets(match4);
+        expetcedMatches.add(m1);
+        expetcedMatches.add(m4);
+        loadWithProperties(expetcedMatches, new Tuple(LoadProperties.BET_COMPANY, stringSet),
+                new Tuple(LoadProperties.LEAGUE, stringSet));
         //3 proeprties
             // startDate, endDate, league
+        expetcedMatches.clear();
+        stringSet.clear();
+        stringSet.add("Extraliga");
+        start = new GregorianCalendar(2013, Calendar.OCTOBER, 31);
+        end = new GregorianCalendar(2013, Calendar.NOVEMBER, 15);
+        expetcedMatches.add(match2);
+        loadWithProperties(expetcedMatches, new Tuple(LoadProperties.START_DATE, start),
+                new Tuple(LoadProperties.END_DATE, end),
+                new Tuple(LoadProperties.LEAGUE, stringSet));
             // startDate, endDate, betCompany
+        expetcedMatches.clear();
+        stringSet.clear();
+        stringSet.add("bet365");
+        m1 = getMatchCopyWithoutBets(match1);
+        m2 = getMatchCopyWithoutBets(match2);
+        m1.addBet(bet1x2_Bet365_Match1);
+        m1.addBet(betah_Bet365_Minus0p5_Match1);
+        m1.addBet(betah_Bet365_Minus0p75_Match1);
+        m1.addBet(betdc_Bet365_Match1);
+
+        m2.addBet(bet1x2_Bet365_Match2);
+        m2.addBet(betah_Bet365_Plus0p75_Match2);
+        m2.addBet(betah_Bet365_Plus1p0_Match2);
+
+        expetcedMatches.add(m1);
+        expetcedMatches.add(m2);
+        loadWithProperties(expetcedMatches, new Tuple(LoadProperties.START_DATE, start),
+                new Tuple(LoadProperties.END_DATE, end),
+                new Tuple(LoadProperties.BET_COMPANY, stringSet));
             // startDate, league, betCompany
+        expetcedMatches.clear();
+        start = new GregorianCalendar(2013, Calendar.DECEMBER, 21);
+        stringSet.clear();
+        stringSet.add("1. liga");
+        stringSet.add("2. league");
+        stringSet.add("fortuna");
+        stringSet.add("bet365");
+        m3 = getMatchCopyWithoutBets(match3);
+        m3.addBet(betah_Bet365_Plus1p0_Match3);
+        m3.addBet(betbtts_Fortuna_Match3);
+        m3.addBet(betou_Bet365_1p5_Match3);
+        expetcedMatches.add(match4);
+        expetcedMatches.add(m3);
+        loadWithProperties(expetcedMatches, new Tuple(LoadProperties.START_DATE, start),
+                new Tuple(LoadProperties.LEAGUE, stringSet),
+                new Tuple(LoadProperties.BET_COMPANY, stringSet));
             // endDate, league, betCompany
+        expetcedMatches.clear();
+        stringSet.clear();
+        stringSet.add("Extraliga");
+        stringSet.add("Corgoň liga");
+        stringSet.add("fortuna");
+        stringSet.add("bet365");
+        end = new GregorianCalendar(2014, Calendar.JANUARY, 2);
+        m1 = getMatchCopyWithoutBets(match1);
+        m1.addBet(bet1x2_Fortuna_Match1);
+        m1.addBet(bet1x2_Bet365_Match1);
+        m1.addBet(betah_Bet365_Minus0p5_Match1);
+        m1.addBet(betah_Bet365_Minus0p75_Match1);
+        m1.addBet(betah_Fortuna_Minus0p5_Match1);
+        m1.addBet(betah_Fortuna_Minus0p75_Match1);
+        m1.addBet(betdc_Bet365_Match1);
+        m1.addBet(betou_Fortuna_1p5_Match1);
+        
+        m2 = getMatchCopyWithoutBets(match2);
+        m2.addBet(bet1x2_Bet365_Match2);
+        m2.addBet(bet1x2_Fortuna_Match2);
+        m2.addBet(betah_Bet365_Plus0p75_Match2);
+        m2.addBet(betah_Bet365_Plus1p0_Match2);
+        expetcedMatches.add(m1);
+        expetcedMatches.add(m2);
+        loadWithProperties(expetcedMatches, new Tuple(LoadProperties.END_DATE, end),
+                new Tuple(LoadProperties.LEAGUE, stringSet),
+                new Tuple(LoadProperties.BET_COMPANY, stringSet));
         //4 properties
+        expetcedMatches.clear();
+        start = new GregorianCalendar(2013, Calendar.NOVEMBER, 15);
+        end = new GregorianCalendar(2014, Calendar.JANUARY, 1);
+        stringSet.clear();
+        stringSet.add("Extraliga");
+        stringSet.add("tipsport");
+        stringSet.add("bet365");
+        m2 = getMatchCopyWithoutBets(match2);
+        m2.addBet(bet1x2_Tipsport_Match2);
+        m2.addBet(bet1x2_Bet365_Match2);
+        m2.addBet(betah_Bet365_Plus0p75_Match2);
+        m2.addBet(betah_Bet365_Plus1p0_Match2);
+        expetcedMatches.add(m2);
+        loadWithProperties(expetcedMatches, new Tuple(LoadProperties.START_DATE, start),
+                new Tuple(LoadProperties.END_DATE, end),
+                new Tuple(LoadProperties.LEAGUE, stringSet),
+                new Tuple(LoadProperties.BET_COMPANY, stringSet));
     }
     
     private void loadWithProperties(Collection<Match> expetedMatches, Tuple... properties){
@@ -750,6 +947,28 @@ public class BetIOManagerTest {
             hasNumberOfRows(betdc.executeQuery(), 0, "betdc", match4.getId());
             hasNumberOfRows(betdnb.executeQuery(), 0, "betdnb", match4.getId());
             hasNumberOfRows(betou.executeQuery(), 0, "betou", match4.getId());
+        } catch (SQLException ex){
+            fail("Error in SQL statements: " + ex);
+        }
+        match3.setId(null);
+        testingManager.saveMatch(match3);
+        testingManager.deleteMatch(match4);
+        try(PreparedStatement match = connection.prepareStatement("SELECT * FROM matches");
+                PreparedStatement score = connection.prepareStatement("SELECT * FROM scores");
+                PreparedStatement bet1x2 = connection.prepareStatement("SELECT * FROM bet1x2");
+                PreparedStatement betah = connection.prepareStatement("SELECT * FROM betah");
+                PreparedStatement betbtts = connection.prepareStatement("SELECT * FROM betbtts");
+                PreparedStatement betdc = connection.prepareStatement("SELECT * FROM betdc");
+                PreparedStatement betdnb = connection.prepareStatement("SELECT * FROM betdnb");
+                PreparedStatement betou = connection.prepareStatement("SELECT * FROM betou")){
+            hasNumberOfRows(match.executeQuery(), 1, "match", match3.getId());
+            hasNumberOfRows(score.executeQuery(), 5, "score", match3.getId());
+            hasNumberOfRows(bet1x2.executeQuery(), 1, "bet1x2", match3.getId());
+            hasNumberOfRows(betah.executeQuery(), 1, "betah", match3.getId());
+            hasNumberOfRows(betbtts.executeQuery(), 1, "betbtts", match3.getId());
+            hasNumberOfRows(betdc.executeQuery(), 1, "betdc", match3.getId());
+            hasNumberOfRows(betdnb.executeQuery(), 1, "betdnb", match3.getId());
+            hasNumberOfRows(betou.executeQuery(), 1, "betou", match3.getId());
         } catch (SQLException ex){
             fail("Error in SQL statements: " + ex);
         }

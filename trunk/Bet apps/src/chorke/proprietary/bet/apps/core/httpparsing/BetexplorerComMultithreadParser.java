@@ -391,15 +391,22 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             matches = new LinkedList<>();
             TextingMatch tm = getNextTextingMatch();
             MatchFromTextingMatchCollector mftmc;
-            Match match;
+            Match match = null;
             while(tm != null){
                 mftmc = new MatchFromTextingMatchCollector(tm);
-                match = mftmc.parseMatchDetails();
-                if(!match.getBets().isEmpty()){
+                try{
+                    match = mftmc.parseMatchDetails();
+                } catch (Exception ex){
+                    match = null;
+                    ex.printStackTrace();
+                }
+                if(match != null && !match.getBets().isEmpty()){
                     if(manager != null){
                         try{
                             manager.saveMatch(match);
                         } catch (BetIOException ex){
+                            System.out.println(match);
+                            ex.printStackTrace();
                             unsavedMatches.add(match);
                         }
                     }

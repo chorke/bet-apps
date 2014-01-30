@@ -61,7 +61,7 @@ public class LoadProperties extends Properties{
      */
     public void addBetCompany(String betCompany){
         Set set;
-        if(contains(BET_COMPANY)){
+        if(containsKey(BET_COMPANY)){
             set = ((Set)get(BET_COMPANY));
         } else {
             set = new HashSet<>();
@@ -84,7 +84,7 @@ public class LoadProperties extends Properties{
      */
     public void addLeague(String league){
         Set set;
-        if(contains(LEAGUE)){
+        if(containsKey(LEAGUE)){
             set = ((Set)get(LEAGUE));
         } else {
             set = new HashSet<>();

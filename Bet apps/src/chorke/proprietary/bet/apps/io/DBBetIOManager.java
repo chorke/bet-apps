@@ -43,7 +43,7 @@ import javax.sql.DataSource;
 public class DBBetIOManager implements CloneableBetIOManager{
 
     private DataSource dataSource;
-
+    
     public DBBetIOManager(DataSource dataSource) {
         this.dataSource = dataSource;
     }
@@ -132,7 +132,10 @@ public class DBBetIOManager implements CloneableBetIOManager{
                 }
             }
         } catch (SQLException ex){
-            throw new BetIOException("Error by saving match" + ex, ex);
+            if(match.getId() != null){
+                deleteMatch(match);
+            }
+            throw new BetIOException("Error by saving match. ", ex);
         }
         
     }
@@ -274,14 +277,14 @@ public class DBBetIOManager implements CloneableBetIOManager{
             throw new BetIOException("No data source");
         }
         try(Connection con = dataSource.getConnection();
-                PreparedStatement matchesPS = con.prepareStatement("SELECT * FROM matches");
+                PreparedStatement matchesPS = prepareMatchStatement(con, null, null, null);
                 PreparedStatement scoresPS = con.prepareStatement("SELECT * FROM scores");
-                PreparedStatement bet1x2PS = con.prepareStatement("SELECT * FROM bet1x2");
-                PreparedStatement betahPS = con.prepareStatement("SELECT * FROM betah");
-                PreparedStatement betbttsPS = con.prepareStatement("SELECT * FROM betbtts");
-                PreparedStatement betdcPS = con.prepareStatement("SELECT * FROM betdc");
-                PreparedStatement betdnbPS = con.prepareStatement("SELECT * FROM betdnb");
-                PreparedStatement betouPS = con.prepareStatement("SELECT * FROM betou");){
+                PreparedStatement bet1x2PS = prepareBetStatement(con, null, "bet1x2");
+                PreparedStatement betahPS = prepareBetStatement(con, null, "betah");
+                PreparedStatement betbttsPS = prepareBetStatement(con, null, "betbtts");
+                PreparedStatement betdcPS = prepareBetStatement(con, null, "betdc");
+                PreparedStatement betdnbPS = prepareBetStatement(con, null, "betdnb");
+                PreparedStatement betouPS = prepareBetStatement(con, null, "betou");){
             return getMatchesFromPreparedStatements(matchesPS, scoresPS, 
                     bet1x2PS, betahPS, betbttsPS, betdcPS, betdnbPS, betouPS);
         } catch (SQLException ex){
@@ -648,19 +651,18 @@ public class DBBetIOManager implements CloneableBetIOManager{
             return con.prepareStatement(out.toString());
         }
         out.append(" WHERE ");
+        boolean needAnd = false;
         if(start != null){
             out.append("matchdate >= ?");
-            if(end != null){
-                out.append(" AND ");
-            }
+            needAnd = true;
         }
         if(end != null){
+            if(needAnd){ out.append(" AND "); }
             out.append("matchdate <= ?");
-            if(leagues != null && !leagues.isEmpty()){
-                out.append(" AND ");
-            }
+            needAnd = true;
         }
         if(leagues != null && !leagues.isEmpty()){
+            if(needAnd){ out.append(" AND "); }
             out.append("(");
             for(String league : leagues){
                 out.append("league LIKE ? OR ");

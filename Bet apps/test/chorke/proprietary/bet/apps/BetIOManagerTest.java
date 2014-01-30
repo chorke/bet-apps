@@ -115,7 +115,7 @@ public class BetIOManagerTest {
                 "betcompany varchar(50) NOT NULL," +
                 "bet1 varchar(5)," +
                 "bet2 varchar(5)," +
-                "handicap varchar(5) NOT NULL," +
+                "handicap varchar(7) NOT NULL," +
                 "description varchar(20) NOT NULL," +
                 "PRIMARY KEY (matchid, betcompany, handicap, description))");
             st.addBatch("CREATE TABLE betbtts(" +
@@ -140,7 +140,7 @@ public class BetIOManagerTest {
             st.addBatch("CREATE TABLE betou(" +
                 "matchid integer NOT NULL," +
                 "betcompany varchar(50) NOT NULL," +
-                "total varchar(5) NOT NULL," +
+                "total varchar(6) NOT NULL," +
                 "overbet varchar(5)," +
                 "underbet varchar(5)," +
                 "description varchar(50) NOT NULL," +
@@ -667,7 +667,7 @@ public class BetIOManagerTest {
         expetcedMatches.add(match2);
         loadWithProperties(expetcedMatches, new Tuple(LoadProperties.END_DATE, cal));
         expetcedMatches.clear();
-        cal = new GregorianCalendar(2014, Calendar.OCTOBER, 31);
+        cal = new GregorianCalendar(2013, Calendar.OCTOBER, 31);
         loadWithProperties(expetcedMatches, new Tuple(LoadProperties.END_DATE, cal));
             //betCompany
         expetcedMatches.clear();
@@ -782,12 +782,10 @@ public class BetIOManagerTest {
         m1.addBet(betou_Tipsport_1p5_Match1);
         m1.addBet(betah_Doublebet_Plus0p75_Match1);
         m1.addBet(betah_Doublebet_Plus1p5_Match1);
-        Match m4 = getMatchCopyWithoutBets(match4);
         expetcedMatches.add(m1);
-        expetcedMatches.add(m4);
         loadWithProperties(expetcedMatches, new Tuple(LoadProperties.BET_COMPANY, stringSet),
                 new Tuple(LoadProperties.LEAGUE, stringSet));
-        //3 proeprties
+        //3 properties
             // startDate, endDate, league
         expetcedMatches.clear();
         stringSet.clear();
@@ -888,8 +886,8 @@ public class BetIOManagerTest {
         for(Tuple tp : properties){
             lp.put(tp.first, tp.second);
         }
-        assertEqualsCollectionsMatches(expetedMatches, 
-                testingManager.loadMatches(lp));
+        assertEqualsCollectionsMatches(testingManager.loadMatches(lp),
+                expetedMatches);
     }
     
     @Test(expected = IllegalArgumentException.class)
@@ -1007,7 +1005,8 @@ public class BetIOManagerTest {
         if(result == null && expected == null){ return; }
         if(result == null && expected != null
                 || result != null && expected == null){ fail("Only one is null"); }
-        if(result.size() != expected.size()){ fail("Not same size"); }
+        if(result.size() != expected.size()){ fail("Not same size (bets) {ex: " 
+                + expected.size() + ", res: " + result.size() + "}"); }
         for(Match res : result){
             for(Match ex : expected){
                 if(res.getId().equals(ex.getId())){
@@ -1046,7 +1045,8 @@ public class BetIOManagerTest {
         if(resColl == null && exColl == null){ return; }
         if(resColl == null && exColl != null
                 || resColl != null && exColl == null){ fail("Only one is null"); }
-        if(resColl.size() != exColl.size()){ fail("Not same size"); }
+        if(resColl.size() != exColl.size()){ fail("Not same size (bets) {ex: " 
+                + exColl.size() + ", res: " + resColl.size() + "}"); }
         LinkedList<Bet> resList = new LinkedList<>(resColl);
         LinkedList<Bet> exList = new LinkedList<>(exColl);
         Iterator<Bet> resIter = resList.iterator();

@@ -1,4 +1,14 @@
+DROP DATABASE BetApp;
 CREATE DATABASE BetApp;
+
+DROP TABLE matches;
+DROP TABLE scores;
+DROP TABLE bet1x2;
+DROP TABLE betah;
+DROP TABLE betbtts;
+DROP TABLE betdc;
+DROP TABLE betdnb;
+DROP TABLE betou;
 
 --matches
 CREATE TABLE matches
@@ -36,9 +46,9 @@ CREATE TABLE bet1x2
 (
   matchid integer NOT NULL,
   betcompany character varying(50) NOT NULL,
-  bet1 character varying(5),
-  betx character varying(5),
-  bet2 character varying(5),
+  bet1 character varying(8),
+  betx character varying(8),
+  bet2 character varying(8),
   CONSTRAINT "bet1x2ID" PRIMARY KEY (matchid, betcompany)
 )
 WITH (
@@ -52,10 +62,10 @@ CREATE TABLE betah
 (
   matchid integer NOT NULL,
   betcompany character varying(50) NOT NULL,
-  bet1 character varying(5),
-  bet2 character varying(5),
-  handicap character varying(5) NOT NULL,
-  description character varying(20) NOT NULL,
+  bet1 character varying(8),
+  bet2 character varying(8),
+  handicap character varying(8) NOT NULL,
+  description character varying(50) NOT NULL,
   CONSTRAINT "betAHID" PRIMARY KEY (matchid, betcompany, handicap, description)
 )
 WITH (
@@ -69,8 +79,8 @@ CREATE TABLE betbtts
 (
   matchid integer NOT NULL,
   betcompany character varying(50) NOT NULL,
-  yesbet character varying(5),
-  nobet character varying(5),
+  yesbet character varying(8),
+  nobet character varying(8),
   CONSTRAINT "betBTTSID" PRIMARY KEY (matchid, betcompany)
 )
 WITH (
@@ -84,9 +94,9 @@ CREATE TABLE betdc
 (
   matchid integer NOT NULL,
   betcompany character varying(50) NOT NULL,
-  bet1x character varying(5),
-  bet2x character varying(5),
-  bet12 character varying(5),
+  bet1x character varying(8),
+  bet2x character varying(8),
+  bet12 character varying(8),
   CONSTRAINT "betDCID" PRIMARY KEY (matchid, betcompany)
 )
 WITH (
@@ -100,8 +110,8 @@ CREATE TABLE betdnb
 (
   matchid integer NOT NULL,
   betcompany character varying(50) NOT NULL,
-  bet1 character varying(5),
-  bet2 character varying(5),
+  bet1 character varying(8),
+  bet2 character varying(8),
   CONSTRAINT "betDNBID" PRIMARY KEY (matchid, betcompany)
 )
 WITH (
@@ -115,9 +125,9 @@ CREATE TABLE betou
 (
   matchid integer NOT NULL,
   betcompany character varying(50) NOT NULL,
-  total character varying(5) NOT NULL,
-  overbet character varying(5),
-  underbet character varying(5),
+  total character varying(8) NOT NULL,
+  overbet character varying(8),
+  underbet character varying(8),
   description character varying(50) NOT NULL,
   CONSTRAINT "betOUID" PRIMARY KEY (matchid, betcompany, total, description)
 )

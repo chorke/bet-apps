@@ -1,6 +1,7 @@
 
 package chorke.proprietary.bet.apps.io;
 
+import chorke.proprietary.bet.apps.core.Tuple;
 import chorke.proprietary.bet.apps.core.bets.Bet;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -16,7 +17,7 @@ public class LoadProperties extends Properties{
     public static final int START_DATE = 1;
     public static final int END_DATE = 2;
     public static final int BET_COMPANY = 3;
-    public static final int LEAGUE = 4;
+    public static final int LEAGUE_COUNTRY = 4;
     public static final int BET_CLASS = 5;
     
     /**
@@ -84,12 +85,21 @@ public class LoadProperties extends Properties{
     }
     
     /**
-     * Pridá vyžadovanú ligu. Ligy sú ukladané v množine.
+     * Pridá vyžadovanú ligu a krajinu ligy. Ligy sú ukladané v množine.
+     * Ukladaný formát je (liga, krajina).
      * @param league  
      * @see Set
      */
-    public void addLeague(String league){
-        addToSet(LEAGUE, league);
+    public void addLeague(String league, String country){
+        addToSet(LEAGUE_COUNTRY, new Tuple(league, country));
+    }
+    
+    /**
+     * Vráti požadované ligy. Ukladaný formát je (liga, krajina).
+     * @return 
+     */
+    public Set<Tuple<String, String>> getLeagues(){
+        return (Set<Tuple<String, String>>)get(LEAGUE_COUNTRY);
     }
     
     /**
@@ -107,13 +117,5 @@ public class LoadProperties extends Properties{
      */
     public <T extends Bet> Set<Class<T>> getBetClasses(){
         return (Set<Class<T>>)get(BET_CLASS);
-    }
-    
-    /**
-     * Vráti požadované ligy.
-     * @return 
-     */
-    public Set<String> getLeagues(){
-        return (Set<String>)get(LEAGUE);
     }
 }

@@ -639,7 +639,8 @@ public class DBBetIOManager implements CloneableBetIOManager{
     }
     
     private PreparedStatement prepareMatchStatement(
-            Connection con, Calendar start, Calendar end, Set<String> leagues) throws SQLException{
+            Connection con, Calendar start, Calendar end, 
+            Set<Tuple<String, String>> leagues) throws SQLException{
         StringBuilder out = new StringBuilder("SELECT * FROM matches");
         if(start == null && end == null && (leagues == null || leagues.isEmpty())){
             return con.prepareStatement(out.toString());
@@ -658,8 +659,8 @@ public class DBBetIOManager implements CloneableBetIOManager{
         if(leagues != null && !leagues.isEmpty()){
             if(needAnd){ out.append(" AND "); }
             out.append("(");
-            for(String league : leagues){
-                out.append("league LIKE ? OR ");
+            for(Tuple tp : leagues){
+                out.append("(country LIKE ? AND league LIKE ?) OR ");
             }
             out.delete(out.length() - 4, out.length());
             out.append(")");
@@ -675,8 +676,10 @@ public class DBBetIOManager implements CloneableBetIOManager{
             i++;
         }
         if(leagues != null && !leagues.isEmpty()){
-            for(String league : leagues){
-                ps.setString(i, league);
+            for(Tuple<String, String> tp : leagues){
+                ps.setString(i, tp.second);
+                i++;
+                ps.setString(i, tp.first);
                 i++;
             }
         }

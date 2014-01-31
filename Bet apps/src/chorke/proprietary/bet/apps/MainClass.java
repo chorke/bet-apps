@@ -30,9 +30,9 @@ public class MainClass {
         BetexplorerComMultithreadParser parser = new BetexplorerComMultithreadParser(man);
         start = System.nanoTime();
         parser.setExploredSport(BettingSports.All);
-        parser.setStartDate(new GregorianCalendar(2013, Calendar.OCTOBER, 23));
-        parser.setEndDate(new GregorianCalendar(2013, Calendar.OCTOBER, 23));
-        System.out.println(parser.getMatches().size());
+        parser.setStartDate(new GregorianCalendar(2013, Calendar.SEPTEMBER, 1));
+        parser.setEndDate(new GregorianCalendar(2013, Calendar.SEPTEMBER, 4));
+//        System.out.println(parser.getMatches().size());
         System.out.println("unsaved {" + parser.getUnsavedMatches().size()
                 + "}: " + parser.getUnsavedMatches());
         System.out.println("matches {" + parser.getUndownloadedMatches().size()

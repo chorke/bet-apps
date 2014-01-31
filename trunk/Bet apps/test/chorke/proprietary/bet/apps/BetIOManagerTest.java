@@ -879,6 +879,30 @@ public class BetIOManagerTest {
                 new Tuple(LoadProperties.END_DATE, end),
                 new Tuple(LoadProperties.LEAGUE, stringSet),
                 new Tuple(LoadProperties.BET_COMPANY, stringSet));
+        // bet class
+        expetcedMatches.clear();
+        HashSet<Class> classSet = new HashSet<>();
+        classSet.add(Bet1x2.class);
+        classSet.add(BetAsianHandicap.class);
+        m1 = getMatchCopyWithoutBets(match1);
+        m3 = getMatchCopyWithoutBets(match3);
+        m1.addBet(bet1x2_Bet365_Match1);
+        m1.addBet(bet1x2_Fortuna_Match1);
+        m1.addBet(bet1x2_Tipsport_Match1);
+        m1.addBet(betah_Bet365_Minus0p5_Match1);
+        m1.addBet(betah_Bet365_Minus0p75_Match1);
+        m1.addBet(betah_Doublebet_Plus0p75_Match1);
+        m1.addBet(betah_Doublebet_Plus1p5_Match1);
+        m1.addBet(betah_Fortuna_Minus0p5_Match1);
+        m1.addBet(betah_Fortuna_Minus0p75_Match1);
+        
+        m3.addBet(bet1x2_Tipsport_Match3);
+        m3.addBet(betah_Bet365_Plus1p0_Match3);
+        
+        expetcedMatches.add(m1);
+        expetcedMatches.add(m3);
+        expetcedMatches.add(match2);
+        loadWithProperties(expetcedMatches, new Tuple(LoadProperties.BET_CLASS, classSet));
     }
     
     private void loadWithProperties(Collection<Match> expetedMatches, Tuple... properties){
@@ -1005,7 +1029,10 @@ public class BetIOManagerTest {
         if(result == null && expected == null){ return; }
         if(result == null && expected != null
                 || result != null && expected == null){ fail("Only one is null"); }
-        if(result.size() != expected.size()){ fail("Not same size (bets) {ex: " 
+        if(result.size() != expected.size()){ 
+            System.out.println(result);
+            System.out.println(expected);
+            fail("Not same size (matches) {ex: " 
                 + expected.size() + ", res: " + result.size() + "}"); }
         for(Match res : result){
             for(Match ex : expected){
@@ -1020,7 +1047,7 @@ public class BetIOManagerTest {
         if(res == null && ex == null){ return; }
         if(res != null){
             if(!res.equals(ex)){
-                fail("Not equals matches");
+                fail("Not equals matches " + res + "  " + ex);
             }
         } else {
             fail("res == null, ex != null");
@@ -1028,7 +1055,8 @@ public class BetIOManagerTest {
         Map<String, Collection<Bet>> betsRes = res.getBets();
         Map<String, Collection<Bet>> betsEx = ex.getBets();
         if(betsRes.size() != betsEx.size()){
-            fail("Not same bets size");
+            fail("Not same bets size {res: " + betsRes.size() + ", ex: " + betsEx.size() + "}"
+                    + System.lineSeparator() + res.toString());
         }
         Collection<Bet> resColl, exColl;
         for(String bc : betsRes.keySet()){

@@ -19,6 +19,8 @@ public class DocumentDownloader {
      */
     public static final int CONNECTION_TRIES = 5;
     
+    private static final int CONNECTION_TIMEOUT = 10_000;
+    
     /**
      * Pokúsi sa stiahnuť web stránku. Počet pokusov je {@link #CONNECTION_TRIES}.
      * Time out je 5 000. V prípade núspechu vracia null;
@@ -28,7 +30,7 @@ public class DocumentDownloader {
     public Document getDocument(String url){
         for(int i = 1; i <= CONNECTION_TRIES; i++){
             try{
-                return Jsoup.connect(url).timeout(5_000).get();
+                return Jsoup.connect(url).timeout(CONNECTION_TIMEOUT).get();
             } catch (IOException ex){
                 System.err.println("Time out [" + i + "] by connecting: " + url);
                 System.err.println(ex);

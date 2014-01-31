@@ -23,6 +23,7 @@ import java.util.GregorianCalendar;
 import java.util.ListIterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -353,6 +354,8 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             Tuple<BettingSports, Calendar> tuple = getNextSportForDownload();
             TextingMatchCollector tmc;
             while(tuple != null){
+                System.out.println("I {" + id + "} have " 
+                        + tuple.first + " " + tuple.second.get(Calendar.DATE));
                 tmc = new TextingMatchCollector(tuple.first, tuple.second);
                 matches.addAll(tmc.getMatchesList());
                 tuple = getNextSportForDownload();
@@ -393,6 +396,8 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             MatchFromTextingMatchCollector mftmc;
             Match match = null;
             while(tm != null){
+                System.out.println("I {" + id + "} have " 
+                        + tm.match + "{" + tm.matchID + "}");
                 mftmc = new MatchFromTextingMatchCollector(tm);
                 try{
                     match = mftmc.parseMatchDetails();
@@ -578,7 +583,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         private Match parseMatchDetails(){
             Document doc;
             Elements tableRows;
-            System.out.println(textingMatch);
+//            System.out.println(textingMatch);
             Match outputMatch = textingMatch.getMatch();
             for(String bt : betsType){
                 doc = docDwnl.getDocument(getURLForMatchDetails(textingMatch.matchID, bt));

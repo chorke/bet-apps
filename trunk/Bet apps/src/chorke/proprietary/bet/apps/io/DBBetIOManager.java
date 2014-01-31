@@ -315,99 +315,75 @@ public class DBBetIOManager implements CloneableBetIOManager{
             PreparedStatement betdcPS,
             PreparedStatement betdnbPS,
             PreparedStatement betouPS) throws SQLException {
+        System.out.println("getting matches");
         Map<Long, Match> matches = getMatches(matchesPS.executeQuery());
-        Map<Long, Score> scores = getScores(scoresPS.executeQuery());
-        Map<Long, Collection<Bet>> bets = new HashMap<>();
-        getBet1x2(bet1x2PS.executeQuery(), bets);
-        getBetAsianHandicap(betahPS.executeQuery(), bets);
-        getBetBothTeamsToScore(betbttsPS.executeQuery(), bets);
-        getBetDoubleChance(betdcPS.executeQuery(), bets);
-        getBetDrawNoBet(betdnbPS.executeQuery(), bets);
-        getBetOverUnder(betouPS.executeQuery(), bets);
-        return merge(matches, scores, bets);
-    }
-    
-    /**
-     * Priradí skóre a stávky ku zápasom. Predané mapy sú vo forme
-     * {@code <idZápasu, zápas/skóre/stávky>}
-     * @param matches
-     * @param scores
-     * @param bets
-     * @return 
-     */
-    private Collection<Match> merge(Map<Long, Match> matches, 
-            Map<Long, Score> scores, Map<Long, Collection<Bet>> bets){
-        Collection<Match> merged = new LinkedList<>();
-        Match match;
+        matchesPS.close();
+        System.out.println("getting scores");
+        getScores(scoresPS.executeQuery(), matches);
+        scoresPS.close();
+        if(bet1x2PS != null){
+            System.out.println("getting 1x2");
+            getBet1x2(bet1x2PS.executeQuery(), matches);
+            bet1x2PS.close();
+        }
+        if(betahPS != null){
+            System.out.println("getting ah");
+            getBetAsianHandicap(betahPS.executeQuery(), matches);
+            betahPS.close();
+        }
+        if(betbttsPS != null){
+            System.out.println("getting btts");
+            getBetBothTeamsToScore(betbttsPS.executeQuery(), matches);
+            betbttsPS.close();
+        }
+        if(betdcPS != null){
+            System.out.println("getting dc");
+            getBetDoubleChance(betdcPS.executeQuery(), matches);
+            betdcPS.close();
+        }
+        if(betdnbPS != null){
+            System.out.println("getting dnb");
+            getBetDrawNoBet(betdnbPS.executeQuery(), matches);
+            betdnbPS.close();
+        }
+        if(betouPS != null){
+            System.out.println("getting ou");
+            getBetOverUnder(betouPS.executeQuery(), matches);
+            betouPS.close();
+        }
+        Collection<Match> outputMatches = new LinkedList<>();
         Iterator<Long> iter = matches.keySet().iterator();
-        Long l;
-        Score score;
+        Match match;
         while(iter.hasNext()){
-            l = iter.next();
-            match = matches.get(l);
-            score = scores.get(l);
-            match.setScore(null);
-            if(score != null){
-                for(PartialScore ps : score.getPartialScore()){
-                    match.addPartialScore(ps);
-                }
+            match = matches.get(iter.next());
+            if(!match.getBets().isEmpty()){
+                outputMatches.add(match);
             }
-            if(bets.containsKey(l)){
-                for(Bet b : bets.get(l)){
-                    match.addBet(b);
-                }
-            }
-            merged.add(match);
             iter.remove();
-            scores.remove(l);
-            bets.remove(l);
         }
-        Iterator<Match> cleanUp = merged.iterator();
-        while(cleanUp.hasNext()){
-            if(cleanUp.next().getBets().isEmpty()){
-                cleanUp.remove();
-            }
-        }
-        return merged;
+        return outputMatches;
     }
-    
-    /**
-     * Pomocná metóda pre ukladanie stávok do mapy.
-     * Obecné zásady sú, že ak už mapa obsahuje kľúč, je pridaná stávka ku 
-     * príslušnej kolekcii, inak je vytvorená nová stávka a kolekcia.
-     * @param bet
-     * @param storage
-     * @param idx 
-     */
-    private void putBetToStorage(Bet bet, Map<Long, Collection<Bet>> storage, Long idx){
-        Collection<Bet> betsCollection;
-        if(storage.containsKey(idx)){
-            betsCollection = storage.get(idx);
-        } else {
-            betsCollection = new LinkedList<>();
-            storage.put(idx, betsCollection);
-        }
-        betsCollection.add(bet);
-    }
-    
+   
     /**
      * Z {@link ResultSet} {@code bet} získa všetky stávky {@link Bet1x2}
      * a uloží do {@code storage}. {@code bet} nie je nijako kontrolovaná
      * a mala by obsahovať iba korektná stávky {@link Bet1x2}.
      * @param bet
-     * @param storage
+     * @param matches
      * @throws SQLException 
      */
-    private void getBet1x2(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+    private void getBet1x2(ResultSet bet, Map<Long, Match> matches) throws SQLException{
+        Match match;
         while(bet.next()){
-            putBetToStorage(
-                    new Bet1x2(bet.getString("betcompany"),
-                        new BigDecimal(bet.getString("bet1")), 
-                        new BigDecimal(bet.getString("betx")),
-                        new BigDecimal(bet.getString("bet2"))),
-                    storage, 
-                    bet.getLong("matchid"));
+            match = matches.get(bet.getLong("matchid"));
+            if(match == null){ continue; }
+            match.addBet(
+                new Bet1x2(bet.getString("betcompany"),
+                    new BigDecimal(bet.getString("bet1")), 
+                    new BigDecimal(bet.getString("betx")),
+                    new BigDecimal(bet.getString("bet2"))));
         }
+        bet.close();
     }
     
     /**
@@ -418,17 +394,19 @@ public class DBBetIOManager implements CloneableBetIOManager{
      * @param storage
      * @throws SQLException 
      */
-    private void getBetAsianHandicap(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+    private void getBetAsianHandicap(ResultSet bet, Map<Long, Match> matches) throws SQLException{
+        Match match;
         while(bet.next()){
-            putBetToStorage(
+            match = matches.get(bet.getLong("matchid"));
+            if(match == null){ continue; }
+            match.addBet(
                     new BetAsianHandicap(bet.getString("betcompany"),
                         new BigDecimal(bet.getString("bet1")), 
                         new BigDecimal(bet.getString("bet2")),
                         new BigDecimal(bet.getString("handicap")),
-                        bet.getString("description")),
-                    storage, 
-                    bet.getLong("matchid"));
+                        bet.getString("description")));
         }
+        bet.close();
     }
     
     /**
@@ -439,15 +417,17 @@ public class DBBetIOManager implements CloneableBetIOManager{
      * @param storage
      * @throws SQLException 
      */
-    private void getBetBothTeamsToScore(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+    private void getBetBothTeamsToScore(ResultSet bet, Map<Long, Match> matches) throws SQLException{
+        Match match;
         while(bet.next()){
-            putBetToStorage(
+            match = matches.get(bet.getLong("matchid"));
+            if(match == null){ continue; }
+            match.addBet(
                     new BetBothTeamsToScore(bet.getString("betcompany"),
                         new BigDecimal(bet.getString("yesbet")), 
-                        new BigDecimal(bet.getString("nobet"))),
-                    storage, 
-                    bet.getLong("matchid"));
+                        new BigDecimal(bet.getString("nobet"))));
         }
+        bet.close();
     }
     
     /**
@@ -458,16 +438,18 @@ public class DBBetIOManager implements CloneableBetIOManager{
      * @param storage
      * @throws SQLException 
      */
-    private void getBetDoubleChance(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+    private void getBetDoubleChance(ResultSet bet, Map<Long, Match> matches) throws SQLException{
+        Match match;
         while(bet.next()){
-            putBetToStorage(
+            match = matches.get(bet.getLong("matchid"));
+            if(match == null){ continue; }
+            match.addBet(
                     new BetDoubleChance(bet.getString("betcompany"),
                         new BigDecimal(bet.getString("bet1x")), 
                         new BigDecimal(bet.getString("bet12")),
-                        new BigDecimal(bet.getString("bet2x"))),
-                    storage, 
-                    bet.getLong("matchid"));
+                        new BigDecimal(bet.getString("bet2x"))));
         }
+        bet.close();
     }
     
     /**
@@ -478,15 +460,17 @@ public class DBBetIOManager implements CloneableBetIOManager{
      * @param storage
      * @throws SQLException 
      */
-    private void getBetDrawNoBet(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+    private void getBetDrawNoBet(ResultSet bet, Map<Long, Match> matches) throws SQLException{
+        Match match;
         while(bet.next()){
-            putBetToStorage(
+            match = matches.get(bet.getLong("matchid"));
+            if(match == null){ continue; }
+            match.addBet(
                     new BetDrawNoBet(bet.getString("betcompany"),
                         new BigDecimal(bet.getString("bet1")), 
-                        new BigDecimal(bet.getString("bet2"))),
-                    storage, 
-                    bet.getLong("matchid"));
+                        new BigDecimal(bet.getString("bet2"))));
         }
+        bet.close();
     }
     
     /**
@@ -497,17 +481,19 @@ public class DBBetIOManager implements CloneableBetIOManager{
      * @param storage
      * @throws SQLException 
      */
-    private void getBetOverUnder(ResultSet bet, Map<Long, Collection<Bet>> storage) throws SQLException{
+    private void getBetOverUnder(ResultSet bet, Map<Long, Match> matches) throws SQLException{
+        Match match;
         while(bet.next()){
-            putBetToStorage(
+            match = matches.get(bet.getLong("matchid"));
+            if(match == null){ continue; }
+            match.addBet(
                     new BetOverUnder(bet.getString("betcompany"),
                         new BigDecimal(bet.getString("total")), 
                         new BigDecimal(bet.getString("overbet")),
                         new BigDecimal(bet.getString("underbet")),
-                        bet.getString("description")),
-                    storage, 
-                    bet.getLong("matchid"));
+                        bet.getString("description")));
         }
+        bet.close();
     }
     
     /**
@@ -517,40 +503,37 @@ public class DBBetIOManager implements CloneableBetIOManager{
      * @return
      * @throws SQLException 
      */
-    private Map<Long, Score> getScores(ResultSet scores) throws SQLException{
-        HashMap<Long, Score> out = new HashMap<>();
-        HashMap<Tuple<Integer, Integer>, PartialScore> handles = new HashMap<>();
-        Score score;
+    private void getScores(ResultSet scores, Map<Long, Match> matches)
+            throws SQLException{
+        LinkedList<ScoreHandler> handler = new LinkedList<>();
         while(scores.next()){
-            if(scores.getInt("part") != -1){
-                handles.put(new Tuple<>(scores.getInt("matchid"), scores.getInt("part")),
-                        new PartialScore(scores.getInt("team1"), scores.getInt("team2")));
-            }
+            handler.add(new ScoreHandler(
+                    scores.getLong("matchid"), scores.getInt("part"), 
+                    scores.getInt("team1"), scores.getInt("team2")));
         }
-        Iterator<Tuple<Integer, Integer>> iter = handles.keySet().iterator();
-        Tuple<Integer, Integer> tp;
-        while(iter.hasNext()){
-            tp = iter.next();
-            if(tp.second.equals(1)){
-                score = new Score();
-                score.addPartialScore(handles.get(tp));
-                out.put(new Long((long)tp.first), score);
-                iter.remove();
-            }
-        }
-        int part = 2;
-        while(!handles.isEmpty()){
-            iter = handles.keySet().iterator();
+        scores.close();
+        
+        int maxPart = 1;
+        int exploredPart = 1;
+        Iterator<ScoreHandler> iter = handler.iterator();
+        ScoreHandler sh;
+        Match match;
+        while(exploredPart <= maxPart){
             while(iter.hasNext()){
-                tp = iter.next();
-                if(tp.second.equals(part)){
-                    out.get(new Long((long)tp.first)).addPartialScore(handles.get(tp));
+                sh = iter.next();
+                if(sh.part == exploredPart){
+                    match = matches.get(sh.matchid);
                     iter.remove();
+                    if(match == null){ continue; }
+                    match.addPartialScore( new PartialScore(sh.team1, sh.team2));
+                }
+                if(sh.part > maxPart){ 
+                    maxPart = sh.part; 
                 }
             }
-            part++;
+            exploredPart++;
+            iter = handler.iterator();
         }
-        return out;
     }
     
     /**
@@ -577,6 +560,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
             match.setProperties(prop);
             out.put(match.getId(), match);
         }
+        matches.close();
         return out;
     }
     
@@ -592,24 +576,34 @@ public class DBBetIOManager implements CloneableBetIOManager{
         if(properties.isEmpty()){
             return loadAllMatches();
         }
-        try(Connection con = dataSource.getConnection();
-                PreparedStatement matchesPS = prepareMatchStatement(con, 
-                        properties.getStartDate(),
-                        properties.getEndDate(),
-                        properties.getLeagues());
-                PreparedStatement scoresPS = con.prepareStatement("SELECT * FROM scores");
-                PreparedStatement bet1x2PS = prepareBetStatement(con,
-                        properties.getBetCompanies(), "bet1x2");
-                PreparedStatement betahPS = prepareBetStatement(con,
-                        properties.getBetCompanies(), "betah");
-                PreparedStatement betbttsPS = prepareBetStatement(con,
-                        properties.getBetCompanies(), "betbtts");
-                PreparedStatement betdcPS = prepareBetStatement(con,
-                        properties.getBetCompanies(), "betdc");
-                PreparedStatement betdnbPS = prepareBetStatement(con,
-                        properties.getBetCompanies(), "betdnb");
-                PreparedStatement betouPS = prepareBetStatement(con,
-                        properties.getBetCompanies(), "betou");){
+        try(Connection con = dataSource.getConnection()){
+            PreparedStatement matchesPS = prepareMatchStatement(con, 
+                    properties.getStartDate(),
+                    properties.getEndDate(),
+                    properties.getLeagues());
+            PreparedStatement scoresPS 
+                    = con.prepareStatement("SELECT * FROM scores");
+            PreparedStatement bet1x2PS 
+                    = prepareBetStatement(con, properties.getBetCompanies(), "bet1x2");
+            PreparedStatement betahPS 
+                    = prepareBetStatement(con, properties.getBetCompanies(), "betah");
+            PreparedStatement betbttsPS 
+                    = prepareBetStatement(con, properties.getBetCompanies(), "betbtts");
+            PreparedStatement betdcPS 
+                    = prepareBetStatement(con, properties.getBetCompanies(), "betdc");
+            PreparedStatement betdnbPS 
+                    = prepareBetStatement(con, properties.getBetCompanies(), "betdnb");
+            PreparedStatement betouPS 
+                    = prepareBetStatement(con, properties.getBetCompanies(), "betou");
+            Set classes = properties.getBetClasses();
+            if(classes != null){
+                if(!classes.contains(Bet1x2.class)){ bet1x2PS.close(); }
+                if(!classes.contains(BetAsianHandicap.class)){ betahPS.close(); betahPS = null;}
+                if(!classes.contains(BetBothTeamsToScore.class)){ betbttsPS.close(); betbttsPS = null;}
+                if(!classes.contains(BetDoubleChance.class)){ betdcPS.close(); betdcPS = null;}
+                if(!classes.contains(BetDrawNoBet.class)){ betdnbPS.close(); betdnbPS = null;}
+                if(!classes.contains(BetOverUnder.class)){ betouPS.close(); betouPS = null;}
+            }
             return getMatchesFromPreparedStatements(matchesPS, scoresPS, 
                     bet1x2PS, betahPS, betbttsPS, betdcPS, betdnbPS, betouPS);
         } catch (SQLException ex){
@@ -753,5 +747,19 @@ public class DBBetIOManager implements CloneableBetIOManager{
     @Override
     protected Object clone() throws CloneNotSupportedException {
         return cloneBetIOManager();
+    }
+    
+    private class ScoreHandler {
+        private final long matchid;
+        private final int part;
+        private final int team1;
+        private final int team2;
+
+        public ScoreHandler(long matchid, int part, int team1, int team2) {
+            this.matchid = matchid;
+            this.part = part;
+            this.team1 = team1;
+            this.team2 = team2;
+        }
     }
 }

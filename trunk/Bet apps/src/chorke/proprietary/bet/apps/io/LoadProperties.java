@@ -1,6 +1,7 @@
 
 package chorke.proprietary.bet.apps.io;
 
+import chorke.proprietary.bet.apps.core.bets.Bet;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Properties;
@@ -16,6 +17,7 @@ public class LoadProperties extends Properties{
     public static final int END_DATE = 2;
     public static final int BET_COMPANY = 3;
     public static final int LEAGUE = 4;
+    public static final int BET_CLASS = 5;
     
     /**
      * Nastaví začiatočný dátum. Ekvivalentné 
@@ -60,14 +62,18 @@ public class LoadProperties extends Properties{
      * @see Set
      */
     public void addBetCompany(String betCompany){
+        addToSet(BET_COMPANY, betCompany);
+    }
+    
+    private void addToSet(int key, Object value){
         Set set;
-        if(containsKey(BET_COMPANY)){
-            set = ((Set)get(BET_COMPANY));
+        if(containsKey(key)){
+            set = ((Set)get(key));
         } else {
             set = new HashSet<>();
-            put(BET_COMPANY, set);
+            put(key, set);
         }
-        set.add(betCompany);
+        set.add(value);
     }
     
     /**
@@ -83,14 +89,24 @@ public class LoadProperties extends Properties{
      * @see Set
      */
     public void addLeague(String league){
-        Set set;
-        if(containsKey(LEAGUE)){
-            set = ((Set)get(LEAGUE));
-        } else {
-            set = new HashSet<>();
-            put(LEAGUE, set);
-        }
-        set.add(league);
+        addToSet(LEAGUE, league);
+    }
+    
+    /**
+     * Pridá požadovaný typ stávok. Triedy sú ukladané v množine.
+     * @param <T>
+     * @param clazz 
+     */
+    public <T extends Bet> void addBetClass(Class<T> clazz){
+        addToSet(BET_CLASS, clazz);
+    }
+    
+    /**
+     * Vráti požadované typy stávok.
+     * @return 
+     */
+    public <T extends Bet> Set<Class<T>> getBetClasses(){
+        return (Set<Class<T>>)get(BET_CLASS);
     }
     
     /**

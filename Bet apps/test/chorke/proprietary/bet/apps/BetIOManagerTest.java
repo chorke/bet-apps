@@ -9,6 +9,7 @@ import chorke.proprietary.bet.apps.core.bets.BetBothTeamsToScore;
 import chorke.proprietary.bet.apps.core.bets.BetDoubleChance;
 import chorke.proprietary.bet.apps.core.bets.BetDrawNoBet;
 import chorke.proprietary.bet.apps.core.bets.BetOverUnder;
+import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.core.match.MatchProperties;
 import chorke.proprietary.bet.apps.core.match.sports.Sport;
@@ -755,6 +756,26 @@ public class BetIOManagerTest {
         properties.addLeague("Extraliga", "Slovensko");
         expectedMatches.add(match2);
         checkLoading(expectedMatches, properties);
+        
+        expectedMatches.clear();
+        properties.clear();
+        
+        Match match = new Match(Sport.getSport(Sport.HANDBALL_STRING));
+        match.addPartialScore(14, 15);
+        match.addPartialScore(15, 16);
+        MatchProperties prop = new MatchProperties();
+        prop.setCountry("Slovensko");
+        prop.setLeague("1. liga");
+        prop.setDate(new GregorianCalendar(2012, Calendar.DECEMBER, 12));
+        match.setProperties(prop);
+        match.addBet(new Bet1x2("my", BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
+        testingManager.saveMatch(match);
+        
+        properties.addLeague("1. liga", "Slovensko");
+        expectedMatches.add(match);
+        
+        checkLoading(expectedMatches, properties);
+        testingManager.deleteMatch(match);
     }
     
     private void classes(Collection<Match> expectedMatches,

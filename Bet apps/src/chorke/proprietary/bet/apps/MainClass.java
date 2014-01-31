@@ -1,11 +1,18 @@
 
 package chorke.proprietary.bet.apps;
 
+import chorke.proprietary.bet.apps.core.bets.Bet1x2;
+import chorke.proprietary.bet.apps.core.bets.BetBothTeamsToScore;
+import chorke.proprietary.bet.apps.core.bets.BetDoubleChance;
+import chorke.proprietary.bet.apps.core.bets.BetDrawNoBet;
+import chorke.proprietary.bet.apps.core.bets.BetOverUnder;
 import chorke.proprietary.bet.apps.core.httpparsing.BetexplorerComMultithreadParser;
 import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser.BettingSports;
+import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.io.DBBetIOManager;
 import chorke.proprietary.bet.apps.io.LoadProperties;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.GregorianCalendar;
 
 
@@ -18,12 +25,13 @@ public class MainClass {
     
     public void start(){
         long start, end;
+        
         DBBetIOManager man = new DBBetIOManager(StaticConstants.DATA_SOURCE);
         BetexplorerComMultithreadParser parser = new BetexplorerComMultithreadParser(man);
         start = System.nanoTime();
         parser.setExploredSport(BettingSports.All);
-        parser.setStartDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 1));
-        parser.setEndDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 1));
+        parser.setStartDate(new GregorianCalendar(2013, Calendar.OCTOBER, 23));
+        parser.setEndDate(new GregorianCalendar(2013, Calendar.OCTOBER, 23));
         System.out.println(parser.getMatches().size());
         System.out.println("unsaved {" + parser.getUnsavedMatches().size()
                 + "}: " + parser.getUnsavedMatches());
@@ -34,6 +42,10 @@ public class MainClass {
         end = System.nanoTime();
         printTime("downloading: ", end - start);
 //        LoadProperties properties = new LoadProperties();
+//        properties.addBetClass(Bet1x2.class);
+//        properties.addBetClass(BetBothTeamsToScore.class);
+//        properties.addBetClass(BetDoubleChance.class);
+//        properties.addBetClass(BetDrawNoBet.class);
 //        start = System.nanoTime();
 //        Collection<Match> loadedMatches = man.loadMatches(properties);
 //        System.out.println("loaded: " + loadedMatches.size());

@@ -278,15 +278,15 @@ public class DBBetIOManager implements CloneableBetIOManager{
         }
         try(Connection con = dataSource.getConnection();
                 PreparedStatement matchesPS = prepareMatchStatement(con, null, null, null);
-                PreparedStatement scoresPS = con.prepareStatement("SELECT * FROM scores");
-                PreparedStatement bet1x2PS = prepareBetStatement(con, null, "bet1x2");
-                PreparedStatement betahPS = prepareBetStatement(con, null, "betah");
-                PreparedStatement betbttsPS = prepareBetStatement(con, null, "betbtts");
-                PreparedStatement betdcPS = prepareBetStatement(con, null, "betdc");
-                PreparedStatement betdnbPS = prepareBetStatement(con, null, "betdnb");
-                PreparedStatement betouPS = prepareBetStatement(con, null, "betou");){
-            return getMatchesFromPreparedStatements(matchesPS, scoresPS, 
-                    bet1x2PS, betahPS, betbttsPS, betdcPS, betdnbPS, betouPS);
+                PreparedStatement scoresPS = prepareScoresStatement(con, null );
+                PreparedStatement bet1x2PS = prepareBetStatement(con, null, "bet1x2", null);
+                PreparedStatement betahPS = prepareBetStatement(con, null, "betah", null);
+                PreparedStatement betbttsPS = prepareBetStatement(con, null, "betbtts", null);
+                PreparedStatement betdcPS = prepareBetStatement(con, null, "betdc", null);
+                PreparedStatement betdnbPS = prepareBetStatement(con, null, "betdnb", null);
+                PreparedStatement betouPS = prepareBetStatement(con, null, "betou", null);){
+            return getMatchesFromPreparedStatements(getMatches(matchesPS.executeQuery()),
+                    scoresPS, bet1x2PS, betahPS, betbttsPS, betdcPS, betdnbPS, betouPS);
         } catch (SQLException ex){
             throw new BetIOException("Error while finding all matches.", ex);
         }
@@ -307,7 +307,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
      * @throws SQLException 
      */
     private Collection<Match> getMatchesFromPreparedStatements(
-            PreparedStatement matchesPS,
+            Map<Long, Match> matches,
             PreparedStatement scoresPS,
             PreparedStatement bet1x2PS,
             PreparedStatement betahPS,
@@ -315,9 +315,6 @@ public class DBBetIOManager implements CloneableBetIOManager{
             PreparedStatement betdcPS,
             PreparedStatement betdnbPS,
             PreparedStatement betouPS) throws SQLException {
-        System.out.println("getting matches");
-        Map<Long, Match> matches = getMatches(matchesPS.executeQuery());
-        matchesPS.close();
         System.out.println("getting scores");
         getScores(scoresPS.executeQuery(), matches);
         scoresPS.close();
@@ -505,34 +502,53 @@ public class DBBetIOManager implements CloneableBetIOManager{
      */
     private void getScores(ResultSet scores, Map<Long, Match> matches)
             throws SQLException{
-        LinkedList<ScoreHandler> handler = new LinkedList<>();
-        while(scores.next()){
-            handler.add(new ScoreHandler(
-                    scores.getLong("matchid"), scores.getInt("part"), 
-                    scores.getInt("team1"), scores.getInt("team2")));
-        }
-        scores.close();
+//        LinkedList<ScoreHandler> handler = new LinkedList<>();
+//        while(scores.next()){
+//            handler.add(new ScoreHandler(
+//                    scores.getLong("matchid"), scores.getInt("part"), 
+//                    scores.getInt("team1"), scores.getInt("team2")));
+//        }
+//        scores.close();
         
         int maxPart = 1;
         int exploredPart = 1;
-        Iterator<ScoreHandler> iter = handler.iterator();
-        ScoreHandler sh;
+//        Iterator<ScoreHandler> iter = handler.iterator();
+//        ScoreHandler sh;
+//        Match match;
+//        while(exploredPart <= maxPart){
+//            while(iter.hasNext()){
+//                sh = iter.next();
+//                if(sh.part == exploredPart){
+//                    match = matches.get(sh.matchid);
+//                    iter.remove();
+//                    if(match == null){ continue; }
+//                    match.addPartialScore( new PartialScore(sh.team1, sh.team2));
+//                }
+//                if(sh.part > maxPart){ 
+//                    maxPart = sh.part; 
+//                }
+//            }
+//            exploredPart++;
+//            iter = handler.iterator();
+//        }
+        int acualPart;
         Match match;
         while(exploredPart <= maxPart){
-            while(iter.hasNext()){
-                sh = iter.next();
-                if(sh.part == exploredPart){
-                    match = matches.get(sh.matchid);
-                    iter.remove();
+            while(scores.next()){
+                acualPart = scores.getInt("part");
+                if(acualPart == exploredPart){
+                    match = matches.get(scores.getLong("matchid"));
                     if(match == null){ continue; }
-                    match.addPartialScore( new PartialScore(sh.team1, sh.team2));
+                    match.addPartialScore(
+                            new PartialScore(scores.getInt("team1"), scores.getInt("team2")));
                 }
-                if(sh.part > maxPart){ 
-                    maxPart = sh.part; 
+                if(acualPart > maxPart){ 
+                    maxPart = acualPart; 
                 }
             }
             exploredPart++;
-            iter = handler.iterator();
+            scores.beforeFirst();
+//            iter = handler.iterator();
         }
     }
     
@@ -581,20 +597,31 @@ public class DBBetIOManager implements CloneableBetIOManager{
                     properties.getStartDate(),
                     properties.getEndDate(),
                     properties.getLeagues());
-            PreparedStatement scoresPS 
-                    = con.prepareStatement("SELECT * FROM scores");
-            PreparedStatement bet1x2PS 
-                    = prepareBetStatement(con, properties.getBetCompanies(), "bet1x2");
-            PreparedStatement betahPS 
-                    = prepareBetStatement(con, properties.getBetCompanies(), "betah");
-            PreparedStatement betbttsPS 
-                    = prepareBetStatement(con, properties.getBetCompanies(), "betbtts");
-            PreparedStatement betdcPS 
-                    = prepareBetStatement(con, properties.getBetCompanies(), "betdc");
-            PreparedStatement betdnbPS 
-                    = prepareBetStatement(con, properties.getBetCompanies(), "betdnb");
-            PreparedStatement betouPS 
-                    = prepareBetStatement(con, properties.getBetCompanies(), "betou");
+            Map<Long, Match> matches = getMatches(matchesPS.executeQuery());
+            matchesPS.close();
+            if(matches.isEmpty()){
+                return new LinkedList<>();
+            }
+            String whereClauseWithIds = "";
+            if(properties.getStartDate() != null
+                    || properties.getEndDate() != null
+                    || (properties.getLeagues() != null
+                        && !properties.getLeagues().isEmpty())){
+                whereClauseWithIds = getWhereClauseWithIds(matches.keySet());
+            }
+            PreparedStatement scoresPS = prepareScoresStatement(con, whereClauseWithIds);
+            PreparedStatement bet1x2PS = prepareBetStatement(con, properties.getBetCompanies(),
+                    "bet1x2", whereClauseWithIds);
+            PreparedStatement betahPS = prepareBetStatement(con, properties.getBetCompanies(),
+                    "betah", whereClauseWithIds);
+            PreparedStatement betbttsPS = prepareBetStatement(con, properties.getBetCompanies(),
+                    "betbtts", whereClauseWithIds);
+            PreparedStatement betdcPS = prepareBetStatement(con, properties.getBetCompanies(),
+                    "betdc", whereClauseWithIds);
+            PreparedStatement betdnbPS = prepareBetStatement(con, properties.getBetCompanies(),
+                    "betdnb", whereClauseWithIds);
+            PreparedStatement betouPS = prepareBetStatement(con, properties.getBetCompanies(),
+                    "betou", whereClauseWithIds);
             Set classes = properties.getBetClasses();
             if(classes != null){
                 if(!classes.contains(Bet1x2.class)){ bet1x2PS.close(); }
@@ -604,13 +631,41 @@ public class DBBetIOManager implements CloneableBetIOManager{
                 if(!classes.contains(BetDrawNoBet.class)){ betdnbPS.close(); betdnbPS = null;}
                 if(!classes.contains(BetOverUnder.class)){ betouPS.close(); betouPS = null;}
             }
-            return getMatchesFromPreparedStatements(matchesPS, scoresPS, 
+            return getMatchesFromPreparedStatements(matches, scoresPS, 
                     bet1x2PS, betahPS, betbttsPS, betdcPS, betdnbPS, betouPS);
         } catch (SQLException ex){
             throw new BetIOException("Error while finding all matches.", ex);
         }
     }
 
+    /**
+     * Vytvorí podmienku na match id. Neobsahuje žiadne zátvorky ani samotné
+     * WHERE kľúčové slovo, iba OR.
+     * @param ids
+     * @return 
+     */
+    private String getWhereClauseWithIds(Set<Long> ids){
+        StringBuilder sb = new StringBuilder("");
+        long min = Long.MAX_VALUE;
+        long max = Long.MIN_VALUE;
+        for(Long l : ids){
+            if(l < min){ min = l; }
+            if(l > max){ max = l; }
+        }
+        sb.append("matchid >= ").append(min).append(" AND matchid <= ").append(max);
+        return sb.toString();
+    }
+    
+    private PreparedStatement prepareScoresStatement(Connection con, 
+            String whereClauseWithIds) throws SQLException{
+        StringBuilder sb =  new StringBuilder("SELECT * FROM scores");
+        if(whereClauseWithIds != null && !whereClauseWithIds.isEmpty()){
+            sb.append(" WHERE ").append(whereClauseWithIds);
+        }
+        return con.prepareStatement(sb.toString(), 
+                ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+    }
+    
     /**
      * Bet - konkrétny typ stávky.
      * @param betCompanies
@@ -619,21 +674,35 @@ public class DBBetIOManager implements CloneableBetIOManager{
      * @throws SQLException 
      */
     private PreparedStatement prepareBetStatement(
-            Connection con, Set<String> betCompanies, String bet) throws SQLException{
+            Connection con, Set<String> betCompanies, String bet,
+            String whereClauseWithIds) throws SQLException{
         StringBuilder out = new StringBuilder("SELECT * FROM ").append(bet);
-        if(betCompanies == null || betCompanies.isEmpty()){
+        if((betCompanies == null || betCompanies.isEmpty())
+                &&(whereClauseWithIds == null || whereClauseWithIds.isEmpty())){
             return con.prepareStatement(out.toString());
         }
         out.append(" WHERE ");
-        for(String betCompany : betCompanies){
-            out.append("betcompany LIKE ? OR ");
+        boolean needAnd = false;
+        if(betCompanies != null && !betCompanies.isEmpty()){
+            needAnd = true;
+            for(String betCompany : betCompanies){
+                out.append("betcompany LIKE ? OR ");
+            }
+            out.delete(out.length() - 4, out.length());
         }
-        out.delete(out.length() - 4, out.length());
+        if(whereClauseWithIds != null && !whereClauseWithIds.isEmpty()){
+            if(needAnd){
+                out.append(" AND ");
+            }
+            out.append("(").append(whereClauseWithIds).append(")");
+        }
         PreparedStatement ps = con.prepareStatement(out.toString());
-        int i = 1;
-        for(String betCompany : betCompanies){
-            ps.setString(i, betCompany);
-            i++;
+        if(betCompanies != null && !betCompanies.isEmpty()){
+            int i = 1;
+            for(String betCompany : betCompanies){
+                ps.setString(i, betCompany);
+                i++;
+            }
         }
         return ps;
     }

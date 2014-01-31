@@ -8,11 +8,9 @@ import chorke.proprietary.bet.apps.core.bets.BetDrawNoBet;
 import chorke.proprietary.bet.apps.core.bets.BetOverUnder;
 import chorke.proprietary.bet.apps.core.httpparsing.BetexplorerComMultithreadParser;
 import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser.BettingSports;
-import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.io.DBBetIOManager;
 import chorke.proprietary.bet.apps.io.LoadProperties;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.GregorianCalendar;
 
 
@@ -42,13 +40,13 @@ public class MainClass {
         end = System.nanoTime();
         printTime("downloading: ", end - start);
 //        LoadProperties properties = new LoadProperties();
+//        properties.addStartDate(new GregorianCalendar(2013, Calendar.OCTOBER, 10));
 //        properties.addBetClass(Bet1x2.class);
 //        properties.addBetClass(BetBothTeamsToScore.class);
 //        properties.addBetClass(BetDoubleChance.class);
 //        properties.addBetClass(BetDrawNoBet.class);
 //        start = System.nanoTime();
-//        Collection<Match> loadedMatches = man.loadMatches(properties);
-//        System.out.println("loaded: " + loadedMatches.size());
+//        System.out.println("loaded: " + man.loadMatches(properties).size());
 //        end = System.nanoTime();
 //        printTime("loading: ", end - start);
     }

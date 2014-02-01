@@ -4,7 +4,6 @@ package chorke.proprietary.bet.apps.core.calculators;
 import chorke.proprietary.bet.apps.core.Tuple;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -120,7 +119,7 @@ public class YieldProperties {
      * @see setScale(List)
      */
     public List<Tuple<BigDecimal, BigDecimal>> getRanges(){
-        List<Tuple<BigDecimal, BigDecimal>> out = new ArrayList<>(scale.size() + 1);
+        List<Tuple<BigDecimal, BigDecimal>> out = new LinkedList<>();
         for(int i = 0; i <= scale.size(); i++){
             out.add(getRangeForIndex(i));
         }
@@ -173,6 +172,10 @@ public class YieldProperties {
         return Collections.unmodifiableList(scale);
     }
     
+    /**
+     * Pridá ďalšiu hranicu ne škálu. Podľa nich sú následne počítané štatistiky.
+     * @param d 
+     */
     public void addScale(BigDecimal d){
         if(!scale.contains(d)){
             for(int i = 0; i < scale.size(); i++){
@@ -185,6 +188,10 @@ public class YieldProperties {
         }
     }
     
+    /**
+     * Odstráni hranicu zo škály.
+     * @param d 
+     */
     public void removeScale(BigDecimal d){
         if(d != null){
             for(int i = 0; i < scale.size(); i++){
@@ -204,7 +211,7 @@ public class YieldProperties {
     public final void setScale(List<BigDecimal> scale){
         if(scale == null){
             if(this.scale == null){
-                this.scale = new ArrayList<>();
+                this.scale = new LinkedList<>();
             } else {
                 this.scale.clear();
             }

@@ -3,13 +3,20 @@ package chorke.proprietary.bet.apps.io;
 
 import chorke.proprietary.bet.apps.core.Tuple;
 import chorke.proprietary.bet.apps.core.bets.Bet;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
 /**
- *
+ * Udržuje informácie, pre načítanie požadovaných stávok. 
+ * Vytvára aj {@link PreparedStatement} pre načítanie týchto stávok z DB podľa
+ * aktuálne nastavených parametrov. 
  * @author Chorke
  */
 public class LoadProperties extends Properties{
@@ -117,5 +124,191 @@ public class LoadProperties extends Properties{
      */
     public <T extends Bet> Set<Class<T>> getBetClasses(){
         return (Set<Class<T>>)get(BET_CLASS);
+    }
+    
+    /**
+     * Vytvorí podmienku na match id. Neobsahuje žiadne zátvorky ani samotné
+     * WHERE kľúčové slovo. Nikdy nie je {@code null}.
+     * @param ids
+     * @return 
+     */
+    public String getWhereClauseWithIds(){
+        StringBuilder sb = new StringBuilder("");
+        String where = getWhereClauseForMatches();
+        if(where.isEmpty()){
+            return sb.toString();
+        }
+        sb.append("matchid IN (SELECT id FROM matches").append(where).append(")");
+        return sb.toString();
+    }
+    
+    /**
+     * Pripraví dotaz pre score.
+     * @param con
+     * @param whereClauseWithIds
+     * @return
+     * @throws SQLException 
+     */
+    public PreparedStatement prepareScoresStatement(Connection con) throws SQLException{
+        StringBuilder sb =  new StringBuilder("SELECT * FROM scores");
+        String whereClauseWithIds = getWhereClauseWithIds();
+        if(!whereClauseWithIds.isEmpty()){
+            PreparedStatement ps = con.prepareStatement(
+                sb.append(" WHERE ").append(whereClauseWithIds).toString(), 
+                ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            fillPreparedStatementForMatchesWhereClause(ps, 1);
+            return ps;
+        }
+        return con.prepareStatement(sb.toString(), 
+                ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+    }
+    
+    /**
+     * Bet - konkrétny typ stávky.
+     * @param betCompanies
+     * @param bet
+     * @return
+     * @throws SQLException 
+     */
+    public PreparedStatement prepareBetStatement(
+            Connection con,  String bet) throws SQLException{
+        StringBuilder out = new StringBuilder("SELECT * FROM ").append(bet);
+        Set<String> betCompanies = getBetCompanies();
+        String whereClauseWithIds = getWhereClauseWithIds();
+        if((betCompanies == null || betCompanies.isEmpty())
+                && (whereClauseWithIds.isEmpty())){
+            return con.prepareStatement(out.toString());
+        }
+        out.append(" WHERE ");
+        boolean needAnd = false;
+        if(betCompanies != null && !betCompanies.isEmpty()){
+            needAnd = true;
+            for(String betCompany : betCompanies){
+                out.append("betcompany LIKE ? OR ");
+            }
+            out.delete(out.length() - 4, out.length());
+        }
+        if(whereClauseWithIds != null && !whereClauseWithIds.isEmpty()){
+            if(needAnd){
+                out.append(" AND ");
+            }
+            out.append("(").append(whereClauseWithIds).append(")");
+        }
+        PreparedStatement ps = con.prepareStatement(out.toString());
+        int i = 1;
+        if(betCompanies != null && !betCompanies.isEmpty()){
+            for(String betCompany : betCompanies){
+                ps.setString(i, betCompany);
+                i++;
+            }
+        }
+        fillPreparedStatementForMatchesWhereClause(ps, i);
+        return ps;
+    }
+    
+    /**
+     * Vytvorí dotaz pre zápas.
+     * @param con
+     * @param start
+     * @param end
+     * @param leagues
+     * @return
+     * @throws SQLException 
+     */
+    public PreparedStatement prepareMatchStatement(Connection con) throws SQLException{
+        StringBuilder out = new StringBuilder("SELECT * FROM matches");
+        String where = getWhereClauseForMatches();
+        if(where.isEmpty()){
+            return con.prepareStatement(out.toString());
+        }
+        out.append(where);
+        PreparedStatement ps = con.prepareStatement(out.toString());
+        fillPreparedStatementForMatchesWhereClause(ps, 1);
+        return ps;
+    }
+    
+    private void fillPreparedStatementForMatchesWhereClause(PreparedStatement ps, int startIdx)
+            throws SQLException{
+        Calendar start = getStartDate();
+        Calendar end = getEndDate();
+        Set<Tuple<String, String>> leagues = getLeagues();
+        int i = startIdx;
+        if(start != null){
+            ps.setTimestamp(i, new Timestamp(start.getTimeInMillis()));
+            i++;
+        }
+        if(end != null){
+            ps.setTimestamp(i, new Timestamp(end.getTimeInMillis()));
+            i++;
+        }
+        if(leagues != null && !leagues.isEmpty()){
+            for(Tuple<String, String> tp : leagues){
+                ps.setString(i, tp.second);
+                i++;
+                ps.setString(i, tp.first);
+                i++;
+            }
+        }
+    }
+    
+    /**
+     * Vytvorí where časť pre SELECT * FROM matches dotaz. Nikdy nie je {@code null}.
+     * @param start
+     * @param end
+     * @param leagues
+     * @return 
+     */
+    private String getWhereClauseForMatches(){
+        StringBuilder out = new StringBuilder("");
+        Calendar start = getStartDate();
+        Calendar end = getEndDate();
+        Set<Tuple<String, String>> leagues = getLeagues();
+        if(start == null && end == null && (leagues == null || leagues.isEmpty())){
+            return out.toString();
+        }
+        out.append(" WHERE ");
+        boolean needAnd = false;
+        if(start != null){
+            out.append("matchdate >= ?");
+            needAnd = true;
+        }
+        if(end != null){
+            if(needAnd){ out.append(" AND "); }
+            out.append("matchdate <= ?");
+            needAnd = true;
+        }
+        if(leagues != null && !leagues.isEmpty()){
+            if(needAnd){
+                out.append(" AND ");
+            }
+            out.append("(");
+            for(Tuple tp : leagues){
+                out.append("(country LIKE ? AND league LIKE ?) OR ");
+            }
+            out.delete(out.length() - 4, out.length());
+            out.append(")");
+        }
+        return out.toString();
+    }
+    
+    /**
+     * Ak nie je požadovaná daná trieda, je ps zatvorený a vráti null. 
+     * Inak vráti pôvodný ps.
+     * @param <T>
+     * @param clazz
+     * @param ps
+     * @return
+     * @throws SQLException 
+     */
+    public <T extends Bet> PreparedStatement checkClass(Class<T> clazz, PreparedStatement ps)
+            throws SQLException{
+        Set classes = getBetClasses();
+        if(classes != null){
+            if(!classes.contains(clazz)){
+                ps.close();
+                return null;
+            }
+        }
+        return ps;
     }
 }

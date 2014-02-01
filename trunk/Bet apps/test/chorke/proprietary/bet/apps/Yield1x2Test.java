@@ -52,19 +52,19 @@ public class Yield1x2Test {
         yield.addYieldForScaleIndex(BetPossibility.Tie, 1, NUM_1_49);
         
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Favorit), 1,
-                yield.getYieldForScaleIndex(BetPossibility.Favorit, 1));
+                yield.getYieldForScaleIndex(BetPossibility.Favorit, 1, false));
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Guest), 1,
-                yield.getYieldForScaleIndex(BetPossibility.Guest, 1));
+                yield.getYieldForScaleIndex(BetPossibility.Guest, 1, false));
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Home), 1,
-                yield.getYieldForScaleIndex(BetPossibility.Home, 1));
+                yield.getYieldForScaleIndex(BetPossibility.Home, 1, false));
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Looser), 1,
-                yield.getYieldForScaleIndex(BetPossibility.Looser, 1));
+                yield.getYieldForScaleIndex(BetPossibility.Looser, 1, false));
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Tie), 1,
-                yield.getYieldForScaleIndex(BetPossibility.Tie, 1));
+                yield.getYieldForScaleIndex(BetPossibility.Tie, 1, false));
         
         yield.addYieldForScaleIndex(BetPossibility.Favorit, 1, NUM_1_50);
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Favorit), 1,
-                yield.getYieldForScaleIndex(BetPossibility.Favorit, 1));
+                yield.getYieldForScaleIndex(BetPossibility.Favorit, 1, false));
     }
     
     @Test
@@ -76,15 +76,15 @@ public class Yield1x2Test {
         yield.addYieldForScaleIndex(BetPossibility.Tie, 1, NUM_1_49);
         
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Favorit), 1,
-                yield.getYieldForScaleRange(BetPossibility.Favorit, new Tuple<>(NUM_1_46, NUM_1_82)));
+                yield.getYieldForScaleRange(BetPossibility.Favorit, new Tuple<>(NUM_1_46, NUM_1_82), false));
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Guest), 1,
-                yield.getYieldForScaleRange(BetPossibility.Guest, new Tuple<>(NUM_1_46, NUM_1_82)));
+                yield.getYieldForScaleRange(BetPossibility.Guest, new Tuple<>(NUM_1_46, NUM_1_82), false));
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Home), 1,
-                yield.getYieldForScaleRange(BetPossibility.Home, new Tuple<>(NUM_1_46, NUM_1_82)));
+                yield.getYieldForScaleRange(BetPossibility.Home, new Tuple<>(NUM_1_46, NUM_1_82), false));
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Looser), 1,
-                yield.getYieldForScaleRange(BetPossibility.Looser, new Tuple<>(NUM_1_46, NUM_1_82)));
+                yield.getYieldForScaleRange(BetPossibility.Looser, new Tuple<>(NUM_1_46, NUM_1_82), false));
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Tie), 1,
-                yield.getYieldForScaleRange(BetPossibility.Tie, new Tuple<>(NUM_1_46, NUM_1_82)));
+                yield.getYieldForScaleRange(BetPossibility.Tie, new Tuple<>(NUM_1_46, NUM_1_82), false));
     }
     
     @Test
@@ -96,15 +96,15 @@ public class Yield1x2Test {
         yield.addYieldForScaleRange(BetPossibility.Tie, new Tuple<>(NUM_1_83, NUM_2_56), NUM_1_49);
         
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Favorit), 2,
-                yield.getYieldForScaleIndex(BetPossibility.Favorit, 2));
+                yield.getYieldForScaleIndex(BetPossibility.Favorit, 2, false));
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Guest), 2,
-                yield.getYieldForScaleIndex(BetPossibility.Guest, 2));
+                yield.getYieldForScaleIndex(BetPossibility.Guest, 2, false));
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Home), 2,
-                yield.getYieldForScaleIndex(BetPossibility.Home, 2));
+                yield.getYieldForScaleIndex(BetPossibility.Home, 2, false));
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Looser), 2,
-                yield.getYieldForScaleIndex(BetPossibility.Looser, 2));
+                yield.getYieldForScaleIndex(BetPossibility.Looser, 2, false));
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Tie), 2,
-                yield.getYieldForScaleIndex(BetPossibility.Tie, 2));
+                yield.getYieldForScaleIndex(BetPossibility.Tie, 2, false));
     }
     
     @Test
@@ -116,15 +116,15 @@ public class Yield1x2Test {
         yield.addYieldForScaleRange(BetPossibility.Tie, new Tuple<>(NUM_1_83, NUM_2_56), NUM_1_49);
         
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Favorit), 2,
-                yield.getYieldForScaleRange(BetPossibility.Favorit, new Tuple<>(NUM_1_83, NUM_2_56)));
+                yield.getYieldForScaleRange(BetPossibility.Favorit, new Tuple<>(NUM_1_83, NUM_2_56), false));
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Guest), 2,
-                yield.getYieldForScaleRange(BetPossibility.Guest, new Tuple<>(NUM_1_83, NUM_2_56)));
+                yield.getYieldForScaleRange(BetPossibility.Guest, new Tuple<>(NUM_1_83, NUM_2_56), false));
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Home), 2,
-                yield.getYieldForScaleRange(BetPossibility.Home, new Tuple<>(NUM_1_83, NUM_2_56)));
+                yield.getYieldForScaleRange(BetPossibility.Home, new Tuple<>(NUM_1_83, NUM_2_56), false));
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Looser), 2,
-                yield.getYieldForScaleRange(BetPossibility.Looser, new Tuple<>(NUM_1_83, NUM_2_56)));
+                yield.getYieldForScaleRange(BetPossibility.Looser, new Tuple<>(NUM_1_83, NUM_2_56), false));
         yieldEqualityIndexTest(yield.getYields(BetPossibility.Tie), 2,
-                yield.getYieldForScaleRange(BetPossibility.Tie, new Tuple<>(NUM_1_83, NUM_2_56)));
+                yield.getYieldForScaleRange(BetPossibility.Tie, new Tuple<>(NUM_1_83, NUM_2_56), false));
     }
     
     private void yieldEqualityIndexTest(List<Tuple<Integer, BigDecimal>> allYields,

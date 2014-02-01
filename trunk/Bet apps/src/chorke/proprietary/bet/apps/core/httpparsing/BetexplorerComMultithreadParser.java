@@ -23,7 +23,6 @@ import java.util.GregorianCalendar;
 import java.util.ListIterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -394,7 +393,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             matches = new LinkedList<>();
             TextingMatch tm = getNextTextingMatch();
             MatchFromTextingMatchCollector mftmc;
-            Match match = null;
+            Match match;
             while(tm != null){
                 System.out.println("I {" + id + "} have " 
                         + tm.match + "{" + tm.matchID + "}");
@@ -640,6 +639,17 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             }
         }
         
+        private String getBetCompanyName(Element row){
+            StringBuilder builder = new StringBuilder();
+            for(byte b : row.select("th").first().text().getBytes()){
+                if(b > 0){
+                    builder.append((char)b);
+                }
+            }
+            builder.delete(builder.length() - 6, builder.length());
+            return builder.toString();
+        }
+        
         /**
          * Spracuje tabuľku stávok 1x2
          * @param tableRows
@@ -649,7 +659,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             String name;
             Elements bets;
             for(Element row : tableRows){
-                name = row.select("th").first().text();
+                name = getBetCompanyName(row);
                 bets = row.select("td");
                 match.addBet(new Bet1x2(name,
                         parseNumber(bets.get(0).attr("data-odd")),
@@ -667,7 +677,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             String name;
             Elements bets;
             for(Element row : tableRows){
-                name = row.select("th").first().text();
+                name = getBetCompanyName(row);
                 bets = row.select("td");
                 if(bets.get(0).select(".doublepar").isEmpty()){
                     String[] s = bets.get(0).select(".doublepar-w").first().text().split("[ ]+");
@@ -696,7 +706,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             Elements bets;
             String[] handicaps;
             for(Element row : tableRows){
-                name = row.select("th").first().text();
+                name = getBetCompanyName(row);
                 bets = row.select("td");
                 if(!bets.get(0).select(".doublepar").isEmpty()){
                     handicaps = bets.get(0).select(".doublepar").first().text().split("[ ,]+");
@@ -741,7 +751,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             String name;
             Elements bets;
             for(Element row : tableRows){
-                name = row.select("th").first().text();
+                name = getBetCompanyName(row);
                 bets = row.select("td");
                 match.addBet(new BetDrawNoBet(name,
                         parseNumber(bets.get(0).attr("data-odd")),
@@ -758,7 +768,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             String name;
             Elements bets;
             for(Element row : tableRows){
-                name = row.select("th").first().text();
+                name = getBetCompanyName(row);
                 bets = row.select("td");
                 match.addBet(new BetDoubleChance(name,
                         parseNumber(bets.get(0).attr("data-odd")),
@@ -776,7 +786,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             String name;
             Elements bets;
             for(Element row : tableRows){
-                name = row.select("th").first().text();
+                name = getBetCompanyName(row);
                 bets = row.select("td");
                 match.addBet(new BetBothTeamsToScore(name,
                         parseNumber(bets.get(0).attr("data-odd")),
@@ -856,14 +866,11 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
          * @see String#trim()
          */
         private String removeEmptyCharacters(String s){
-            byte[] newB = new byte[s.length()];
-            int i = 0;
-            for(byte b : s.getBytes()){
-                if(b > 0){ newB[i++] = b;}
-            }
             StringBuilder builder = new StringBuilder();
-            for(int j = 0; j < i; j++){
-                builder.append((char)newB[j]);
+            for(byte b : s.getBytes()){
+                if(b > 0){
+                    builder.append((char)b);
+                }
             }
             return builder.toString();
         }

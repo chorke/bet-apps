@@ -1,6 +1,7 @@
 
 package chorke.proprietary.bet.apps;
 
+import chorke.proprietary.bet.apps.core.Graph;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
 import chorke.proprietary.bet.apps.core.bets.BetBothTeamsToScore;
 import chorke.proprietary.bet.apps.core.bets.BetDoubleChance;
@@ -14,14 +15,20 @@ import chorke.proprietary.bet.apps.core.calculators.YieldProperties;
 import chorke.proprietary.bet.apps.core.httpparsing.BetexplorerComMultithreadParser;
 import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser.BettingSports;
 import chorke.proprietary.bet.apps.core.match.Match;
+import chorke.proprietary.bet.apps.gui.panels.GraphPanel;
 import chorke.proprietary.bet.apps.io.DBBetIOManager;
 import chorke.proprietary.bet.apps.io.LoadProperties;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.Map;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 
 
@@ -32,6 +39,31 @@ import java.util.Map;
 public class MainClass {
     
     public void start(){
+//        betsDownloading();
+        guiTester();
+    }
+    
+    private void guiTester(){
+        JFrame f = new JFrame();
+        Graph g = new Graph();
+        for(int i = 0; i < 10; i++){
+            g.add(new BigDecimal("89.43"));
+            g.add(new BigDecimal("140.13"));
+            g.add(new BigDecimal("-34.51"));
+            g.add(new BigDecimal("86.4"));
+            g.add(new BigDecimal("-55.1"));
+        }
+        GraphPanel p = new GraphPanel(g);
+        p.setPreferredSize(new Dimension(500, 300));
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        JScrollPane pane = new JScrollPane(p);
+        pane.setPreferredSize(new Dimension(520, 320));
+        f.add(pane);
+        f.pack();
+        f.setVisible(true);
+    }
+    
+    private void betsDownloading(){
         long start, end;
         
         DBBetIOManager man = new DBBetIOManager(StaticConstants.DATA_SOURCE);
@@ -56,8 +88,8 @@ public class MainClass {
     private void download(DBBetIOManager man){
         BetexplorerComMultithreadParser parser = new BetexplorerComMultithreadParser(man);
         parser.setExploredSport(BettingSports.All);
-        parser.setStartDate(new GregorianCalendar(2013, Calendar.JULY, 1));
-        parser.setEndDate(new GregorianCalendar(2013, Calendar.JULY, 5));
+        parser.setStartDate(new GregorianCalendar(2013, Calendar.JANUARY, 1));
+        parser.setEndDate(new GregorianCalendar(2013, Calendar.JANUARY, 3));
         System.out.println(parser.getMatches().size());
         System.out.println("unsaved {" + parser.getUnsavedMatches().size()
                 + "}: " + parser.getUnsavedMatches());
@@ -75,7 +107,7 @@ public class MainClass {
 //        properties.addBetClass(BetDoubleChance.class);
 //        properties.addBetClass(BetDrawNoBet.class);
         properties.addBetCompany("bet365");
-        properties.addLeague("Premier League", "England");
+//        properties.addLeague("Premier League", "England");
         Collection<Match> matches = man.loadMatches(properties);
         System.out.println("loaded: " + matches.size());
         return matches;

@@ -3,7 +3,6 @@ package chorke.proprietary.bet.apps;
 
 import java.util.Locale;
 import javax.sql.DataSource;
-import org.postgresql.ds.PGConnectionPoolDataSource;
 import org.postgresql.jdbc2.optional.PoolingDataSource;
 
 /**
@@ -23,7 +22,6 @@ public class StaticConstants {
     
     private static DataSource initDataSource(){
         PoolingDataSource outDs = new PoolingDataSource();
-        outDs.setMaxConnections(30);
         outDs.setPortNumber(5432);
         outDs.setServerName("localhost");
         outDs.setUser("Juraj Durani");

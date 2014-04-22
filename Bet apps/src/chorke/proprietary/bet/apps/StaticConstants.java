@@ -16,6 +16,10 @@ public class StaticConstants {
     
     public static enum Winner {Team1, Team2, Tie};
     
+    public static enum Periode {Day, Week, Month, Year};
+    
+    public static enum BetPossibility {Home, Guest, Favorit, Looser, Tie};
+    
     public static final Locale SVK_LOCALE = new Locale("sk", "SK");
     
     public static final DataSource DATA_SOURCE = initDataSource();

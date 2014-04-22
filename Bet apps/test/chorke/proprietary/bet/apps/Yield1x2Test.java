@@ -1,14 +1,14 @@
 
 package chorke.proprietary.bet.apps;
 
+import chorke.proprietary.bet.apps.StaticConstants.BetPossibility;
 import chorke.proprietary.bet.apps.core.Tuple;
-import chorke.proprietary.bet.apps.core.calculators.Yield;
-import chorke.proprietary.bet.apps.core.calculators.Yield.BetPossibility;
 import chorke.proprietary.bet.apps.core.calculators.Yield1x2;
 import chorke.proprietary.bet.apps.core.calculators.YieldProperties;
 import java.math.BigDecimal;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -127,14 +127,17 @@ public class Yield1x2Test {
                 yield.getYieldForScaleRange(BetPossibility.Tie, new Tuple<>(NUM_1_83, NUM_2_56), false));
     }
     
-    private void yieldEqualityIndexTest(List<Tuple<Integer, BigDecimal>> allYields,
+    private void yieldEqualityIndexTest(Map<Integer, BigDecimal> allYields,
             int index, BigDecimal yield){
-        for(Tuple<Integer, BigDecimal> tp : allYields){
-            if(tp.first.equals(index)){
-                if(yield.compareTo(tp.second) != 0){
-                    fail();
-                }
-            }
+//        for(Tuple<Integer, BigDecimal> tp : allYields){
+//            if(tp.first.equals(index)){
+//                if(yield.compareTo(tp.second) != 0){
+//                    fail();
+//                }
+//            }
+//        }
+        if(yield.compareTo(allYields.get(index)) != 0){
+            fail();
         }
     }
 }

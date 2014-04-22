@@ -1,6 +1,6 @@
 package chorke.proprietary.bet.apps;
 
-import chorke.proprietary.bet.apps.core.Graph;
+import chorke.proprietary.bet.apps.core.graphs.Graph;
 import java.math.BigDecimal;
 import java.util.LinkedList;
 import java.util.List;

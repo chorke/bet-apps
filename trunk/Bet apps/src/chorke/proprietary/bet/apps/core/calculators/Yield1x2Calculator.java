@@ -1,10 +1,11 @@
 
 package chorke.proprietary.bet.apps.core.calculators;
 
+import chorke.proprietary.bet.apps.StaticConstants.BetPossibility;
+import chorke.proprietary.bet.apps.StaticConstants.Periode;
 import chorke.proprietary.bet.apps.StaticConstants.Winner;
 import chorke.proprietary.bet.apps.core.Tuple;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
-import chorke.proprietary.bet.apps.core.calculators.Yield.BetPossibility;
 import chorke.proprietary.bet.apps.core.match.Match;
 import java.math.BigDecimal;
 import java.util.Calendar;
@@ -16,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import javax.rmi.CORBA.Tie;
 
 /**
  * @author Chorke
@@ -40,27 +42,19 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
     }
 
     @Override
-    public Map<Calendar, Yield1x2> getPeriodicYieldDAY(Collection<Match> matches,
-                YieldProperties properties) {
-        return innerPeriodicYield(matches, properties, new PeriodHolderDAY());
-    }
-
-    @Override
-    public Map<Calendar, Yield1x2> getPeriodicYieldWEEK(Collection<Match> matches, 
-                YieldProperties properties) {
-        return innerPeriodicYield(matches, properties, new PeriodHolderWEEK());
-    }
-
-    @Override
-    public Map<Calendar, Yield1x2> getPeriodicYieldMONTH(Collection<Match> matches, 
-                YieldProperties properties) {
-        return innerPeriodicYield(matches, properties, new PeriodHolderMONTH());
-    }
-
-    @Override
-    public Map<Calendar, Yield1x2> getPeriodicYieldYEAR(Collection<Match> matches, 
-                YieldProperties properties) {
-        return innerPeriodicYield(matches, properties, new PeriodHolderYEAR());
+    public Map<Calendar, Yield1x2> getPeriodicYield(Collection<Match> matches,
+                YieldProperties properties, Periode periode) {
+        switch (periode) {
+            case Day:
+                return innerPeriodicYield(matches, properties, new PeriodHolderDAY());
+            case Week:
+                return innerPeriodicYield(matches, properties, new PeriodHolderWEEK());
+            case Month:
+                return innerPeriodicYield(matches, properties, new PeriodHolderMONTH());
+            case Year:
+                return innerPeriodicYield(matches, properties, new PeriodHolderYEAR());
+        }
+        throw new UnsupportedOperationException("Periode " + periode + "is not supported.");
     }
 
     @Override
@@ -70,26 +64,8 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
     }
 
     @Override
-    public Map<Calendar, Yield1x2> getCumulativePeriodicYieldDAY(Collection<Match> matches,
-                CumulativeYieldProperties properties) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public Map<Calendar, Yield1x2> getCumulativePeriodicYieldWEEK(Collection<Match> matches, 
-                CumulativeYieldProperties properties) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public Map<Calendar, Yield1x2> getCumulativePeriodicYieldMONTH(Collection<Match> matches,
-                CumulativeYieldProperties properties) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public Map<Calendar, Yield1x2> getCumulativePeriodicYieldYEAR(Collection<Match> matches, 
-                CumulativeYieldProperties properties) {
+    public Map<Calendar, Yield1x2> getCumulativePeriodicYield(Collection<Match> matches,
+                CumulativeYieldProperties properties, Periode periode) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
     
@@ -268,9 +244,31 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
     private abstract class PeriodHolder{
         private Calendar date;
         
+        /**
+         * Posunie dátum na ďalšie obdobie.
+         */
         abstract void nextPeriod();
+        
+        /**
+         * Rozhodne, či zápas zapadá do aktuálne nastaveného obdobia.
+         * @param m
+         * @return 
+         * @see #setDate(java.util.Calendar) 
+         * @see #nextPeriod() 
+         */
         abstract boolean suits(Match m);
         
+        /**
+         * Vráti posledný index zápasu v matches, ktorý ešte vyhovuje akutálne
+         * nastavenému dátumu.
+         * 
+         * @param from počiatočný index, od ktorého sa má hľadať
+         * @param matches zápasy
+         * @return posledný index, ktorý je v rovnakom období ako nastavený 
+         * dátum
+         * @see #setDate(java.util.Calendar) 
+         * @see #suits(chorke.proprietary.bet.apps.core.match.Match)
+         */
         int lastSuitedMatchIndex(int from, List<Match> matches) {
             ListIterator<Match> iter = matches.listIterator(from);
             int last = from;
@@ -284,6 +282,13 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
             return last;
         }
         
+        /**
+         * Nastaví dátum. Podľa neho sa bude určovať, či zápasy vyhovujú
+         * obdobiu.
+         * 
+         * @param date 
+         * @see #suits(chorke.proprietary.bet.apps.core.match.Match)
+         */
         void setDate(Calendar date){
             this.date = date;
             this.date.set(Calendar.MILLISECOND, 0);

@@ -1,8 +1,7 @@
 
 package chorke.proprietary.bet.apps.gui.panels;
 
-import chorke.proprietary.bet.apps.core.Graph;
-import chorke.proprietary.bet.apps.core.Tuple;
+import chorke.proprietary.bet.apps.core.graphs.Graph;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -14,7 +13,8 @@ import java.util.List;
 import javax.swing.JPanel;
 
 /**
- *
+ * Vykresľuje jeden graf na JPanel.
+ * 
  * @author Chorke
  */
 public class GraphPanel extends JPanel{
@@ -25,6 +25,9 @@ public class GraphPanel extends JPanel{
     private Color dotsColor = Color.BLACK;
     private int graphWidth = 0;
     private Insets borders = new Insets(30, 50, 30, 35);
+    
+    private int zeroLine;
+    private BigDecimal yStep;
     
     public GraphPanel(Graph graph) {
         setGraph(graph);
@@ -41,31 +44,37 @@ public class GraphPanel extends JPanel{
         setMinimumSize(getMinimumSize());
         setMaximumSize(getMaximumSize());
         setPreferredSize(getPreferredSize());
+        setYStepAndZeroLine();
     }
 
     @Override
     public void setMaximumSize(Dimension maximumSize) {
         super.setMaximumSize(new Dimension(Math.max(maximumSize.width, graphWidth), maximumSize.height));
+        setYStepAndZeroLine();
     }
 
     @Override
     public void setMinimumSize(Dimension minimumSize) {
         super.setMinimumSize(new Dimension(Math.max(minimumSize.width, graphWidth), minimumSize.height));
+        setYStepAndZeroLine();
     }
 
     @Override
     public void setSize(Dimension d) {
         super.setSize(new Dimension(Math.max(d.width, graphWidth), d.height));
+        setYStepAndZeroLine();
     }
 
     @Override
     public void setSize(int width, int height) {
         super.setSize(Math.max(width, graphWidth), height);
+        setYStepAndZeroLine();
     }
 
     @Override
     public void setPreferredSize(Dimension preferredSize) {
         super.setPreferredSize(new Dimension(Math.max(preferredSize.width, graphWidth), preferredSize.height));
+        setYStepAndZeroLine();
     }
     
     public void setDotsColor(Color dotsColor) {
@@ -74,11 +83,11 @@ public class GraphPanel extends JPanel{
     
     @Override
     public void paint(Graphics g) {
-        Tuple<BigDecimal, Integer> context = paintBackground(g);
-        paintGraph(g, graph, context);
+        paintBackground(g);
+        paintGraph(g, graph);
     }
     
-    private void paintGraph(Graphics g, Graph gr, Tuple<BigDecimal, Integer> context){
+    private void paintGraph(Graphics g, Graph gr){
         MathContext zeroContext = new MathContext(0);
         List<BigDecimal> values = gr.getValues();
         int[] xPoints = new int[values.size()];
@@ -87,8 +96,8 @@ public class GraphPanel extends JPanel{
         int i = 0;
         for(BigDecimal val : values){
             xPoints[i] = x;
-            yPoints[i] = context.second 
-                    - val.multiply(context.first).round(zeroContext).intValue();
+            yPoints[i] = zeroLine 
+                    - val.multiply(yStep).round(zeroContext).intValue();
             x += X_STEP;
             i++;
         }
@@ -99,34 +108,9 @@ public class GraphPanel extends JPanel{
         }
     }
     
-    /**
-     * 
-     * @param g
-     * @return krok pre os Y a pozíciu nulovej hranice
-     */
-    private Tuple<BigDecimal, Integer> paintBackground(Graphics g){
+    private void paintBackground(Graphics g){
         super.paint(g);
         int height = getPreferredSize().height;
-        float topSpace = 0.1f;
-        float bottomSpace = 0.1f;
-        
-        int zeroLine = 0;
-        BigDecimal step;
-        if(graph.getMax() != null){
-            step = graph.getMax().abs().add(graph.getMin().abs());
-        } else {
-            step = new BigDecimal("200");
-        }
-        step = new BigDecimal(Math.round(height * (1 - topSpace - bottomSpace)))
-                .divide(step, 50, BigDecimal.ROUND_CEILING);
-        if(graph.getMin() == null){
-            zeroLine = height / 2;
-        }else if(graph.getMin().compareTo(BigDecimal.ZERO) >= 0){
-            zeroLine = height;
-        } else if(graph.getMax().compareTo(BigDecimal.ZERO) > 0){
-            BigDecimal bd = step.multiply(graph.getMin().abs());
-            zeroLine = height - bd.round(new MathContext(0)).intValue() - Math.round(height * topSpace);
-        }
         
         g.setColor(new Color(0, 255, 0, 50));
         g.fillRect(0, 0, graphWidth, zeroLine);
@@ -143,7 +127,7 @@ public class GraphPanel extends JPanel{
         int linesCount = 1;
         while(nextStep){
             int lineY = Math.round(height * 0.1f * linesCount);
-            BigDecimal label = new BigDecimal(lineY).divide(step, new MathContext(2));
+            BigDecimal label = new BigDecimal(lineY).divide(yStep, new MathContext(2));
             
             nextStep = false;
             int yPos = zeroLine - lineY;
@@ -160,6 +144,30 @@ public class GraphPanel extends JPanel{
             }
             linesCount++;
         }
-        return new Tuple(step, zeroLine);
+    }
+    
+    /**
+     * Nastaví krok pre os Y a pozíciu nulovej čiary.
+     */
+    private void setYStepAndZeroLine(){
+        float topSpace = 0.1f;
+        float bottomSpace = 0.1f;
+        int height = getPreferredSize().height;
+        
+        if(graph.getMax() != null){
+            yStep = graph.getMax().abs().add(graph.getMin().abs());
+        } else {
+            yStep = new BigDecimal("200");
+        }
+        yStep = new BigDecimal(Math.round(height * (1 - topSpace - bottomSpace)))
+                .divide(yStep, 50, BigDecimal.ROUND_CEILING);
+        if(graph.getMin() == null){
+            zeroLine = height / 2;
+        }else if(graph.getMin().compareTo(BigDecimal.ZERO) >= 0){
+            zeroLine = height;
+        } else if(graph.getMax().compareTo(BigDecimal.ZERO) > 0){
+            BigDecimal bd = yStep.multiply(graph.getMin().abs());
+            zeroLine = height - bd.round(new MathContext(0)).intValue() - Math.round(height * topSpace);
+        }
     }
 }

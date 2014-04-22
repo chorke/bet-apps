@@ -1,5 +1,5 @@
 
-package chorke.proprietary.bet.apps.core;
+package chorke.proprietary.bet.apps.core.graphs;
 
 import java.math.BigDecimal;
 import java.util.Collections;

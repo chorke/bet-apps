@@ -1,11 +1,9 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package chorke.proprietary.bet.apps;
 
+import chorke.proprietary.bet.apps.StaticConstants.BetPossibility;
+import chorke.proprietary.bet.apps.StaticConstants.Periode;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
-import chorke.proprietary.bet.apps.core.calculators.Yield.BetPossibility;
 import chorke.proprietary.bet.apps.core.calculators.Yield1x2;
 import chorke.proprietary.bet.apps.core.calculators.Yield1x2Calculator;
 import chorke.proprietary.bet.apps.core.calculators.YieldProperties;
@@ -82,7 +80,7 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
     
     @Test
     public void getYieldYEAR(){
-        Map<Calendar, Yield1x2> yields = calculator.getPeriodicYieldYEAR(matches, properties);
+        Map<Calendar, Yield1x2> yields = calculator.getPeriodicYield(matches, properties, Periode.Year);
         assertEquals(yields.size(), 2);
         Yield1x2 yield;
         int i = 0;
@@ -139,7 +137,7 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
     
     @Test
     public void getYieldMONTH(){
-        Map<Calendar, Yield1x2> yields = calculator.getPeriodicYieldMONTH(matches, properties);
+        Map<Calendar, Yield1x2> yields = calculator.getPeriodicYield(matches, properties, Periode.Month);
         assertEquals(yields.size(), 3);
         Yield1x2 yield;
         for(Calendar c : yields.keySet()){
@@ -215,7 +213,7 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
     
     @Test
     public void getYieldWEEK(){
-        Map<Calendar, Yield1x2> yields = calculator.getPeriodicYieldWEEK(matches, properties);
+        Map<Calendar, Yield1x2> yields = calculator.getPeriodicYield(matches, properties, Periode.Week);
         assertEquals(yields.size(), 6);
         Yield1x2 yield;
         for(Calendar c : yields.keySet()){

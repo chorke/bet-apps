@@ -1,17 +1,21 @@
 
 package chorke.proprietary.bet.apps;
 
-import chorke.proprietary.bet.apps.core.Graph;
+import chorke.proprietary.bet.apps.StaticConstants.BetPossibility;
+import chorke.proprietary.bet.apps.StaticConstants.Periode;
+import chorke.proprietary.bet.apps.core.graphs.Graph;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
 import chorke.proprietary.bet.apps.core.bets.BetBothTeamsToScore;
 import chorke.proprietary.bet.apps.core.bets.BetDoubleChance;
 import chorke.proprietary.bet.apps.core.bets.BetDrawNoBet;
 import chorke.proprietary.bet.apps.core.bets.BetOverUnder;
 import chorke.proprietary.bet.apps.core.calculators.CumulativeYieldProperties;
+import chorke.proprietary.bet.apps.core.calculators.Yield;
 import chorke.proprietary.bet.apps.core.calculators.Yield1x2;
 import chorke.proprietary.bet.apps.core.calculators.Yield1x2Calculator;
 import chorke.proprietary.bet.apps.core.calculators.YieldCalculator;
 import chorke.proprietary.bet.apps.core.calculators.YieldProperties;
+import chorke.proprietary.bet.apps.core.graphs.GraphBuilderYield1x2;
 import chorke.proprietary.bet.apps.core.httpparsing.BetexplorerComMultithreadParser;
 import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser.BettingSports;
 import chorke.proprietary.bet.apps.core.match.Match;
@@ -45,14 +49,27 @@ public class MainClass {
     
     private void guiTester(){
         JFrame f = new JFrame();
-        Graph g = new Graph();
-        for(int i = 0; i < 10; i++){
-            g.add(new BigDecimal("89.43"));
-            g.add(new BigDecimal("140.13"));
-            g.add(new BigDecimal("-34.51"));
-            g.add(new BigDecimal("86.4"));
-            g.add(new BigDecimal("-55.1"));
-        }
+//        Graph g = new Graph();
+//        for(int i = 0; i < 10; i++){
+//            g.add(new BigDecimal("89.43"));
+//            g.add(new BigDecimal("140.13"));
+//            g.add(new BigDecimal("-34.51"));
+//            g.add(new BigDecimal("86.4"));
+//            g.add(new BigDecimal("-55.1"));
+//        }
+        YieldProperties yieldProp = new YieldProperties();
+        yieldProp.setBetCompany("bet365");
+        yieldProp.addScale(new BigDecimal("1.60"));
+        yieldProp.addScale(new BigDecimal("1.70"));
+        yieldProp.addScale(new BigDecimal("2.00"));
+        
+        Yield1x2Calculator calcul = new Yield1x2Calculator();
+        
+        Collection<Match> matches = load(new DBBetIOManager(StaticConstants.DATA_SOURCE));
+        Graph g = new GraphBuilderYield1x2().getGraph(
+                calcul.getPeriodicYield(matches,
+                    yieldProp, Periode.Month),
+                BetPossibility.Tie, 0);
         GraphPanel p = new GraphPanel(g);
         p.setPreferredSize(new Dimension(500, 300));
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -107,7 +124,7 @@ public class MainClass {
 //        properties.addBetClass(BetDoubleChance.class);
 //        properties.addBetClass(BetDrawNoBet.class);
         properties.addBetCompany("bet365");
-//        properties.addLeague("Premier League", "England");
+        properties.addLeague("NHL", "USA");
         Collection<Match> matches = man.loadMatches(properties);
         System.out.println("loaded: " + matches.size());
         return matches;
@@ -120,7 +137,7 @@ public class MainClass {
         yieldProp.addScale(new BigDecimal("1.60"));
         yieldProp.addScale(new BigDecimal("1.70"));
         yieldProp.addScale(new BigDecimal("2.00"));
-        Map<Calendar, Yield1x2> yield = calculator.getPeriodicYieldWEEK(matches, yieldProp);
+        Map<Calendar, Yield1x2> yield = calculator.getPeriodicYield(matches, yieldProp, Periode.Week);
         for(Calendar cal : yield.keySet()){
             System.out.println(cal.get(Calendar.WEEK_OF_YEAR) + ":  " + yield.get(cal));
         }

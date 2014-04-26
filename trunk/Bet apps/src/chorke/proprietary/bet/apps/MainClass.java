@@ -20,6 +20,7 @@ import chorke.proprietary.bet.apps.core.httpparsing.BetexplorerComMultithreadPar
 import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser.BettingSports;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.gui.panels.GraphPanel;
+import chorke.proprietary.bet.apps.gui.panels.GraphsCollectingPanel;
 import chorke.proprietary.bet.apps.io.DBBetIOManager;
 import chorke.proprietary.bet.apps.io.LoadProperties;
 import java.awt.Color;
@@ -28,6 +29,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.Map;
 import javax.swing.JFrame;
@@ -49,35 +51,37 @@ public class MainClass {
     
     private void guiTester(){
         JFrame f = new JFrame();
-//        Graph g = new Graph();
-//        for(int i = 0; i < 10; i++){
-//            g.add(new BigDecimal("89.43"));
-//            g.add(new BigDecimal("140.13"));
-//            g.add(new BigDecimal("-34.51"));
-//            g.add(new BigDecimal("86.4"));
-//            g.add(new BigDecimal("-55.1"));
-//        }
         YieldProperties yieldProp = new YieldProperties();
         yieldProp.setBetCompany("bet365");
         yieldProp.addScale(new BigDecimal("1.60"));
         yieldProp.addScale(new BigDecimal("1.70"));
+        yieldProp.addScale(new BigDecimal("1.72"));
+        yieldProp.addScale(new BigDecimal("1.74"));
+        yieldProp.addScale(new BigDecimal("1.76"));
+        yieldProp.addScale(new BigDecimal("1.78"));
+        yieldProp.addScale(new BigDecimal("1.80"));
         yieldProp.addScale(new BigDecimal("2.00"));
-        
+//        
         Yield1x2Calculator calcul = new Yield1x2Calculator();
-        
+//        
         Collection<Match> matches = load(new DBBetIOManager(StaticConstants.DATA_SOURCE));
-        Graph g = new GraphBuilderYield1x2().getGraph(
-                calcul.getPeriodicYield(matches,
-                    yieldProp, Periode.Month),
-                BetPossibility.Tie, 0);
-        GraphPanel p = new GraphPanel(g);
-        p.setPreferredSize(new Dimension(500, 300));
+//        Graph g = new GraphBuilderYield1x2().getGraph(
+//                calcul.getPeriodicYield(matches,
+//                    yieldProp, Periode.Month),
+//                BetPossibility.Tie, 0);
+//        GraphPanel p = new GraphPanel(g);
+//        p.setPreferredSize(new Dimension(500, 300));
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        JScrollPane pane = new JScrollPane(p);
-        pane.setPreferredSize(new Dimension(520, 320));
+        GraphsCollectingPanel panel = new GraphsCollectingPanel(calcul, new GraphBuilderYield1x2());
+        JScrollPane pane = new JScrollPane(panel);
+        pane.setPreferredSize(new Dimension(800, 320));
         f.add(pane);
         f.pack();
+        f.setLocationRelativeTo(null);
         f.setVisible(true);
+        
+        panel.setMatches(matches);
+        panel.setProperties(yieldProp);
     }
     
     private void betsDownloading(){
@@ -124,7 +128,7 @@ public class MainClass {
 //        properties.addBetClass(BetDoubleChance.class);
 //        properties.addBetClass(BetDrawNoBet.class);
         properties.addBetCompany("bet365");
-        properties.addLeague("NHL", "USA");
+        properties.addLeague("", "Canada");
         Collection<Match> matches = man.loadMatches(properties);
         System.out.println("loaded: " + matches.size());
         return matches;

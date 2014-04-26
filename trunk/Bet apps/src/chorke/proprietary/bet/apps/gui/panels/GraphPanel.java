@@ -150,24 +150,34 @@ public class GraphPanel extends JPanel{
      * Nastaví krok pre os Y a pozíciu nulovej čiary.
      */
     private void setYStepAndZeroLine(){
-        float topSpace = 0.1f;
-        float bottomSpace = 0.1f;
+        BigDecimal topSpace = new BigDecimal("0.1");
+        BigDecimal bottomSpace = new BigDecimal("0.1");
         int height = getPreferredSize().height;
+        BigDecimal maxHeight = new BigDecimal(height).multiply(topSpace);
         
+        boolean inMiddle = false;
         if(graph.getMax() != null){
             yStep = graph.getMax().abs().add(graph.getMin().abs());
+            if(yStep.compareTo(BigDecimal.ZERO) == 0){
+                yStep = new BigDecimal("200");
+                inMiddle = true;
+            }
         } else {
             yStep = new BigDecimal("200");
+            inMiddle = true;
         }
-        yStep = new BigDecimal(Math.round(height * (1 - topSpace - bottomSpace)))
-                .divide(yStep, 50, BigDecimal.ROUND_CEILING);
-        if(graph.getMin() == null){
+        BigDecimal divider = new BigDecimal(height).multiply(
+                BigDecimal.ONE.subtract(bottomSpace.add(topSpace)));
+        yStep = divider.divide(yStep, 50, BigDecimal.ROUND_CEILING);
+        if(inMiddle){
             zeroLine = height / 2;
         }else if(graph.getMin().compareTo(BigDecimal.ZERO) >= 0){
             zeroLine = height;
         } else if(graph.getMax().compareTo(BigDecimal.ZERO) > 0){
-            BigDecimal bd = yStep.multiply(graph.getMin().abs());
-            zeroLine = height - bd.round(new MathContext(0)).intValue() - Math.round(height * topSpace);
+            zeroLine = height - yStep.multiply(graph.getMin().abs())
+                                    .add(maxHeight)
+                                    .round(new MathContext(0))
+                                .intValue();
         }
     }
 }

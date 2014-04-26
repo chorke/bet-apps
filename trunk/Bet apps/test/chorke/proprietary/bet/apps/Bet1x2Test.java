@@ -1,9 +1,9 @@
 package chorke.proprietary.bet.apps;
 
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
+import static chorke.proprietary.bet.apps.BasicTests.assertEqualsBigDecimal;
 import java.math.BigDecimal;
 import org.junit.Test;
-import static org.junit.Assert.*;
 import org.junit.Before;
 
 /**
@@ -32,42 +32,36 @@ public class Bet1x2Test {
     
     @Test
     public void getHomeBetTest(){
-        assertEquals(bet.getHomeBet(), BET_1);
-        assertEquals(betSame.getHomeBet(), BET_1_SAME);
-        assertEquals(betGuest.getHomeBet(), BET_2);
+        assertEqualsBigDecimal(bet.getHomeBet(), BET_1);
+        assertEqualsBigDecimal(betSame.getHomeBet(), BET_1_SAME);
+        assertEqualsBigDecimal(betGuest.getHomeBet(), BET_2);
     }
     
     @Test
     public void getGuestBetTest(){
-        assertEquals(bet.getGuestBet(), BET_2);
-        assertEquals(betSame.getGuestBet(), BET_2_SAME);
-        assertEquals(betGuest.getGuestBet(), BET_1);
+        assertEqualsBigDecimal(bet.getGuestBet(), BET_2);
+        assertEqualsBigDecimal(betSame.getGuestBet(), BET_2_SAME);
+        assertEqualsBigDecimal(betGuest.getGuestBet(), BET_1);
     }
     
     @Test
     public void getFavoritBetTest(){
-        assertEquals(bet.getFavoritBet(), BET_2);
-        assertEquals(betSame.getFavoritBet(), BigDecimal.ZERO);
-        assertEquals(betGuest.getFavoritBet(), BET_2);
+        assertEqualsBigDecimal(bet.getFavoritBet(), BET_2);
+        assertEqualsBigDecimal(betSame.getFavoritBet(), BigDecimal.ZERO);
+        assertEqualsBigDecimal(betGuest.getFavoritBet(), BET_2);
     }
     
     @Test
     public void getLooserBetTest(){
-        assertEquals(bet.getLooserBet(), BET_1);
-        assertEquals(betSame.getLooserBet(), BigDecimal.ZERO);
-        assertEquals(betGuest.getLooserBet(), BET_1);
+        assertEqualsBigDecimal(bet.getLooserBet(), BET_1);
+        assertEqualsBigDecimal(betSame.getLooserBet(), BigDecimal.ZERO);
+        assertEqualsBigDecimal(betGuest.getLooserBet(), BET_1);
     }
     
     @Test
     public void getTieBetTest(){
-        assertEquals(bet.getTieBet(), BET_X);
-        assertEquals(betSame.getTieBet(), BET_X_SAME);
-        assertEquals(betGuest.getTieBet(), BET_X);
-    }
-    
-    private void assertEquals(BigDecimal b1, BigDecimal b2){
-        if(b1.compareTo(b2) != 0){
-            fail(b1 + " " + b2);
-        }
+        assertEqualsBigDecimal(bet.getTieBet(), BET_X);
+        assertEqualsBigDecimal(betSame.getTieBet(), BET_X_SAME);
+        assertEqualsBigDecimal(betGuest.getTieBet(), BET_X);
     }
 }

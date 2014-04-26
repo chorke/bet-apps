@@ -129,13 +129,6 @@ public class Yield1x2Test {
     
     private void yieldEqualityIndexTest(Map<Integer, BigDecimal> allYields,
             int index, BigDecimal yield){
-//        for(Tuple<Integer, BigDecimal> tp : allYields){
-//            if(tp.first.equals(index)){
-//                if(yield.compareTo(tp.second) != 0){
-//                    fail();
-//                }
-//            }
-//        }
         if(yield.compareTo(allYields.get(index)) != 0){
             fail();
         }

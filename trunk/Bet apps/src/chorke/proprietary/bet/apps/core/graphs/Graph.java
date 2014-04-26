@@ -191,4 +191,14 @@ public class Graph implements Cloneable{
     public int valuesCount(){
         return values.size();
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("Graph:  ");
+        for(BigDecimal bd : values){
+            sb.append(bd).append(", ");
+        }
+        sb.delete(sb.length() - 2, sb.length());
+        return sb.toString();
+    }
 }

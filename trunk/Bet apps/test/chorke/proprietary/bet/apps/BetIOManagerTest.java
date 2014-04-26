@@ -1,7 +1,8 @@
 
 package chorke.proprietary.bet.apps;
 
-import chorke.proprietary.bet.apps.core.Tuple;
+import static chorke.proprietary.bet.apps.BasicTests.collectionChecker;
+import static chorke.proprietary.bet.apps.BasicTests.assertAreBothNull;
 import chorke.proprietary.bet.apps.core.bets.Bet;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
 import chorke.proprietary.bet.apps.core.bets.BetAsianHandicap;
@@ -9,7 +10,6 @@ import chorke.proprietary.bet.apps.core.bets.BetBothTeamsToScore;
 import chorke.proprietary.bet.apps.core.bets.BetDoubleChance;
 import chorke.proprietary.bet.apps.core.bets.BetDrawNoBet;
 import chorke.proprietary.bet.apps.core.bets.BetOverUnder;
-import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.core.match.MatchProperties;
 import chorke.proprietary.bet.apps.core.match.sports.Sport;
@@ -27,7 +27,6 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.GregorianCalendar;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -637,6 +636,17 @@ public class BetIOManagerTest {
         assertEqualsCollectionsMatches(result, expected);
     }
     
+    /**
+     * Vymaže všetky kolekcie.
+     * @param col 
+     */
+    private void clearThem(LoadProperties prop, Collection... col){
+        prop.clear();
+        for(Collection c : col){
+            c.clear();
+        }
+    }
+    
     @Test
     public void saveLoadWithPropertiesTest(){
         testingManager.saveMatch(match1);
@@ -648,24 +658,26 @@ public class BetIOManagerTest {
         LoadProperties properties = new LoadProperties();
         
         zeroProperties(expectedMatches, properties);
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         oneProperty(expectedMatches, properties);
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         twoProperties(expectedMatches, properties);
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         threeProperties(expectedMatches, properties);
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         fourProperties(expectedMatches, properties);
     }
     
+    /**
+     * Kontrola načítania pri nezadanej žiadnej property.
+     * 
+     * @param expectedMatches
+     * @param properties 
+     */
     private void zeroProperties(Collection<Match> expectedMatches,
             LoadProperties properties){
         expectedMatches.add(match1);
@@ -675,27 +687,35 @@ public class BetIOManagerTest {
         checkLoading(expectedMatches, properties);
     }
     
+    /**
+     * Kontrola načítania pri zadanej jednej property.
+     * 
+     * @param expectedMatches
+     * @param properties 
+     */
     private void oneProperty(Collection<Match> expectedMatches,
             LoadProperties properties){
         startDate(expectedMatches, properties);
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         endDate(expectedMatches, properties);
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         betCompany(expectedMatches, properties);
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         league(expectedMatches, properties);
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         classes(expectedMatches, properties);
     }
     
+    /**
+     * Zadaný počiatočný dátum.
+     * 
+     * @param expectedMatches
+     * @param properties 
+     */
     private void startDate(Collection<Match> expectedMatches,
             LoadProperties properties){
         properties.addStartDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 15));
@@ -708,6 +728,12 @@ public class BetIOManagerTest {
         checkLoading(expectedMatches, properties);
     }
     
+    /**
+     * Zadaný koncový dátum.
+     * 
+     * @param expectedMatches
+     * @param properties 
+     */
     private void endDate(Collection<Match> expectedMatches,
             LoadProperties properties){
         expectedMatches.add(match1);
@@ -719,6 +745,12 @@ public class BetIOManagerTest {
         checkLoading(expectedMatches, properties);
     }
     
+    /**
+     * Zadaná stávková spoločnosť.
+     * 
+     * @param expectedMatches
+     * @param properties 
+     */
     private void betCompany(Collection<Match> expectedMatches,
             LoadProperties properties){
         Match m1 = getMatchCopyWithoutBets(match1);
@@ -748,6 +780,11 @@ public class BetIOManagerTest {
         checkLoading(expectedMatches, properties);
     }
     
+    /**
+     * Zadaná liga.
+     * @param expectedMatches
+     * @param properties 
+     */
     private void league(Collection<Match> expectedMatches,
             LoadProperties properties){
         properties.addLeague("1. liga", "Česká republika");
@@ -757,8 +794,7 @@ public class BetIOManagerTest {
         expectedMatches.add(match2);
         checkLoading(expectedMatches, properties);
         
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         Match match = new Match(Sport.getSport(Sport.HANDBALL_STRING));
         match.addPartialScore(14, 15);
@@ -776,8 +812,31 @@ public class BetIOManagerTest {
         
         checkLoading(expectedMatches, properties);
         testingManager.deleteMatch(match);
+        
+        clearThem(properties, expectedMatches);
+        
+        properties.addLeague("", "Slovensko");
+        expectedMatches.add(match1);
+        expectedMatches.add(match2);
+        checkLoading(expectedMatches, properties);
+        
+        clearThem(properties, expectedMatches);
+        
+        properties.addLeague("1. liga", null);
+        expectedMatches.add(match3);
+        expectedMatches.add(match);
+        match.setId(null);
+        testingManager.saveMatch(match);
+        checkLoading(expectedMatches, properties);
+        testingManager.deleteMatch(match);
     }
     
+    /**
+     * Zadané požadované typy stávok.
+     * 
+     * @param expectedMatches
+     * @param properties 
+     */
     private void classes(Collection<Match> expectedMatches,
             LoadProperties properties){
         properties.addBetClass(Bet1x2.class);
@@ -803,31 +862,38 @@ public class BetIOManagerTest {
         checkLoading(expectedMatches, properties);
     }
     
+    /**
+     * Kontrola načítania pri zadaných dvoch properties.
+     * 
+     * @param expectedMatches
+     * @param properties 
+     */
     private void twoProperties(Collection<Match> expectedMatches,
             LoadProperties properties){
         startDateEndDate(expectedMatches, properties);
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         startDateBetCompany(expectedMatches, properties);
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         startDateLeague(expectedMatches, properties);
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         endDateBetCompany(expectedMatches, properties);
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         endDateLeague(expectedMatches, properties);
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         leagueBetCompany(expectedMatches, properties);
     }
     
+    /**
+     * Zadaný počiatočný a koncový dátum.
+     * 
+     * @param expectedMatches
+     * @param properties 
+     */
     private void startDateEndDate(Collection<Match> expectedMatches,
             LoadProperties properties){
         properties.addStartDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 15));
@@ -837,6 +903,12 @@ public class BetIOManagerTest {
         checkLoading(expectedMatches, properties);
     }
     
+    /**
+     * Zdaraný počiatočný dtáum a stávková spoločnosť.
+     * 
+     * @param expectedMatches
+     * @param properties 
+     */
     private void startDateBetCompany(Collection<Match> expectedMatches,
             LoadProperties properties){
         Match m2 = getMatchCopyWithoutBets(match2);
@@ -853,6 +925,12 @@ public class BetIOManagerTest {
         checkLoading(expectedMatches, properties);
     }
     
+    /**
+     * Zadaný počiatočný dátum a liga.
+     * 
+     * @param expectedMatches
+     * @param properties 
+     */
     private void startDateLeague(Collection<Match> expectedMatches,
             LoadProperties properties){
         properties.addLeague("2. league", "USA");
@@ -863,6 +941,12 @@ public class BetIOManagerTest {
         checkLoading(expectedMatches, properties);
     }
     
+    /**
+     * Zdaraný koncový dátum a stávková spoločnosť
+     * 
+     * @param expectedMatches
+     * @param properties 
+     */
     private void endDateBetCompany(Collection<Match> expectedMatches,
             LoadProperties properties){
         properties.addBetCompany("tipsport");
@@ -887,6 +971,12 @@ public class BetIOManagerTest {
         checkLoading(expectedMatches, properties);
     }
     
+    /**
+     * Zadaný koncový dátum a liga.
+     * 
+     * @param expectedMatches
+     * @param properties 
+     */
     private void endDateLeague(Collection<Match> expectedMatches,
             LoadProperties properties){
         properties.addLeague("Corgoň liga", "Slovensko");
@@ -897,6 +987,11 @@ public class BetIOManagerTest {
         checkLoading(expectedMatches, properties);
     }
     
+    /**
+     * Zadaná liga a stávková spoločnosť.
+     * @param expectedMatches
+     * @param properties 
+     */
     private void leagueBetCompany(Collection<Match> expectedMatches,
             LoadProperties properties){
         properties.addBetCompany("doublebet");
@@ -913,23 +1008,30 @@ public class BetIOManagerTest {
         checkLoading(expectedMatches, properties);
     }
     
+    /**
+     * Kontrola pri zadaných 3 properties.
+     * @param expectedMatches
+     * @param properties 
+     */
     private void threeProperties(Collection<Match> expectedMatches,
             LoadProperties properties){
         startDateEndDateLeague(expectedMatches, properties);
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         startDateEndDateBetCompany(expectedMatches, properties);
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         startDateLeagueBetCompany(expectedMatches, properties);
-        expectedMatches.clear();
-        properties.clear();
+        clearThem(properties, expectedMatches);
         
         endDateLeagueBetCompany(expectedMatches, properties);
     }
     
+    /**
+     * Zadarný počiatočný a koncový dátum a liga.
+     * @param expectedMatches
+     * @param properties 
+     */
     private void startDateEndDateLeague(Collection<Match> expectedMatches,
             LoadProperties properties){
         properties.addLeague("Extraliga", "Slovensko");
@@ -939,6 +1041,11 @@ public class BetIOManagerTest {
         checkLoading(expectedMatches, properties);
     }
     
+    /**
+     * Zadaný počiatočný dátum, koncový dátum a stávková spoločnosť.
+     * @param expectedMatches
+     * @param properties 
+     */
     private void startDateEndDateBetCompany(Collection<Match> expectedMatches,
             LoadProperties properties){
         properties.addBetCompany("bet365");
@@ -960,6 +1067,11 @@ public class BetIOManagerTest {
         checkLoading(expectedMatches, properties);
     }
     
+    /**
+     * Zadaný počiatočný dátum, liga, stávková spoločnosť.
+     * @param expectedMatches
+     * @param properties 
+     */
     private void startDateLeagueBetCompany(Collection<Match> expectedMatches,
             LoadProperties properties){
         properties.addStartDate(new GregorianCalendar(2013, Calendar.DECEMBER, 21));
@@ -976,6 +1088,11 @@ public class BetIOManagerTest {
         checkLoading(expectedMatches, properties);
     }
     
+    /**
+     * Zadaný konečný dátum, liga a stávková spoločnosť.
+     * @param expectedMatches
+     * @param properties 
+     */
     private void endDateLeagueBetCompany(Collection<Match> expectedMatches,
             LoadProperties properties){
         properties.addLeague("Extraliga", "Slovensko");
@@ -1003,6 +1120,11 @@ public class BetIOManagerTest {
         checkLoading(expectedMatches, properties);
     }
     
+    /**
+     * Kontorla pri zadaných 4 LoadProperties.
+     * @param expectedMatches
+     * @param properties 
+     */
     private void fourProperties(Collection<Match> expectedMatches,
             LoadProperties properties){
         properties.addStartDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 15));
@@ -1019,6 +1141,13 @@ public class BetIOManagerTest {
         checkLoading(expectedMatches, properties);
     }
     
+    /**
+     * Skontorluje, či testovací objekt vráti rovnakú kolekciu ako expectedMatches
+     * pri zadaných properties.
+     * 
+     * @param expetedMatches
+     * @param properties 
+     */
     private void checkLoading(Collection<Match> expetedMatches, LoadProperties properties){
         assertEqualsCollectionsMatches(testingManager.loadMatches(properties),
                 expetedMatches);
@@ -1106,6 +1235,18 @@ public class BetIOManagerTest {
         }
     }
     
+    /**
+     * Skontroluje, či výsledok rs obsahuje požadovaný počet prvkov a či 
+     * sú všetky z deklarovaných id v ids. Ak nie sú predané žiadne ids,
+     * tak skontroluje iba počet prvkov.
+     * 
+     * @param rs výsledok
+     * @param number požadovaný počet
+     * @param items názov položiek
+     * @param ids požadované id, ktoré majú byť prítomné. Nekontorluje ich počet
+     *      vzhľadom ku number
+     * @throws SQLException 
+     */
     private void hasNumberOfRows(ResultSet rs, int number, String items, Long... ids)
             throws SQLException{
         for(int i = 0; i < number; i++){
@@ -1136,14 +1277,9 @@ public class BetIOManagerTest {
      * @param expected 
      */
     private void assertEqualsCollectionsMatches(Collection<Match> result, Collection<Match> expected) {
-        if(result == null && expected == null){ return; }
-        if(result == null && expected != null
-                || result != null && expected == null){ fail("Only one is null"); }
-        if(result.size() != expected.size()){ 
-            System.out.println(result);
-            System.out.println(expected);
-            fail("Not same size (matches) {ex: " 
-                + expected.size() + ", res: " + result.size() + "}"); }
+        if(!collectionChecker(result, expected)){
+            return;
+        }
         for(Match res : result){
             for(Match ex : expected){
                 if(res.getId().equals(ex.getId())){
@@ -1153,14 +1289,17 @@ public class BetIOManagerTest {
         }
     }
 
+    /**
+     * Skontorluje, či sú zápasy rovnaké vrátane stávok.
+     * @param res
+     * @param ex 
+     */
     private void assertDeepEquals(Match res, Match ex) {
-        if(res == null && ex == null){ return; }
-        if(res != null){
-            if(!res.equals(ex)){
-                fail("Not equals matches " + res + "  " + ex);
-            }
-        } else {
-            fail("res == null, ex != null");
+        if(assertAreBothNull(ex, res)){
+            return;
+        }
+        if(!res.equals(ex)){
+            fail("Not equals matches " + res + "  " + ex);
         }
         Map<String, Collection<Bet>> betsRes = res.getBets();
         Map<String, Collection<Bet>> betsEx = ex.getBets();
@@ -1171,7 +1310,7 @@ public class BetIOManagerTest {
         Collection<Bet> resColl, exColl;
         for(String bc : betsRes.keySet()){
             if(!betsEx.containsKey(bc)){
-                fail("Bet company not int ex: " + bc);
+                fail("Bet company not in ex: " + bc);
             }
             resColl = betsRes.get(bc);
             exColl = betsEx.get(bc);
@@ -1179,12 +1318,17 @@ public class BetIOManagerTest {
         }
     }
 
+    /**
+     * Skontorluje, či sú kolekcie stváok rovnaké. Resp, či ob
+     * sahujú rovnaké prvky. Na poradí nezáleží.
+     * 
+     * @param resColl
+     * @param exColl 
+     */
     private void assertEqualsCollectionsBets(Collection<Bet> resColl, Collection<Bet> exColl) {
-        if(resColl == null && exColl == null){ return; }
-        if(resColl == null && exColl != null
-                || resColl != null && exColl == null){ fail("Only one is null"); }
-        if(resColl.size() != exColl.size()){ fail("Not same size (bets) {ex: " 
-                + exColl.size() + ", res: " + resColl.size() + "}"); }
+        if(!collectionChecker(resColl, exColl)){
+            return;
+        }
         LinkedList<Bet> resList = new LinkedList<>(resColl);
         LinkedList<Bet> exList = new LinkedList<>(exColl);
         Iterator<Bet> resIter = resList.iterator();
@@ -1208,6 +1352,11 @@ public class BetIOManagerTest {
         }
     }
     
+    /**
+     * Vráti kópiu zápasu bez jeho stávok.
+     * @param match
+     * @return 
+     */
     private Match getMatchCopyWithoutBets(Match match){
         Match copy = new Match(match.getSport());
         copy.setId(match.getId());

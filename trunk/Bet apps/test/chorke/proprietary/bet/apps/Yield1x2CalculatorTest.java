@@ -1,6 +1,7 @@
 
 package chorke.proprietary.bet.apps;
 
+import static chorke.proprietary.bet.apps.BasicTests.assertEqualsBigDecimal;
 import chorke.proprietary.bet.apps.StaticConstants.BetPossibility;
 import chorke.proprietary.bet.apps.StaticConstants.Periode;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
@@ -290,11 +291,4 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
             }
         }
     }
-    
-    private void assertEqualsBigDecimal(BigDecimal b1, BigDecimal b2){
-        if(b1.compareTo(b2) != 0){
-            fail(b1 + " <--> " + b2);
-        }
-    }
-    
 }

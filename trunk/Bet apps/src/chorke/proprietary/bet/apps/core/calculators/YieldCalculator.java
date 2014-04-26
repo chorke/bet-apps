@@ -1,6 +1,7 @@
 
 package chorke.proprietary.bet.apps.core.calculators;
 
+import chorke.proprietary.bet.apps.StaticConstants.BetPossibility;
 import chorke.proprietary.bet.apps.StaticConstants.Periode;
 import chorke.proprietary.bet.apps.core.match.Match;
 import java.util.Calendar;
@@ -51,4 +52,11 @@ public interface YieldCalculator<T extends Yield> {
      */
     Map<Calendar, T> getCumulativePeriodicYield(Collection<Match> matches,
             CumulativeYieldProperties properties, Periode period);
+    
+    /**
+     * Vráti podporované možnosti stávok.
+     * 
+     * @return 
+     */
+    BetPossibility[] getBetPossibilities();
 }

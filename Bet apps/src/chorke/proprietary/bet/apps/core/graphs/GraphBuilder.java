@@ -22,7 +22,7 @@ public abstract class GraphBuilder <T extends Yield> {
      * @param index
      * @return 
      */
-    abstract Graph getGraph(Map<Calendar, T> yields, BetPossibility betPossibility, int index);
+    public abstract Graph getGraph(Map<Calendar, T> yields, BetPossibility betPossibility, int index);
     
     /**
      * Vytvorí graf pre zvolenú možnosť stávky a podľa rozsahu range.
@@ -32,7 +32,7 @@ public abstract class GraphBuilder <T extends Yield> {
      * @param range
      * @return 
      */
-    abstract Graph getGraph(Map<Calendar, T> yields, BetPossibility betPossibility,
+    public abstract Graph getGraph(Map<Calendar, T> yields, BetPossibility betPossibility,
             Tuple<BigDecimal, BigDecimal> range);
     
     /**

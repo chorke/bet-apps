@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package chorke.proprietary.bet.apps;
 
 import chorke.proprietary.bet.apps.core.Tuple;
@@ -15,6 +12,8 @@ import org.junit.After;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.Before;
+import static chorke.proprietary.bet.apps.BasicTests.collectionChecker;
+import static chorke.proprietary.bet.apps.BasicTests.assertEqualsBigDecimal;
 
 /**
  *
@@ -183,42 +182,32 @@ public class YieldPropertiesTest {
     }
     
     private void assertEqualsListBigDecimal(List<BigDecimal> l1, List<BigDecimal> l2){
-        if(!checkNullList(l1, l2)){ fail(); }
+        if(!collectionChecker(l1, l2)){
+            return;
+        }
         Iterator<BigDecimal> i1 = l1.iterator();
         Iterator<BigDecimal> i2 = l2.iterator();
         while(i1.hasNext() && i2.hasNext()){
-            if(i1.next().compareTo(i2.next()) != 0){ fail(); }
+            assertEqualsBigDecimal(i1.next(), i2.next());
         }
     }
     
     private void assertEqualsListTupleBigDecimal(List<Tuple<BigDecimal, BigDecimal>> l1, 
             List<Tuple<BigDecimal, BigDecimal>> l2){
-        if(!checkNullList(l1, l2)){ fail(); }
+        if(!collectionChecker(l1, l2)){
+            return;
+        }
         Iterator<Tuple<BigDecimal, BigDecimal>> i1 = l1.iterator();
         Iterator<Tuple<BigDecimal, BigDecimal>> i2 = l2.iterator();
         Tuple<BigDecimal, BigDecimal> tp1, tp2;
         while(i1.hasNext() && i2.hasNext()){
-            tp1 = i1.next();
-            tp2 = i2.next();
-            if(tp1.first.compareTo(tp2.first) != 0
-                    || tp1.second.compareTo(tp2.second) != 0){
-                fail();
-            }
+            assertEqualsTupleBigDecimal(i1.next(), i2.next());
         }
     }
     
     private void assertEqualsTupleBigDecimal(Tuple<BigDecimal, BigDecimal> tp1, 
             Tuple<BigDecimal, BigDecimal> tp2){
-        if(tp1.first.compareTo(tp2.first) != 0
-                || tp1.second.compareTo(tp2.second) != 0){
-            fail();
-        }
-    }
-    
-    private boolean checkNullList(List l1, List l2){
-        if(l1 == null && l2 == null){ return true; }
-        if(l1 == null && l2 != null){ return false; }
-        if(l1 != null && l2 == null){ return false; }
-        return l1.size() == l2.size();
+        assertEqualsBigDecimal(tp1.first, tp2.first);
+        assertEqualsBigDecimal(tp1.second, tp2.second);
     }
 }

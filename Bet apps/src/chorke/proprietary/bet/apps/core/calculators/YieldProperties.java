@@ -99,7 +99,7 @@ public class YieldProperties {
             throw new IndexOutOfBoundsException("Index out of bounds " + index);
         }
         if(index == 0){
-            return new Tuple<>(BigDecimal.ONE, scale.get(0));
+            return new Tuple<>(BigDecimal.ONE, scale.isEmpty() ? BigDecimal.ONE : scale.get(0));
         } else if(index == scale.size()){
             return new Tuple<>(scale.get(index - 1).add(ZERO_POINT_ZERO_ONE), MAX_VALUE);
         } else {

@@ -6,6 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import static chorke.proprietary.bet.apps.BasicTests.assertAreBothNull;
+import static chorke.proprietary.bet.apps.BasicTests.collectionChecker;
 
 /**
  *
@@ -30,8 +32,8 @@ public class GraphTest {
         
         Graph g = new Graph();
         
-        assertNullChecker(g.getMin(), null);
-        assertNullChecker(g.getMax(), null);
+        assertAreBothNull(g.getMin(), null);
+        assertAreBothNull(g.getMax(), null);
         assertEqualsBigDecimalLists(g.getValues(), new LinkedList<BigDecimal>());
         
         for(BigDecimal bd : list){
@@ -188,7 +190,7 @@ public class GraphTest {
     
     
     private void assertEqualsBigDecimal(BigDecimal val1, BigDecimal val2){
-        if(!assertNullChecker(val1, val2)){
+        if(!assertAreBothNull(val1, val2)){
             if(val1.compareTo(val2) != 0){
                 fail("BigDecimal values are not same: " + val1 + ", " + val2);
             }
@@ -196,25 +198,17 @@ public class GraphTest {
     }
     
     private void assertEqualsBigDecimalLists(List<BigDecimal> list1, List<BigDecimal> list2){
-        if(!assertNullChecker(list1, list2)){
-            if(list1.size() != list2.size()){ fail("Not same size {list1: " 
-                    + list1.size() + ", list2: " + list2.size() + "}"); }
+        if(collectionChecker(list1, list2)){
             for(int i = 0; i < list1.size(); i++){
                 assertEqualsBigDecimal(list1.get(i), list2.get(i));
             }
         }
-    }
-    
-    /**
-     * 
-     * @param o1
-     * @param o2
-     * @return true, ak sú oba null
-     */
-    private boolean assertNullChecker(Object o1, Object o2){
-        if(o1 == null && o2 == null){ return true; }
-        if(o1 == null && o2 != null
-                || o1 != null && o2 == null){ fail("Only one is null"); }
-        return false;
+//        if(!assertAreBothNull(list1, list2)){
+//            if(list1.size() != list2.size()){ fail("Not same size {list1: " 
+//                    + list1.size() + ", list2: " + list2.size() + "}"); }
+//            for(int i = 0; i < list1.size(); i++){
+//                assertEqualsBigDecimal(list1.get(i), list2.get(i));
+//            }
+//        }
     }
 }

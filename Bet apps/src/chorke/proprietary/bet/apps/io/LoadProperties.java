@@ -227,6 +227,14 @@ public class LoadProperties extends Properties{
         return ps;
     }
     
+    /**
+     * Vyplní where klauzulu. Úzko súvisí s metódou {@link #getWhereClauseForMatches()}.
+     * Vyplňovať začne od indexu startIdx.
+     * 
+     * @param ps
+     * @param startIdx počiatočný index
+     * @throws SQLException 
+     */
     private void fillPreparedStatementForMatchesWhereClause(PreparedStatement ps, int startIdx)
             throws SQLException{
         Calendar start = getStartDate();
@@ -243,10 +251,14 @@ public class LoadProperties extends Properties{
         }
         if(leagues != null && !leagues.isEmpty()){
             for(Tuple<String, String> tp : leagues){
-                ps.setString(i, tp.second);
-                i++;
-                ps.setString(i, tp.first);
-                i++;
+                if(tp.second != null && !tp.second.isEmpty()){
+                    ps.setString(i, tp.second);
+                    i++;
+                }
+                if(tp.first != null && !tp.first.isEmpty()){
+                    ps.setString(i, tp.first);
+                    i++;
+                }
             }
         }
     }
@@ -263,7 +275,8 @@ public class LoadProperties extends Properties{
         Calendar start = getStartDate();
         Calendar end = getEndDate();
         Set<Tuple<String, String>> leagues = getLeagues();
-        if(start == null && end == null && (leagues == null || leagues.isEmpty())){
+        boolean hasSomeLeagues = isAnythingForCountryLeaguePart(leagues);
+        if(start == null && end == null && !hasSomeLeagues){
             return out.toString();
         }
         out.append(" WHERE ");
@@ -277,16 +290,64 @@ public class LoadProperties extends Properties{
             out.append("matchdate <= ?");
             needAnd = true;
         }
-        if(leagues != null && !leagues.isEmpty()){
+        if(hasSomeLeagues){
             if(needAnd){
                 out.append(" AND ");
             }
             out.append("(");
             for(Tuple tp : leagues){
-                out.append("(country LIKE ? AND league LIKE ?) OR ");
+                String clwp = getCountryLeagueWherePart(tp);
+                if(!clwp.isEmpty()){
+                    out.append("(").append(clwp).append(") OR ");
+                }
             }
             out.delete(out.length() - 4, out.length());
             out.append(")");
+        }
+        return out.toString();
+    }
+    
+    /**
+     * Vráti true, ak existuje nejaká liga alebo krajina, ktorá mý byť zahrnutá
+     * vo WHERE časti.
+     * 
+     * @param leagues
+     * @return 
+     */
+    private boolean isAnythingForCountryLeaguePart(Set<Tuple<String, String>> leagues){
+        if(leagues == null || leagues.isEmpty()){
+            return false;
+        }
+        for(Tuple<String, String> tp : leagues){
+            if((tp.first != null && !tp.first.isEmpty())
+                    || tp.second != null && !tp.second.isEmpty()){
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Vytvorí časť v klauzule pre ligu a krajinu. Ak je niektorá z nich 
+     * prázdna alebo null, tak je v klauzule vynechaná (prípadne obe).
+     * 
+     * @param tuple formát (liga, krajina)
+     * @return 
+     */
+    private String getCountryLeagueWherePart(Tuple<String, String> tuple){
+        String league = tuple.first;
+        String country = tuple.second;
+        StringBuilder out = new StringBuilder("");
+        boolean needAnd = false;
+        if(country != null && !country.isEmpty()){
+            out.append("country LIKE ?");
+            needAnd = true;
+        }
+        if(league != null && !league.isEmpty()){
+            if(needAnd){
+                out.append(" AND ");
+            }
+            out.append("league LIKE ?");
         }
         return out.toString();
     }

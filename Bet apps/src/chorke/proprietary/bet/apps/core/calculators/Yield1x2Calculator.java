@@ -17,7 +17,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import javax.rmi.CORBA.Tie;
 
 /**
  * @author Chorke
@@ -239,6 +238,12 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
     
     protected boolean fitRange(BigDecimal value, Tuple<BigDecimal, BigDecimal> range){
         return range.first.compareTo(value) <= 0 && range.second.compareTo(value) >= 0;
+    }
+
+    @Override
+    public BetPossibility[] getBetPossibilities() {
+        return new BetPossibility[]{BetPossibility.Guest, BetPossibility.Home, 
+            BetPossibility.Favorit, BetPossibility.Looser, BetPossibility.Tie};
     }
     
     private abstract class PeriodHolder{

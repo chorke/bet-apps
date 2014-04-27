@@ -24,6 +24,10 @@ public class StaticConstants {
     
     public static final DataSource DATA_SOURCE = initDataSource();
     
+    public static Locale getDefaultLocale(){
+        return SVK_LOCALE;
+    }
+    
     private static DataSource initDataSource(){
         PoolingDataSource outDs = new PoolingDataSource();
         outDs.setPortNumber(5432);

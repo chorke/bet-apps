@@ -73,10 +73,23 @@ public class LoadProperties extends Properties{
         addToSet(BET_COMPANY, betCompany);
     }
     
+    /**
+     * Nájde prvok s kľúčom key a pridá do tejto množiny prvok value.
+     * Ak neexistuje kľúč, je vytvorená nová množina.
+     * 
+     * @param key
+     * @param value 
+     */
+    @SuppressWarnings("unchecked")
     private void addToSet(int key, Object value){
-        Set set;
+        Set<Object> set;
         if(containsKey(key)){
-            set = ((Set)get(key));
+            Object o = get(key);
+            if(o instanceof Set){
+                set = (Set<Object>)get(key);
+            } else {
+                throw new IllegalArgumentException("Object in map with key " + key + " is not set");
+            }
         } else {
             set = new HashSet<>();
             put(key, set);
@@ -87,6 +100,7 @@ public class LoadProperties extends Properties{
     /**
      * Vráti požadované stávkové spoločnosti.
      */
+    @SuppressWarnings("unchecked")
     public Set<String> getBetCompanies(){
         return (Set<String>)get(BET_COMPANY);
     }
@@ -98,13 +112,14 @@ public class LoadProperties extends Properties{
      * @see Set
      */
     public void addLeague(String league, String country){
-        addToSet(LEAGUE_COUNTRY, new Tuple(league, country));
+        addToSet(LEAGUE_COUNTRY, new Tuple<>(league, country));
     }
     
     /**
      * Vráti požadované ligy. Ukladaný formát je (liga, krajina).
      * @return 
      */
+    @SuppressWarnings("unchecked")
     public Set<Tuple<String, String>> getLeagues(){
         return (Set<Tuple<String, String>>)get(LEAGUE_COUNTRY);
     }
@@ -122,6 +137,7 @@ public class LoadProperties extends Properties{
      * Vráti požadované typy stávok.
      * @return 
      */
+    @SuppressWarnings("unchecked")
     public <T extends Bet> Set<Class<T>> getBetClasses(){
         return (Set<Class<T>>)get(BET_CLASS);
     }
@@ -295,7 +311,7 @@ public class LoadProperties extends Properties{
                 out.append(" AND ");
             }
             out.append("(");
-            for(Tuple tp : leagues){
+            for(Tuple<String, String> tp : leagues){
                 String clwp = getCountryLeagueWherePart(tp);
                 if(!clwp.isEmpty()){
                     out.append("(").append(clwp).append(") OR ");

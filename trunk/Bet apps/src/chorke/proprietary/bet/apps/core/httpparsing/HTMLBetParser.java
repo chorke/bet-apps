@@ -15,7 +15,7 @@ import java.util.Collection;
  */
 public interface HTMLBetParser {
     
-    public static enum BettingSports {Soccer, Hockey, Basketball, Handball, Volleyball, Baseball, All};
+    public static enum BettingSports {All, Soccer, Hockey, Basketball, Handball, Volleyball, Baseball};
     
     /**
      * Stiahne a vráti zápasy z dňa {@code cal}. Stiahnuté športy závisia na

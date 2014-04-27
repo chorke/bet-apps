@@ -175,6 +175,13 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         return Collections.unmodifiableCollection(unsavedMatches);
     }
     
+    /**
+     * Stiahne všetky požadované zápasy v textovej podobe, konkrétne 
+     * v podobe {@link TextingMatch}.
+     * Spustí niekoľko vlákien, ktoré sťahujú zápasy a čaká na ich dokončenie.
+     * 
+     * @return 
+     */
     private List<TextingMatch> getAllTextingMatches(){
         toDownload = prepareSportsAndDates();
         toDownloadIterator = toDownload.listIterator();
@@ -201,6 +208,12 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         return matches;
     }
     
+    /**
+     * Zaznamená, že vlákno sťahujúce textové zápasy skončilo. Ak všetky 
+     * vlákna už skončili, prebudú vlákno čakajúce na dokončenie tohto sťahovania.
+     * 
+     * @param threadId id vlákna.
+     */
     private void TMCThreadIsDone(int threadId){
         synchronized(TMCThreadsDoneStatus){
             TMCThreadsDoneStatus[threadId] = true;
@@ -219,6 +232,11 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         }
     }
     
+    /**
+     * Zaznamená, že vlákno sťahujúce zápas podľa textového zápasu už skončilo.
+     * Ak skončili všetky vlákna, prebudí vlákno čakajúce na dokončenie sťahovania.
+     * @param threadiId 
+     */
     private void MFTMCThreadIsDone(int threadiId){
         synchronized(MFTMCThreadsDoneStatus){
             MFTMCThreadsDoneStatus[threadiId] = true;
@@ -285,14 +303,14 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             c = new GregorianCalendar();
             c.setTimeInMillis(i);
             if(sport == BettingSports.All) {
-                out.add(new Tuple(BettingSports.Soccer, c));
-                out.add(new Tuple(BettingSports.Baseball, c));
-                out.add(new Tuple(BettingSports.Basketball, c));
-                out.add(new Tuple(BettingSports.Handball, c));
-                out.add(new Tuple(BettingSports.Hockey, c));
-                out.add(new Tuple(BettingSports.Volleyball, c));
+                out.add(new Tuple<>(BettingSports.Soccer, c));
+                out.add(new Tuple<>(BettingSports.Baseball, c));
+                out.add(new Tuple<>(BettingSports.Basketball, c));
+                out.add(new Tuple<>(BettingSports.Handball, c));
+                out.add(new Tuple<>(BettingSports.Hockey, c));
+                out.add(new Tuple<>(BettingSports.Volleyball, c));
             } else {
-                out.add(new Tuple(sport, c));
+                out.add(new Tuple<>(sport, c));
             }
         }
         return out;
@@ -343,6 +361,10 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         private final int id;
         private List<TextingMatch> matches;
 
+        /**
+         * Vytvorí nové vlákno pre sťahovanie textových zápasov s id id.
+         * @param id 
+         */
         public TMCThread(int id) {
             this.id = id;
         }
@@ -351,11 +373,12 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         public void run() {
             matches = new LinkedList<>();
             Tuple<BettingSports, Calendar> tuple = getNextSportForDownload();
-            TextingMatchCollector tmc;
+            TextingMatchCollector tmc = new TextingMatchCollector();
             while(tuple != null){
                 System.out.println("I {" + id + "} have " 
                         + tuple.first + " " + tuple.second.get(Calendar.DATE));
-                tmc = new TextingMatchCollector(tuple.first, tuple.second);
+                tmc.setSport(tuple.first);
+                tmc.setDate(tuple.second);
                 matches.addAll(tmc.getMatchesList());
                 tuple = getNextSportForDownload();
             }
@@ -383,6 +406,11 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         private final int id;
         private BetIOManager manager;
 
+        /**
+         * Vytvorí nové vlákno pre sťahvoanie zápasov s id id.
+         * @param manager
+         * @param id 
+         */
         public MFTMCThread(BetIOManager manager, int id) {
             this.manager = manager;
             this.id = id;
@@ -392,12 +420,12 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         public void run() {
             matches = new LinkedList<>();
             TextingMatch tm = getNextTextingMatch();
-            MatchFromTextingMatchCollector mftmc;
+            MatchFromTextingMatchCollector mftmc = new MatchFromTextingMatchCollector();
             Match match;
             while(tm != null){
                 System.out.println("I {" + id + "} have " 
                         + tm.match + "{" + tm.matchID + "}");
-                mftmc = new MatchFromTextingMatchCollector(tm);
+                mftmc.setTextingMatch(tm);
                 try{
                     match = mftmc.parseMatchDetails();
                 } catch (Exception ex){
@@ -428,14 +456,19 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
      * Stiahne stránku so zvoleným dňom a zápasom a vytvorí z nich {@link TextingMatch}.
      */
     private class TextingMatchCollector{
-        private final BettingSports exploredSport;
-        private final String exploredSportString;
-        private final Calendar date;
+        private BettingSports exploredSport;
+        private String exploredSportString;
+        private Calendar date;
         private final DocumentDownloader docDwnl = new DocumentDownloader();
 
-        public TextingMatchCollector(BettingSports exploredSport, Calendar date) {
+        /**
+         * Nastaví šport, ktorý bude spracovávaný.
+         * 
+         * @param exploredSport 
+         */
+        public void setSport(BettingSports exploredSport){
             this.exploredSport = exploredSport;
-            switch (exploredSport){
+            switch (this.exploredSport){
                 case Baseball:
                     exploredSportString = BASEBALL;
                     break;
@@ -454,7 +487,14 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
                 default:
                     exploredSportString = SOCCER;
             }
-            this.date = date;
+        }
+        
+        /**
+         * Nastaví dátum, ktorý bude spracovávaný.
+         * @param date 
+         */
+        public void setDate(Calendar date){
+            this.date = (Calendar)date.clone();
         }
 
         /**
@@ -466,7 +506,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             List<TextingMatch> out = new LinkedList<>();
             Document document = docDwnl.getDocument(getURLForMatchesPageByDate());
             if(document == null){
-                undownloadedSports.add(new Tuple(exploredSport, date));
+                undownloadedSports.add(new Tuple<>(exploredSport, date));
                 return out;
             }
             String href;
@@ -568,13 +608,9 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
      * Z príslušného {@link TextingMatch} vytvorí {@link Match}. 
      */
     private class MatchFromTextingMatchCollector{
-        private final TextingMatch textingMatch;
+        private TextingMatch textingMatch;
         private final DocumentDownloader docDwnl = new DocumentDownloader();
 
-        public MatchFromTextingMatchCollector(TextingMatch textingMatch) {
-            this.textingMatch = textingMatch;
-        }
-        
         /**
          * Stiahne detail zápasu a vytovrí z neho {@link Match}.
          * @return 
@@ -596,6 +632,14 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
                 }
             }
             return outputMatch;
+        }
+        
+        /**
+         * Nastaví zápas, ktorý má byť sťahovaný.
+         * @param textingMatch 
+         */
+        public void setTextingMatch(TextingMatch textingMatch) {
+            this.textingMatch = textingMatch;
         }
         
         /**

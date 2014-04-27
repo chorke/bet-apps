@@ -46,6 +46,9 @@ public class GraphsCollectingPanel extends JPanel{
     private GraphBuilder graphBuilder;
     private List<Match> matches;
     private YieldProperties properties;
+    /**
+     * forma (perióda, idx stávkovej možnosti, idx rozsahu)
+     */
     private Map<Periode, GraphPanel[][]> graphs;
     private String[] scale;
     private String[] periode;

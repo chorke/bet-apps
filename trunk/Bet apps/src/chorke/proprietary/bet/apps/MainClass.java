@@ -28,6 +28,8 @@ import chorke.proprietary.bet.apps.io.DBBetIOManager;
 import chorke.proprietary.bet.apps.io.LoadProperties;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.GraphicsConfiguration;
+import java.awt.Window;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Calendar;

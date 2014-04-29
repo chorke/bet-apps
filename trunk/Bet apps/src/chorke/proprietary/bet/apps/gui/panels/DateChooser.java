@@ -83,7 +83,7 @@ public class DateChooser extends JPanel{
         setCalendar(calendar);
         ImageIcon image = new ImageIcon(
                 getClass().getResource("/chorke/proprietary/bet/"
-                + "apps/gui/icons/kalendar.png"));
+                + "apps/gui/icons/calendar.png"));
         
         dateCall = new JButton(image);
         dateCall.setMargin(new Insets(0, 0, 0, 0));

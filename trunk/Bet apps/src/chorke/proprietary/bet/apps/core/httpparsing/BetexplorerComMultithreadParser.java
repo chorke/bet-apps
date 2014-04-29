@@ -20,6 +20,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,7 +33,7 @@ import org.jsoup.select.Elements;
  * Pre ukladanie používa konkrétnu implementáciu {@link BetIOManager}
  * @author Chorke
  */
-public class BetexplorerComMultithreadParser implements HTMLBetParser{
+public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser{
 
     private static final String STRING_URL = "http://www.betexplorer.com";
     private static final String RESULTS = "/results/";
@@ -54,40 +55,116 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
                         BET_ASIAN_HANDICAP, BET_DRAW_NO_BET,
                         BET_DOUBLE_CHANCE, BET_BOTH_TEAMS_TO_SCORE};
     
+    /**
+     * Zámok pre synchronizáciu vlákien pri získavaní dátumov a športov
+     * požadovaných na stiahnutie.
+     */
     private final Object LOCK_FOR_TO_DOWNLOAD = new Object();
+    /**
+     * Zámok pre synchronizáciu objektov pri získavaní jednotlivých
+     * zápasov požadovaných na stiahnutie.
+     */
     private final Object LOCK_FOR_TO_PARSE = new Object();
+    /**
+     * Požadované dni a športy na stiahnutie.
+     */
     private List<Tuple<BettingSports, Calendar>> toDownload;
+    /**
+     * Iterátor pre dni a športy na stiahnutie.
+     */
     private ListIterator<Tuple<BettingSports, Calendar>> toDownloadIterator;
+    /**
+     * Požadované zápasy na stiahnutie.
+     */
     private List<TextingMatch> toParse;
+    /**
+     * Iterátor pre požadované zápasy na stiahnutie.
+     */
     private ListIterator<TextingMatch> toParseIterator;  
     
+    /**
+     * Objekt použitý pri synchronizácii. Aktuálne vlákno čaká (pomocou tohto 
+     * objektu) pokým neskončia všetky vlákna spustené pre sťahovanie.
+     */
     private final Object WAITING_OBJECK = new Object();
+    /**
+     * Status o (ne)ukončení činnosti vlákien pre sťahovanie športov.
+     */
     private final boolean[] TMCThreadsDoneStatus = new boolean[NUM_OF_TMCTHREAD];
+    /**
+     * Status o (ne)ukončení činnosti vlákien pre sťahovanie zápasov.
+     */
     private final boolean[] MFTMCThreadsDoneStatus = new boolean[NUM_OF_MFTMCTHREAD];
+    /**
+     * Status, či všetky vlákna už skončili sťahovanie športov.
+     */
     private boolean areAllTMCDone;
+    /**
+     * Status, či všetky vlákna už skončili sťahovanie zápasov.
+     */
     private boolean areAllMFTMCDone;
     
+    /**
+     * Podporovaný počet súbežných vlákien sťahujúcich športy.
+     */
     private static final int NUM_OF_TMCTHREAD = 12;
+    /**
+     * Podporovaný počet súbežných vlákien sťahujúcich zápasy.
+     */
     private static final int NUM_OF_MFTMCTHREAD = 20;
     
+    /**
+     * Požadovaný počiatočný dátum.
+     */
     private Calendar startDate;
+    /**
+     * Požadovaný koncový dátum.
+     */
     private Calendar endDate;
     
+    /**
+     * Požadovaný šport.
+     */
     private BettingSports sport = BettingSports.All;
     
+    /**
+     * Nestiahnuté zápasy.
+     */
     private Collection<String> undownloadedMatches;
+    /**
+     * Nestiahnuté športy a dni.
+     */
     private Collection<Tuple<BettingSports, Calendar>> undownloadedSports;
+    /**
+     * Neuložené zápasy.
+     */
     private Collection<Match> unsavedMatches;
     
+    /**
+     * Manažér pre ukladanie zápasov. Ak je null, zápasy sa neukladajú.
+     */
     private CloneableBetIOManager IOManager;
     
+    /**
+     * Zoznam vlákien, ktoré boli spustené pre sťahovanie a ešte neskončili.
+     * Ak už spustené vlákna skončili, môžu sa vyskytnúť v tomto zoname.
+     */
+    private List<Thread> actualRunningThreads = new LinkedList<>();
+    /**
+     * Status rozhodujúci, či sa má sťahovanie zastaviť.
+     */
+    private volatile boolean stopDownloading;
+    
+    /**
+     * Vytvorí nový parser. Používa IOManager pre ukladanie zápasov ihneď 
+     * po ich stiahnutí. Ak je IOManager == null, tak zápasy nie sú ukladané.
+     * 
+     * @param IOManager 
+     */
     public BetexplorerComMultithreadParser(CloneableBetIOManager IOManager) {
         startDate = new GregorianCalendar();
         endDate = new GregorianCalendar();
-        startDate.set(Calendar.HOUR_OF_DAY, 0);
-        startDate.set(Calendar.MINUTE, 0);
-        startDate.set(Calendar.SECOND, 0);
-        startDate.set(Calendar.MILLISECOND, 1);
+        clearCalendar(startDate);
         endDate.setTimeInMillis(startDate.getTimeInMillis());
         undownloadedMatches = new LinkedList<>();
         undownloadedSports = new LinkedList<>();
@@ -118,6 +195,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
 
     @Override
     public Collection<Match> getMatches() {
+        stopDownloading = false;
         undownloadedMatches.clear();
         undownloadedSports.clear();
         unsavedMatches.clear();
@@ -126,32 +204,48 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         MFTMCThread[] mftmcThreads = new MFTMCThread[NUM_OF_MFTMCTHREAD];
         areAllMFTMCDone = false;
         Arrays.fill(MFTMCThreadsDoneStatus, false);
-        for(int i = 0; i < NUM_OF_MFTMCTHREAD; i++){
-            mftmcThreads[i] = new MFTMCThread(getCloneOfIOManager(), i);
-            Thread t = new Thread(mftmcThreads[i]);
-            t.start();
-        }
-        synchronized(WAITING_OBJECK){
-            while(!areAllMFTMCDone){
-                try{
-                    WAITING_OBJECK.wait();
-                } catch (InterruptedException ex){}
+        List<Match> matches = new LinkedList<>();
+        if(!stopDownloading){
+            for(int i = 0; i < NUM_OF_MFTMCTHREAD; i++){
+                mftmcThreads[i] = new MFTMCThread(getCloneOfIOManager(), i);
+                Thread t = new Thread(mftmcThreads[i]);
+                t.start();
+                actualRunningThreads.add(t);
+            }
+            synchronized(WAITING_OBJECK){
+                while(!areAllMFTMCDone){
+                    try{
+                        WAITING_OBJECK.wait();
+                    } catch (InterruptedException ex){}
+                }
+            }
+            for(MFTMCThread th : mftmcThreads){
+                matches.addAll(th.matches);
+                th.destroy();
             }
         }
-        List<Match> matches = new LinkedList<>();
-        for(MFTMCThread th : mftmcThreads){
-            matches.addAll(th.matches);
-        }
         toParseIterator = null;
+        clearActualRunningThreads();
         return matches;
     }
 
+    /**
+     * Odstráni ukončené vlákna zo zoznamu.
+     */
+    private void clearActualRunningThreads(){
+        Iterator<Thread> iter = actualRunningThreads.iterator();
+        while(iter.hasNext()){
+            if(!iter.next().isAlive()){
+                iter.remove();
+            }
+        }
+    }
+    
     /**
      * Vytovrí klon {@link CloneableBetIOManager}, aby každé vlákno mohlo 
      * používať vlastného manažéra.
      * @return 
      */
-   
     private CloneableBetIOManager getCloneOfIOManager(){
         if(IOManager == null){
             return null;
@@ -174,6 +268,15 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
     public Collection<Match> getUnsavedMatches(){
         return Collections.unmodifiableCollection(unsavedMatches);
     }
+
+    @Override
+    public void stopThreads() {
+        for(Thread t : actualRunningThreads){
+            t.interrupt();
+        }
+        clearActualRunningThreads();
+        stopDownloading = true;
+    }
     
     /**
      * Stiahne všetky požadované zápasy v textovej podobe, konkrétne 
@@ -188,21 +291,25 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
         TMCThread[] tmcThreads = new TMCThread[NUM_OF_TMCTHREAD];
         Arrays.fill(TMCThreadsDoneStatus, false);
         areAllTMCDone = false;
-        for(int i = 0; i < NUM_OF_TMCTHREAD; i++){
-            tmcThreads[i] = new TMCThread(i);
-            Thread t = new Thread(tmcThreads[i]);
-            t.start();
-        }
-        synchronized(WAITING_OBJECK){
-            while(!areAllTMCDone){
-                try{
-                    WAITING_OBJECK.wait();
-                } catch (InterruptedException ex){}
-            }
-        }
         List<TextingMatch> matches = new LinkedList<>();
-        for(TMCThread th : tmcThreads){
-            matches.addAll(th.matches);
+        if(!stopDownloading){
+            for(int i = 0; i < NUM_OF_TMCTHREAD; i++){
+                tmcThreads[i] = new TMCThread(i);
+                Thread t = new Thread(tmcThreads[i]);
+                t.start();
+                actualRunningThreads.add(t);
+            }
+            synchronized(WAITING_OBJECK){
+                while(!areAllTMCDone){
+                    try{
+                        WAITING_OBJECK.wait();
+                    } catch (InterruptedException ex){}
+                }
+            }
+            for(TMCThread th : tmcThreads){
+                matches.addAll(th.matches);
+                th.destroy();
+            }
         }
         toDownloadIterator = null;
         return matches;
@@ -264,6 +371,9 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
      */
     private Tuple<BettingSports, Calendar> getNextSportForDownload(){
         synchronized(LOCK_FOR_TO_DOWNLOAD){
+            if(stopDownloading){
+                return null;
+            }
             if(toDownloadIterator.hasNext()){
                 return toDownloadIterator.next();
             } else {
@@ -281,6 +391,9 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
      */
     private TextingMatch getNextTextingMatch(){
         synchronized(LOCK_FOR_TO_PARSE){
+            if(stopDownloading){
+                return null;
+            }
             if(toParseIterator.hasNext()){
                 return toParseIterator.next();
             } else {
@@ -329,19 +442,25 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
     @Override
     public void setStartDate(Calendar start) {
         this.startDate.setTimeInMillis(start.getTimeInMillis());
-        startDate.set(Calendar.HOUR_OF_DAY, 0);
-        startDate.set(Calendar.MINUTE, 0);
-        startDate.set(Calendar.SECOND, 0);
-        startDate.set(Calendar.MILLISECOND, 1);
+        clearCalendar(startDate);
     }
     
     @Override
     public void setEndDate(Calendar end) {
         this.endDate.setTimeInMillis(end.getTimeInMillis());
-        endDate.set(Calendar.HOUR_OF_DAY, 0);
-        endDate.set(Calendar.MINUTE, 0);
-        endDate.set(Calendar.SECOND, 0);
-        endDate.set(Calendar.MILLISECOND, 1);
+        clearCalendar(endDate);
+    }
+    
+    /**
+     * Vynuluje hodiny, minúty, sekundy a milisekundy dátumu c. Resp. nastaví
+     * na prvú milisekundu zadaného dňa.
+     * @param c 
+     */
+    private void clearCalendar(Calendar c){
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 1);
     }
 
     /**
@@ -374,7 +493,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             matches = new LinkedList<>();
             Tuple<BettingSports, Calendar> tuple = getNextSportForDownload();
             TextingMatchCollector tmc = new TextingMatchCollector();
-            while(tuple != null){
+            while(tuple != null && !Thread.currentThread().isInterrupted()){
                 System.out.println("I {" + id + "} have " 
                         + tuple.first + " " + tuple.second.get(Calendar.DATE));
                 tmc.setSport(tuple.first);
@@ -383,7 +502,18 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
                 tuple = getNextSportForDownload();
             }
             TMCThreadIsDone(id);
-            System.err.println("Done TMC(" + id + ")");
+            if(Thread.currentThread().isInterrupted()){
+                System.err.println("Interrupted TMC(" + id + ")");
+            } else {
+                System.err.println("Done TMC(" + id + ")");
+            }
+        }
+        
+        /**
+         * Ukončí prácu s týmto objektom a uvolní držané zdroje.
+         */
+        private void destroy(){
+            matches.clear();
         }
     }
     
@@ -422,7 +552,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
             TextingMatch tm = getNextTextingMatch();
             MatchFromTextingMatchCollector mftmc = new MatchFromTextingMatchCollector();
             Match match;
-            while(tm != null){
+            while(tm != null && !Thread.currentThread().isInterrupted()){
                 System.out.println("I {" + id + "} have " 
                         + tm.match + "{" + tm.matchID + "}");
                 mftmc.setTextingMatch(tm);
@@ -430,7 +560,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
                     match = mftmc.parseMatchDetails();
                 } catch (Exception ex){
                     match = null;
-                    ex.printStackTrace();
+//                    ex.printStackTrace();
                 }
                 if(match != null && !match.getBets().isEmpty()){
                     if(manager != null){
@@ -438,7 +568,7 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
                             manager.saveMatch(match);
                         } catch (BetIOException ex){
                             System.out.println(match);
-                            ex.printStackTrace();
+//                            ex.printStackTrace();
                             unsavedMatches.add(match);
                         }
                     }
@@ -447,9 +577,20 @@ public class BetexplorerComMultithreadParser implements HTMLBetParser{
                 tm = getNextTextingMatch();
             }
             MFTMCThreadIsDone(id);
-            System.err.println("Done MFTMC (" + id + ")");
+            if(Thread.currentThread().isInterrupted()){
+                System.err.println("Interrpupted MFTMC (" + id + ")");
+            } else {
+                System.err.println("Done MFTMC (" + id + ")");
+            }
         }
         
+        /**
+         * Ukončí prácu s týmto objektom a uvolní držané zdroje.
+         */
+        private void destroy(){
+            matches.clear();
+            manager = null;
+        }
     }
     
     /**

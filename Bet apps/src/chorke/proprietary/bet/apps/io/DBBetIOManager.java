@@ -1,7 +1,6 @@
 
 package chorke.proprietary.bet.apps.io;
 
-import chorke.proprietary.bet.apps.core.Tuple;
 import chorke.proprietary.bet.apps.core.bets.Bet;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
 import chorke.proprietary.bet.apps.core.bets.BetAsianHandicap;
@@ -29,12 +28,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.sql.DataSource;
 
 /**
  *
- * Implementácia {@link BetIOManager} pre ukladanie stávok. Iniciálne je implementácia
+ * Implementácia {@link CloneableBetIOManager} pre ukladanie stávok. Iniciálne je implementácia
  * robená pre PostgreSQL databázu. Obsahuje však iba jednoduché SELECT, INSERT, DELETE
  * SQL príkazy, ktoré by mali podporovať všetky databázi.
  * 
@@ -50,94 +48,94 @@ public class DBBetIOManager implements CloneableBetIOManager{
     
     @Override
     public void saveMatch(Match match) throws BetIOException {
-        if(dataSource == null){
-            throw new BetIOException("No data source");
-        }
-        if(match == null){
-            throw new IllegalArgumentException("Match can no be null.");
-        }
-        if(match.getId() != null){
-            throw new IllegalArgumentException("Matchs ID already set");
-        }
-        if(match.getProperties() == null){
-            throw new IllegalArgumentException("Match properties can no be null.");
-        }
-        if(match.getProperties().getCountry() == null
-                || match.getProperties().getCountry().isEmpty()
-                || match.getProperties().getLeague() == null
-                || match.getProperties().getLeague().isEmpty()){
-            throw new IllegalArgumentException("Invalid match properties.");
-        }
-        if(match.getSport() == null){
-            throw new IllegalArgumentException("Sport can not be null");
-        }
-        try(Connection con = dataSource.getConnection()){
-            PreparedStatement ps = con.prepareStatement(
-                    "INSERT INTO matches "
-                    + "(sport,country,league,matchdate) VALUES(?,?,?,?)",
-                    Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, match.getSport().toString());
-            ps.setString(2, match.getProperties().getCountry());
-            ps.setString(3, match.getProperties().getLeague());
-            ps.setTimestamp(4, new Timestamp(match.getProperties().getDate().getTimeInMillis()));
-            
-            ps.executeUpdate();
-            ResultSet rs = ps.getGeneratedKeys();
-            rs.next();
-            match.setId(rs.getLong(1));
-      
-            ps = con.prepareStatement("INSERT INTO scores (matchid,team1,team2,part) VALUES(?,?,?,?)");
-            ps.setLong(1, match.getId());
-            ps.setInt(2, match.getScore().getScoreFirstParty());
-            ps.setInt(3, match.getScore().getScoreSecondParty());
-            ps.setInt(4, -1);
-            ps.executeUpdate();
-            List<PartialScore> listPs = match.getScore().getPartialScore();
-            int i = 0;
-            while(i < listPs.size()){
-                ps = con.prepareStatement(
-                        "INSERT INTO scores (matchid,team1,team2,part) VALUES(?,?,?,?)");
-                ps.setLong(1, match.getId());
-                ps.setInt(2, listPs.get(i).firstParty);
-                ps.setInt(3, listPs.get(i).secondParty);
-                i++;
-                ps.setInt(4, i);
-                ps.executeUpdate();
-            }
-            Map<String, Collection<Bet>> bets = match.getBets();
-            for(String s : bets.keySet()){
-                for(Bet b : bets.get(s)){
-                    if(b instanceof Bet1x2){
-                        ps = prepareStatementBet1x2(
-                                con, (Bet1x2)b, match.getId());
-                    } else if(b instanceof BetAsianHandicap){
-                        ps = prepareStatementBetAsianHandicap(
-                                con, (BetAsianHandicap)b, match.getId());
-                    } else if(b instanceof BetBothTeamsToScore){
-                        ps = prepareStatementBetBothTeamsToScore(
-                                con, (BetBothTeamsToScore)b, match.getId());
-                    } else if(b instanceof BetDoubleChance){
-                        ps = prepareStatementBetDoubleChance(
-                                con, (BetDoubleChance)b, match.getId());
-                    } else if(b instanceof BetDrawNoBet){
-                        ps = prepareStatementBetDrawNoBet(
-                                con, (BetDrawNoBet)b, match.getId());
-                    } else if(b instanceof BetOverUnder){
-                        ps = prepareStatementBetOverUnder(
-                                con, (BetOverUnder)b, match.getId());
-                    } else {
-                        throw new BetIOException("Unsuported Bet class");
-                    }
-                    ps.executeUpdate();
-                }
-            }
-        } catch (SQLException ex){
-            if(match.getId() != null){
-                deleteMatch(match);
-            }
-            throw new BetIOException("Error by saving match. ", ex);
-        }
-        
+//        if(dataSource == null){
+//            throw new BetIOException("No data source");
+//        }
+//        if(match == null){
+//            throw new IllegalArgumentException("Match can no be null.");
+//        }
+//        if(match.getId() != null){
+//            throw new IllegalArgumentException("Matchs ID already set");
+//        }
+//        if(match.getProperties() == null){
+//            throw new IllegalArgumentException("Match properties can no be null.");
+//        }
+//        if(match.getProperties().getCountry() == null
+//                || match.getProperties().getCountry().isEmpty()
+//                || match.getProperties().getLeague() == null
+//                || match.getProperties().getLeague().isEmpty()){
+//            throw new IllegalArgumentException("Invalid match properties.");
+//        }
+//        if(match.getSport() == null){
+//            throw new IllegalArgumentException("Sport can not be null");
+//        }
+//        try(Connection con = dataSource.getConnection()){
+//            PreparedStatement ps = con.prepareStatement(
+//                    "INSERT INTO matches "
+//                    + "(sport,country,league,matchdate) VALUES(?,?,?,?)",
+//                    Statement.RETURN_GENERATED_KEYS);
+//            ps.setString(1, match.getSport().toString());
+//            ps.setString(2, match.getProperties().getCountry());
+//            ps.setString(3, match.getProperties().getLeague());
+//            ps.setTimestamp(4, new Timestamp(match.getProperties().getDate().getTimeInMillis()));
+//            
+//            ps.executeUpdate();
+//            ResultSet rs = ps.getGeneratedKeys();
+//            rs.next();
+//            match.setId(rs.getLong(1));
+//      
+//            ps = con.prepareStatement("INSERT INTO scores (matchid,team1,team2,part) VALUES(?,?,?,?)");
+//            ps.setLong(1, match.getId());
+//            ps.setInt(2, match.getScore().getScoreFirstParty());
+//            ps.setInt(3, match.getScore().getScoreSecondParty());
+//            ps.setInt(4, -1);
+//            ps.executeUpdate();
+//            List<PartialScore> listPs = match.getScore().getPartialScore();
+//            int i = 0;
+//            while(i < listPs.size()){
+//                ps = con.prepareStatement(
+//                        "INSERT INTO scores (matchid,team1,team2,part) VALUES(?,?,?,?)");
+//                ps.setLong(1, match.getId());
+//                ps.setInt(2, listPs.get(i).firstParty);
+//                ps.setInt(3, listPs.get(i).secondParty);
+//                i++;
+//                ps.setInt(4, i);
+//                ps.executeUpdate();
+//            }
+//            Map<String, Collection<Bet>> bets = match.getBets();
+//            for(String s : bets.keySet()){
+//                for(Bet b : bets.get(s)){
+//                    if(b instanceof Bet1x2){
+//                        ps = prepareStatementBet1x2(
+//                                con, (Bet1x2)b, match.getId());
+//                    } else if(b instanceof BetAsianHandicap){
+//                        ps = prepareStatementBetAsianHandicap(
+//                                con, (BetAsianHandicap)b, match.getId());
+//                    } else if(b instanceof BetBothTeamsToScore){
+//                        ps = prepareStatementBetBothTeamsToScore(
+//                                con, (BetBothTeamsToScore)b, match.getId());
+//                    } else if(b instanceof BetDoubleChance){
+//                        ps = prepareStatementBetDoubleChance(
+//                                con, (BetDoubleChance)b, match.getId());
+//                    } else if(b instanceof BetDrawNoBet){
+//                        ps = prepareStatementBetDrawNoBet(
+//                                con, (BetDrawNoBet)b, match.getId());
+//                    } else if(b instanceof BetOverUnder){
+//                        ps = prepareStatementBetOverUnder(
+//                                con, (BetOverUnder)b, match.getId());
+//                    } else {
+//                        throw new BetIOException("Unsuported Bet class");
+//                    }
+//                    ps.executeUpdate();
+//                }
+//            }
+//        } catch (SQLException ex){
+//            if(match.getId() != null){
+//                deleteMatch(match);
+//            }
+//            throw new BetIOException("Error by saving match. ", ex);
+//        }
+//        
     }
     
     /**

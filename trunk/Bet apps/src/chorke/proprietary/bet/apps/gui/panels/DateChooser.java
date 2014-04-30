@@ -342,7 +342,7 @@ public class DateChooser extends JPanel{
     }
     
     /**
-     * Akcia pre výberové okno pri získaní/stratení zamrenia.
+     * Akcia pre výberové okno pri získaní/stratení zamerania.
      * Pri stratení sa okno zruší. Pri získaní sa nedeje nič.
      */
     private class Focus implements WindowFocusListener {

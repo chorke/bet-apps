@@ -1,9 +1,7 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package chorke.proprietary.bet.apps.core.httpparsing;
 
+import chorke.proprietary.bet.apps.StaticConstants.BettingSports;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.core.Tuple;
 import java.util.Calendar;
@@ -14,8 +12,6 @@ import java.util.Collection;
  * @author Chorke
  */
 public interface HTMLBetParser {
-    
-    public static enum BettingSports {All, Soccer, Hockey, Basketball, Handball, Volleyball, Baseball};
     
     /**
      * Stiahne a vráti zápasy z dňa {@code cal}. Stiahnuté športy závisia na
@@ -30,9 +26,10 @@ public interface HTMLBetParser {
      * Stiahne a vráti zápasy z predošlého dňa. Predošlý deň je relatívny 
      * vzhľadom ku počiatočnému dátumu ({@link #setStartDate(java.util.Calendar) }).
      * Stiahnuté športy závisia na aktuálne nastavenom {@link BettingSports}
-     * ({@link #setExploredSport(BettingSports)}). Môže manipulovať aj z 
-     * koncovým dátumom. Teda volanie tejto metódy môže zrušiť predošlé volanie
-     * metódy {@link #setEndDate(java.util.Calendar)}.
+     * ({@link #setExploredSport(BettingSports)}). Môže manipulovať aj s 
+     * koncovým a počiatočným dátumom. Teda volanie tejto metódy môže zrušiť 
+     * predošlé volanie metódy {@link #setEndDate(java.util.Calendar)} a
+     * {@link #setStartDate(java.util.Calendar)}
      * @return 
      * @see #setStartDate(java.util.Calendar)
      * @see #setExploredSport(BettingSports)
@@ -43,9 +40,10 @@ public interface HTMLBetParser {
      * Stiahne a vráti zápasy z nasledujúceho dňa. Nasledujúci deň je relatívny 
      * vzhľadom ku koncovému dátumu ({@link #setEndDate(java.util.Calendar)}). 
      * Stiahnuté športy závisia na aktuálne nastavenom {@link BettingSports}
-     * ({@link #setExploredSport(BettingSports)}). Môže manipulovať aj z počiatočným
-     * dátumom. Teda volanie tejto metódy môže zrušiť predošlé volanie metódy
-     * {@link #setStartDate(java.util.Calendar)}.
+     * ({@link #setExploredSport(BettingSports)}). Môže manipulovať aj s 
+     * koncovým a počiatočným dátumom. Teda volanie tejto metódy môže zrušiť 
+     * predošlé volanie metódy {@link #setEndDate(java.util.Calendar)} a
+     * {@link #setStartDate(java.util.Calendar)}
      * @return 
      * @see #setEndDate(java.util.Calendar) 
      * @see #setExploredSport(BettingSports)  

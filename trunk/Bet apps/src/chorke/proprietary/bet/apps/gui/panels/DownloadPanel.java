@@ -1,9 +1,12 @@
 
 package chorke.proprietary.bet.apps.gui.panels;
 
+import chorke.proprietary.bet.apps.StaticConstants;
+import chorke.proprietary.bet.apps.core.Tuple;
 import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser;
-import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser.BettingSports;
+import chorke.proprietary.bet.apps.StaticConstants.BettingSports;
 import chorke.proprietary.bet.apps.core.httpparsing.MultithreadHTMLBetParser;
+import chorke.proprietary.bet.apps.core.match.Match;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Window;
@@ -13,16 +16,21 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
+import java.text.DateFormat;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.ResourceBundle;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
@@ -34,10 +42,12 @@ import javax.swing.border.TitledBorder;
 public class DownloadPanel extends JPanel {
 
     private HTMLBetParser parser;
-    private JComboBox<BettingSports> sportToDownload;
+    private JComboBox<String> sportToDownload;
     private DateChooser from;
-    private DateChooser till;
+    private DateChooser by;
     private JButton downloadButton;
+    
+    private ResourceBundle bundle = StaticConstants.BUNDLE;
     
     public DownloadPanel(HTMLBetParser parser) {
         this.parser = parser;
@@ -46,15 +56,17 @@ public class DownloadPanel extends JPanel {
     
     private void init(){
         from = new DateChooser();
-        till = new DateChooser();
-        from.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "From"));
-        till.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Till"));
+        by = new DateChooser();
+        from.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED),
+                bundle.getString("from")));
+        by.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED),
+                bundle.getString("by")));
         Dimension dim = new Dimension(150, 50);
         from.setPreferredSize(dim);
-        till.setPreferredSize(dim);
-        sportToDownload = new JComboBox<>(BettingSports.values());
+        by.setPreferredSize(dim);
+        sportToDownload = new JComboBox<>(getLocalizedBettingSportsArray());
         sportToDownload.setBackground(Color.WHITE);
-        downloadButton = new JButton("Download");
+        downloadButton = new JButton(bundle.getString("download"));
         downloadButton.addActionListener(new DownloadSportsListener());
         
         GroupLayout gl = new GroupLayout(this);
@@ -65,7 +77,7 @@ public class DownloadPanel extends JPanel {
                     .addGap(10, 40, 200)
                     .addComponent(from, 120, 150, 250)
                     .addGap(10, 40, 200)
-                    .addComponent(till)
+                    .addComponent(by)
                     .addGap(10, 40, 200))
                 .addGroup(Alignment.CENTER, gl.createSequentialGroup()
                     .addGap(10, 40, 200)
@@ -82,18 +94,33 @@ public class DownloadPanel extends JPanel {
                     .addGap(10, 40, 200))
                 .addGroup(Alignment.CENTER, gl.createSequentialGroup()
                     .addGap(10, 40, 200)
-                    .addComponent(till)
+                    .addComponent(by)
                     .addGap(10, 40, 200)
                     .addComponent(downloadButton)
                     .addGap(10, 40, 200)));
         gl.linkSize(sportToDownload, downloadButton);
-        gl.linkSize(from, till);
+        gl.linkSize(from, by);
         setLayout(gl);
     }
     
     /**
+     * Vráti lokalizované názvy športov v poradí, ako ich vráti 
+     * {@link BettingSports#values()}.
+     * @return 
+     */
+    private String[] getLocalizedBettingSportsArray(){
+        BettingSports[] sports = BettingSports.values();
+        String[] out = new String[sports.length];
+        int i = 0;
+        for(BettingSports bs : sports){
+            out[i++] = bundle.getString(bs.toString());
+        }
+        return out;
+    }
+    
+    /**
      * Akcia pre download button. Stiahne všetky zápasy podľa aktuálne
-     * zvoleného počiatočného (from) a koncového (till) dátumu a podľa
+     * zvoleného počiatočného (from) a koncového (by) dátumu a podľa
      * športu (sportToDownload). Ku sťahovaniu používa HTMLBetParser
      * parser. 
      */
@@ -101,7 +128,8 @@ public class DownloadPanel extends JPanel {
         
         @Override
         public void actionPerformed(ActionEvent e) {
-            Downloader d = new Downloader(from.getActualDate(), till.getActualDate(), parser);
+            Downloader d = new Downloader(from.getActualDate(), by.getActualDate(),
+                    BettingSports.values()[sportToDownload.getSelectedIndex()], parser);
             d.execute();
         }
     }
@@ -119,7 +147,10 @@ public class DownloadPanel extends JPanel {
 
         private Calendar startDate;
         private Calendar endDate;
+        private BettingSports sport;
         private HTMLBetParser betParser;
+        
+        private int matchesCount;
         /**
          * Informácie o viditeľnosti aktuálnych okien pre znovuobnovenie stavu
          * pred začatím sťahovania.
@@ -155,9 +186,10 @@ public class DownloadPanel extends JPanel {
          * @param endDate
          * @param parser 
          */
-        public Downloader(Calendar startDate, Calendar endDate, HTMLBetParser parser) {
+        public Downloader(Calendar startDate, Calendar endDate, BettingSports sport, HTMLBetParser parser) {
             this.startDate = (Calendar)startDate.clone();
             this.endDate = (Calendar)endDate.clone();
+            this.sport = sport;
             this.betParser = parser;
             eraseDate(this.startDate);
             eraseDate(this.endDate);
@@ -174,13 +206,16 @@ public class DownloadPanel extends JPanel {
             downloadInfoWin.setVisible(true);
             
             Calendar partStartDate = (Calendar)startDate.clone();
-            betParser.setExploredSport((BettingSports)sportToDownload.getSelectedItem());
+            betParser.setExploredSport(sport);
             boolean end = false;
+            matchesCount = 0;
             while(!end && !stop){
                 Calendar partEndDate = getNextPartEndDate(partStartDate);
                 betParser.setStartDate(partStartDate);
                 betParser.setEndDate(partEndDate);
-                betParser.getMatches().clear();
+                Collection<Match> matches = betParser.getMatches();
+                matchesCount += matches.size();
+                matches.clear();
                 end = lastIteration(partEndDate);
                 partStartDate = partEndDate;
                 partStartDate.add(Calendar.DATE, 1);
@@ -225,17 +260,90 @@ public class DownloadPanel extends JPanel {
             }
             System.setOut(defaultPrintStream);
             getDownloadResultsInfoWin().setVisible(true);
+            System.err.println("unsaved {" + parser.getUnsavedMatches().size()
+                + "}: " + parser.getUnsavedMatches());
+            System.err.println("matches {" + parser.getUndownloadedMatches().size()
+                + "}: " + parser.getUndownloadedMatches());
+            System.err.println("sports {" + parser.getUndownloadedSports().size()
+                + "}: " + parser.getUndownloadedSports());
+            
         }
         
+        /**
+         * Vráti okno, ktoré zobrazí záverečné výsledky sťahovania.
+         * @return 
+         */
         private JFrame getDownloadResultsInfoWin(){
-            JFrame resultInfo = new JFrame();
             JScrollPane pane = new JScrollPane(infoTextArea);
             pane.setPreferredSize(new Dimension(500, 400));
-            resultInfo.add(pane);
+            int collSize = parser.getUndownloadedSports().size();
+            JLabel undwnSportsLable = new JLabel("Undownloaded sports: " + collSize);
+            JLabel matchesCountLabel = new JLabel("Matches downloaded: " + matchesCount);
+            JLabel emptyLabel = new JLabel();
+            JButton showButton = new JButton("Show");
+            showButton.addActionListener(new ShowInfoAboutUndownloadedSports());
+            showButton.setEnabled(collSize != 0);
+            JPanel mainPanel = new JPanel();
+            GroupLayout gl = new GroupLayout(mainPanel);
+            gl.setHorizontalGroup(gl.createParallelGroup(Alignment.CENTER)
+                    .addComponent(pane)
+                    .addGroup(gl.createSequentialGroup()
+                        .addGroup(gl.createParallelGroup()
+                            .addComponent(matchesCountLabel)
+                            .addComponent(undwnSportsLable))
+                        .addGroup(gl.createParallelGroup()
+                            .addComponent(emptyLabel)
+                            .addComponent(showButton))));
+            gl.setVerticalGroup(gl.createSequentialGroup()
+                    .addComponent(pane)
+                    .addGroup(gl.createParallelGroup()
+                        .addGroup(gl.createSequentialGroup()
+                            .addComponent(matchesCountLabel)
+                            .addComponent(undwnSportsLable))
+                        .addGroup(gl.createSequentialGroup()
+                            .addComponent(emptyLabel)
+                            .addComponent(showButton))));
+            gl.setAutoCreateContainerGaps(true);
+            gl.setAutoCreateGaps(true);
+            gl.linkSize(SwingConstants.VERTICAL, undwnSportsLable, showButton);
+            gl.linkSize(SwingConstants.VERTICAL, matchesCountLabel, emptyLabel);
+            mainPanel.setLayout(gl);            
+            
+            JFrame resultInfo = new JFrame();
+            resultInfo.add(mainPanel);
             resultInfo.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             resultInfo.pack();
             resultInfo.setLocationRelativeTo(null);
             return resultInfo;
+        }
+        
+        /**
+         * Stiahne znovu nestiahnuté športy.
+         */
+        private class ShowInfoAboutUndownloadedSports implements ActionListener{
+            
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                StringBuilder builder = new StringBuilder();
+                DateFormat df = DateFormat.getDateInstance(
+                        DateFormat.SHORT, StaticConstants.getDefaultLocale());
+                for(Tuple<BettingSports, Calendar> sports : parser.getUndownloadedSports()){
+                    builder.append(df.format(sports.second.getTime()))
+                            .append("   ")
+                            .append(sports.first)
+                            .append(System.lineSeparator());
+                }
+                JTextArea text = new JTextArea(builder.toString());
+                text.setEditable(false);
+                JFrame info = new JFrame();
+                JScrollPane pane = new JScrollPane(text);
+                pane.setPreferredSize(new Dimension(300, 200));
+                info.add(pane);
+                info.pack();
+                info.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                info.setLocationRelativeTo(null);
+                info.setVisible(true);
+            }
         }
         
         /**
@@ -265,7 +373,7 @@ public class DownloadPanel extends JPanel {
         
         /**
          * Vráti najbližší dátum, ktorý je menší alebo rovný koncovému požadovanému
-         * dátumu a nie je viac ako 5 dní od start dátumu.
+         * dátumu a nie je viac ako 4 dní od start dátumu.
          * @param start
          * @return 
          */
@@ -291,10 +399,17 @@ public class DownloadPanel extends JPanel {
         }
     }
     
+    /**
+     * Action listener pre zastavenie sťahovania.
+     */
     private class StopDownloading implements ActionListener{
 
         private Downloader downloader;
-
+        
+        /**
+         * Downloader, ktorý by mal byť zastavený. 
+         * @param downloader 
+         */
         public StopDownloading(Downloader downloader) {
             this.downloader = downloader;
         }

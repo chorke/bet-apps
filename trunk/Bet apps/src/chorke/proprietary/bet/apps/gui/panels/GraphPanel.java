@@ -77,6 +77,11 @@ public class GraphPanel extends JPanel{
         setYStepAndZeroLine();
     }
     
+    /**
+     * Nastaví farbu bodov. Čiary mezi nimi budú stále čierne.
+     * 
+     * @param dotsColor 
+     */
     public void setDotsColor(Color dotsColor) {
         this.dotsColor = dotsColor;
     }
@@ -87,6 +92,11 @@ public class GraphPanel extends JPanel{
         paintGraph(g, graph);
     }
     
+    /**
+     * Vykreslí graf gr pomocou grafiky g.
+     * @param g
+     * @param gr 
+     */
     private void paintGraph(Graphics g, Graph gr){
         MathContext zeroContext = new MathContext(0);
         List<BigDecimal> values = gr.getValues();
@@ -108,6 +118,10 @@ public class GraphPanel extends JPanel{
         }
     }
     
+    /**
+     * Vykreslí pomocou grafiky g pozadie pre graf. Teda jeho osi.
+     * @param g 
+     */
     private void paintBackground(Graphics g){
         super.paint(g);
         int height = getPreferredSize().height;

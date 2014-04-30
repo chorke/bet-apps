@@ -18,7 +18,7 @@ import chorke.proprietary.bet.apps.core.calculators.YieldProperties;
 import chorke.proprietary.bet.apps.core.graphs.GraphBuilderYield1x2;
 import chorke.proprietary.bet.apps.core.httpparsing.BetexplorerComMultithreadParser;
 import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser;
-import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser.BettingSports;
+import chorke.proprietary.bet.apps.StaticConstants.BettingSports;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.gui.panels.DownloadPanel;
 import chorke.proprietary.bet.apps.gui.panels.GraphPanel;
@@ -55,15 +55,16 @@ public class MainClass {
     }
     
     private void guiTester(){
-//        YieldProperties yieldProp = new YieldProperties();
+        DBBetIOManager man = new DBBetIOManager(StaticConstants.DATA_SOURCE);
+        
+        YieldProperties yieldProp = new YieldProperties();
 //        yieldProp.setBetCompany("bet365");
 //        yieldProp.addScale(new BigDecimal("1.60"));
 //        yieldProp.addScale(new BigDecimal("1.70"));
 //        yieldProp.addScale(new BigDecimal("2.00"));
 //        
 //        Yield1x2Calculator calcul = new Yield1x2Calculator();
-        CloneableBetIOManager man = new DBBetIOManager(StaticConstants.DATA_SOURCE);
-//        Collection<Match> matches = load(max);
+//        Collection<Match> matches = load(man);
 //        Graph g = new GraphBuilderYield1x2().getGraph(
 //                calcul.getPeriodicYield(matches,
 //                    yieldProp, Periode.Month),
@@ -71,10 +72,15 @@ public class MainClass {
 //        GraphPanel p = new GraphPanel(g);
 //        p.setPreferredSize(new Dimension(500, 300));
 //        GraphsCollectingPanel panel = new GraphsCollectingPanel(calcul, new GraphBuilderYield1x2());
+//        panel.setPreferredSize(new Dimension(400, 350));
+//        panel.setMatches(matches);
+//        panel.setProperties(yieldProp);
         HTMLBetParser parser = new BetexplorerComMultithreadParser(man);
         DownloadPanel panel = new DownloadPanel(parser);
-        JScrollPane pane = new JScrollPane(panel);
         panel.setPreferredSize(new Dimension(400, 150));
+        
+        
+        JScrollPane pane = new JScrollPane(panel);
         pane.setPreferredSize(new Dimension(410, 160));
         JFrame f = new JFrame();
         f.add(pane);
@@ -82,9 +88,6 @@ public class MainClass {
         f.pack();
         f.setLocationRelativeTo(null);
         f.setVisible(true);
-        
-//        panel.setMatches(matches);
-//        panel.setProperties(yieldProp);
     }
     
     private void betsDownloading(){

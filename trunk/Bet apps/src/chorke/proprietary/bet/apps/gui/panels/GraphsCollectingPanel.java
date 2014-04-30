@@ -1,6 +1,7 @@
 
 package chorke.proprietary.bet.apps.gui.panels;
 
+import chorke.proprietary.bet.apps.StaticConstants;
 import chorke.proprietary.bet.apps.StaticConstants.BetPossibility;
 import chorke.proprietary.bet.apps.StaticConstants.Periode;
 import chorke.proprietary.bet.apps.core.calculators.Yield;
@@ -21,6 +22,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.ButtonModel;
@@ -61,6 +63,8 @@ public class GraphsCollectingPanel extends JPanel{
     private JPanel propertiesPanel;
     private GraphPanel emptyGraph;
     private Dimension graphScrollPaneDim = new Dimension(500, 150);
+    
+    private ResourceBundle bundle = StaticConstants.BUNDLE;
 
     /**
      * Vytvorí nový panel, ktorý zobrazuje grafy.
@@ -79,14 +83,14 @@ public class GraphsCollectingPanel extends JPanel{
         periode = new String[Periode.values().length];
         int i = 0;
         for(Periode p : Periode.values()){
-            periode[i] = p.toString();
+            periode[i] = bundle.getString(p.toString());
             periodeGroup.add(getRadioButton(periode[i++]));
         }
         betPoss = new String[calculator.getBetPossibilities().length];
         betPossGroup = new ButtonGroup();
         i = 0;
         for(BetPossibility bp : calculator.getBetPossibilities()){
-            betPoss[i] = bp.toString();
+            betPoss[i] = bundle.getString(bp.toString());
             betPossGroup.add(getRadioButton(betPoss[i++]));
         }
         scaleGroup = new ButtonGroup();
@@ -181,10 +185,11 @@ public class GraphsCollectingPanel extends JPanel{
      */
     private JPanel initPropPanel(){
         JPanel propPanel = new JPanel();
-        propPanel.setBorder(new TitledBorder(new LineBorder(Color.BLACK), "Prop"));
-        JLabel periodeLabel = new JLabel("periode");
-        JLabel scaleLabel = new JLabel("scale");
-        JLabel betPossLabel = new JLabel("bet poss");
+        propPanel.setBorder(new TitledBorder(new LineBorder(Color.BLACK),
+                bundle.getString("propertiesTitle")));
+        JLabel periodeLabel = new JLabel(bundle.getString("periode"));
+        JLabel scaleLabel = new JLabel(bundle.getString("scale"));
+        JLabel betPossLabel = new JLabel(bundle.getString("betPoss"));
         JPanel periodePanel = getButtonsPanel(periodeGroup);
         JPanel scalePanel = getButtonsPanel(scaleGroup);
         JPanel betPossPanel = getButtonsPanel(betPossGroup);

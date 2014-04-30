@@ -1,6 +1,7 @@
 
 package chorke.proprietary.bet.apps.core.httpparsing;
 
+import chorke.proprietary.bet.apps.StaticConstants.BettingSports;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.core.match.MatchProperties;
 import chorke.proprietary.bet.apps.core.Tuple;
@@ -174,8 +175,8 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
     
     @Override
     public Collection<Match> getMatchesOfDay(Calendar cal) {
-        startDate.setTimeInMillis(cal.getTimeInMillis());
-        endDate.setTimeInMillis(cal.getTimeInMillis());
+        setStartDate(cal);
+        setEndDate(cal);
         return getMatches();
     }
 
@@ -779,7 +780,7 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
          * Nastaví zápas, ktorý má byť sťahovaný.
          * @param textingMatch 
          */
-        public void setTextingMatch(TextingMatch textingMatch) {
+        private void setTextingMatch(TextingMatch textingMatch) {
             this.textingMatch = textingMatch;
         }
         

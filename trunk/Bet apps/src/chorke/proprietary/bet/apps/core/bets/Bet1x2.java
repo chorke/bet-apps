@@ -12,6 +12,14 @@ public class Bet1x2 extends Bet{
     public final BigDecimal betX;
     public final BigDecimal bet2;
 
+    /**
+     * Vytvorí novú stávku so spoločnousťou betCompany, kurzom na domáceho bet1, 
+     * kurzom na remízu betX a kurzom na hosťa bet2.
+     * @param betCompany
+     * @param bet1
+     * @param betX
+     * @param bet2 
+     */
     public Bet1x2(String betCompany, BigDecimal bet1, BigDecimal betX, BigDecimal bet2) {
         super(betCompany);
         this.bet1 = bet1;
@@ -19,19 +27,32 @@ public class Bet1x2 extends Bet{
         this.bet2 = bet2;
     }
     
+    /**
+     * Vráti stávkový kurz pre domáceho.
+     * @return 
+     */
     public BigDecimal getHomeBet(){
         return bet1;
     }
     
+    /**
+     * Vráti stávkový kurz pre hosťa.
+     * @return 
+     */
     public BigDecimal getGuestBet(){
         return bet2;
     }
     
+    /**
+     * Vráti stávkový kurz pre remízu.
+     * @return 
+     */
     public BigDecimal getTieBet(){
         return betX;
     }
     
     /**
+     * Vráti stávkový kurz na favorita stretnutia.
      * Vráti 0.0, ak neexistuje favoritná stávka (domáci a hostia majú rovnaké stávky)
      * @return 
      */
@@ -46,6 +67,7 @@ public class Bet1x2 extends Bet{
     }
     
     /**
+     * Vráti stávkový kurz proti favoritovi stretnutia.
      * Vráti 0.0, ak neexistuje favoritná stávka (domáci a hostia majú rovnaké stávky)
      * @return 
      */

@@ -23,25 +23,52 @@ public class YieldProperties {
     private String betCompany;
     private Map<String, Object> properties;
     
+    /**
+     * Vytvorí nové nastavenia zisku s prázdnými rozsahmi, stávkovou spoločnosťou
+     * a prázdnymi properties.
+     */
     public YieldProperties(){
         this(null, "", new HashMap<String, Object>());
     }
 
+    /**
+     * Vytvorí nové nastavenia zisku s rozsahmi scales a stávkovou spoločnosťou
+     * betCompany.
+     * 
+     * @param scale
+     * @param betCompany 
+     */
     public YieldProperties(List<BigDecimal> scale, String betCompany) {
         this(scale, betCompany, new HashMap<String, Object>());
     }
 
+    /**
+     * Vytvorí nové nastavenia zisku s rozsahmi scales, stávkovou spoločnosťou
+     * betCompany a nastaveniami properties.
+     * 
+     * @param scale
+     * @param betCompany
+     * @param properties 
+     */
     public YieldProperties(List<BigDecimal> scale, String betCompany, Map<String, Object> properties) {
         setScale(scale);
         this.betCompany = betCompany;
         this.properties = properties;
     }
 
-    
+    /**
+     * Vráti aktuálnu stávkovu spoločnosť.
+     * @return 
+     */
     public String getBetCompany() {
         return betCompany;
     }
 
+    /**
+     * Nastaví stávovú spoločnosť.
+     * 
+     * @param betCompany 
+     */
     public void setBetCompany(String betCompany) {
         this.betCompany = betCompany;
     }
@@ -168,6 +195,11 @@ public class YieldProperties {
         return idx;
     }
     
+    /**
+     * Vráti neupraviteľný zoznam s aktuálne nastavenými rozsahmi (iba hraničné
+     * hodnoty, nie celé dvojice rozsahov).
+     * @return 
+     */
     public List<BigDecimal> getScale() {
         return Collections.unmodifiableList(scale);
     }

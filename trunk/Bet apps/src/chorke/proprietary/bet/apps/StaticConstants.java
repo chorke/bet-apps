@@ -26,7 +26,7 @@ public class StaticConstants {
     /**
      * Možnosť stávky.
      */
-    public static enum BetPossibility {Home, Guest, Favorit, Looser, Tie};
+    public static enum BetPossibility {Home, Guest, Favorit, Loser, Tie};
     /**
      * Športy, na ktoré je možné staviť.
      */

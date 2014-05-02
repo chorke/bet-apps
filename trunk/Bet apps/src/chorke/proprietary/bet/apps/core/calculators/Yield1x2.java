@@ -25,9 +25,9 @@ public class Yield1x2 extends Yield{
      */
     private Map<Integer, BigDecimal> favorit;
     /**
-     * Looser. Index rozsahu a zisk.
+     * Loser. Index rozsahu a zisk.
      */
-    private Map<Integer, BigDecimal> looser;
+    private Map<Integer, BigDecimal> loser;
     /**
      * Remíza. Index rozsahu a zisk.
      */
@@ -38,7 +38,7 @@ public class Yield1x2 extends Yield{
         home = new HashMap<>();
         guest = new HashMap<>();
         favorit = new HashMap<>();
-        looser = new HashMap<>();
+        loser = new HashMap<>();
         tie = new HashMap<>();
     }
 
@@ -58,7 +58,7 @@ public class Yield1x2 extends Yield{
             home.clear();
             guest.clear();
             favorit.clear();
-            looser.clear();
+            loser.clear();
             tie.clear();
         }
     }
@@ -66,7 +66,7 @@ public class Yield1x2 extends Yield{
     @Override
     public BetPossibility[] getSupportedBetPossibilities() {
         return new BetPossibility[]{BetPossibility.Guest, BetPossibility.Home, 
-            BetPossibility.Favorit, BetPossibility.Looser, BetPossibility.Tie};
+            BetPossibility.Favorit, BetPossibility.Loser, BetPossibility.Tie};
     }
 
     @Override
@@ -78,14 +78,15 @@ public class Yield1x2 extends Yield{
                 .append(System.lineSeparator())
                 .append(" favorit: ").append(stringYield(favorit))
                 .append(System.lineSeparator())
-                .append(" looser: ").append(stringYield(looser))
+                .append(" looser: ").append(stringYield(loser))
                 .append(System.lineSeparator())
                 .append(" tie: ").append(stringYield(tie));
         return sb.toString();
     }
 
     @Override
-    protected Map<Integer, BigDecimal> getRequiredMap(BetPossibility betPossibility) {
+    protected Map<Integer, BigDecimal> getRequiredMap(BetPossibility betPossibility)
+                throws IllegalArgumentException{
         switch(betPossibility){
             case Favorit:
                 return favorit;
@@ -93,12 +94,13 @@ public class Yield1x2 extends Yield{
                 return guest;
             case Home:
                 return home;
-            case Looser:
-                return looser;
+            case Loser:
+                return loser;
             case Tie:
                 return tie;
             default :
-                throw new IllegalStateException("Unsupported bet possibility [" + betPossibility + "]");
+                throw new IllegalArgumentException(
+                        "Unsupported bet possibility [" + betPossibility + "]");
         }
     }
 }

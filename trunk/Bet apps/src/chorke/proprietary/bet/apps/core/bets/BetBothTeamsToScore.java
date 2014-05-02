@@ -11,6 +11,13 @@ public class BetBothTeamsToScore extends Bet{
     public final BigDecimal yes;
     public final BigDecimal no;
 
+    /**
+     * Vytvorí stávku so spoločnosťou betCompany, kurzom na áno yes a kurzom
+     * na nie no.
+     * @param betCompany
+     * @param yes
+     * @param no 
+     */
     public BetBothTeamsToScore(String betCompany, BigDecimal yes, BigDecimal no) {
         super(betCompany);
         this.yes = yes;

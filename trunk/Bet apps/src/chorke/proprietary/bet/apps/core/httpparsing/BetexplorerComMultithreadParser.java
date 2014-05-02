@@ -108,11 +108,11 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
     /**
      * Podporovaný počet súbežných vlákien sťahujúcich športy.
      */
-    private static final int NUM_OF_TMCTHREAD = 12;
+    private static final int NUM_OF_TMCTHREAD = 10;
     /**
      * Podporovaný počet súbežných vlákien sťahujúcich zápasy.
      */
-    private static final int NUM_OF_MFTMCTHREAD = 20;
+    private static final int NUM_OF_MFTMCTHREAD = 12;
     
     /**
      * Požadovaný počiatočný dátum.

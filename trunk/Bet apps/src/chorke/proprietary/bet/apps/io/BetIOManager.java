@@ -1,8 +1,11 @@
 
 package chorke.proprietary.bet.apps.io;
 
+import chorke.proprietary.bet.apps.core.Tuple;
+import chorke.proprietary.bet.apps.core.bets.Bet;
 import chorke.proprietary.bet.apps.core.match.Match;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Ukladá stávky.
@@ -39,4 +42,22 @@ public interface BetIOManager{
      * @throws BetIOException 
      */
     void deleteMatch(Match match) throws BetIOException;
+    
+    /**
+     * Vráti dostupné stávkové spoločnosti v DB pre konkrétny typ stávky. 
+     * @param clazz trieda reprezentujúca požadovaný typ stávky
+     * @return 
+     * @throws BetIOException ak nastane nejaká chyba pri práci s DB
+     * @throws IllegalArgumentException ak je clazz null
+     */
+    <T extends Bet> Collection<String> getAvailableBetCompanies(Class<T> clazz) 
+            throws BetIOException, IllegalArgumentException;
+    
+    /**
+     * Vráti mapu dostupných krajín a v nich dostupných líg. Vrátená mapa
+     * má ako kľúč krajinu a hodnota pri každom kľúči sú dostupné ligy.
+     * @return 
+     * @throws BetIOException ak nastane nejaká chyba pri práci s DB
+     */
+    Map<String, Collection<String>> getAvailableCountriesAndLeagues() throws BetIOException;
 }

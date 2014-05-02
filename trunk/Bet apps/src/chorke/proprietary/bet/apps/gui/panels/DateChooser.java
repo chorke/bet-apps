@@ -2,6 +2,7 @@
 package chorke.proprietary.bet.apps.gui.panels;
 
 import chorke.proprietary.bet.apps.StaticConstants;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -12,16 +13,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 import javax.swing.GroupLayout;
+import javax.swing.GroupLayout.Alignment;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFrame;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -38,22 +43,84 @@ import javax.swing.event.ChangeListener;
  */
 public class DateChooser extends JPanel{
     
-    private JFrame dateWin;
+    /**
+     * Okno so zobrazeným dátumom.
+     */
+    private JDialog dateWin;
+    /**
+     * JComboBox pre mesiace
+     */
     private JComboBox<String> monthChooser;
+    /**
+     * JSpiner pre mesaic.
+     */
     private JSpinner yearChooser;
+    /**
+     * Tlačítko, ktoré vyvolá zobrazenie dateWin pre výber dátumu.
+     */
     private JButton dateCall;
+    /**
+     * Panel, ktorý obsahuje všetky súčasti pre výber dátumu. Je nastavený
+     * pre dateWin.
+     */
     private JPanel datePanel;
+    /**
+     * Panel, ktorý obsahuje mriežku pre dni.
+     */
     private JPanel daysPanel;
+    /**
+     * WindowFosucListener, ktorý je nastavený pre dateWin. 
+     */
     private WindowFocusListener focus = new Focus();
+    /**
+     * Aktuálne zvolený dátum.
+     */
     private Calendar calendar;
+    /**
+     * Dočasný dátum pri výbere. Obzvlášť pri výbere mesiaca a roku.
+     */
     private Calendar tmpCal;
+    /**
+     * Dnešný deň.
+     */
+    private Calendar today;
+    /**
+     * Tlačítka pre dni od 1 do 31.
+     */
     private JButton[] days;
+    /**
+     * Lokalizované názvy dní
+     */
     private JLabel[] daysName;
+    /**
+     * Oblasť pre textovú podobu aktuálne zvoleného dátumu.
+     */
     private JTextArea dateString;
+    /**
+     * Defaultné Locale pre aplikáciu
+     */
+    private Locale defaulLocale = StaticConstants.getDefaultLocale();
     
+    /**
+     * Farba tlačítka, ktorou je zobrazený dnešný dátum.
+     */
+    private Color todayColor = Color.ORANGE;
+    /**
+     * Farba tlačítok dní, ktoré nemajú dnešný dátum.
+     */
+    private Color otherDaysColor = new JButton().getBackground();
+    
+    /**
+     * Vytvorí novú inštanciu DateChooser s počiatočným dnešným dátumom.
+     */
     public DateChooser() {
-        calendar = new GregorianCalendar(StaticConstants.getDefaultLocale());
-        tmpCal = new GregorianCalendar(StaticConstants.getDefaultLocale());
+        today = new GregorianCalendar(defaulLocale);
+        calendar = new GregorianCalendar(defaulLocale);
+        tmpCal = new GregorianCalendar(defaulLocale);
+        
+        calendar.setTimeInMillis(today.getTimeInMillis());
+        tmpCal.setTimeInMillis(today.getTimeInMillis());
+        
         init();
     }
 
@@ -64,7 +131,7 @@ public class DateChooser extends JPanel{
         String[] s = new String[12];
         Calendar c = new GregorianCalendar(2013, Calendar.JANUARY, Calendar.MONDAY);
         for(int i = 0; i < s.length; i++){
-            s[i] = c.getDisplayName(Calendar.MONTH, Calendar.LONG, StaticConstants.getDefaultLocale());
+            s[i] = c.getDisplayName(Calendar.MONTH, Calendar.LONG, defaulLocale);
             c.roll(Calendar.MONTH, true);
         }
         monthChooser = new JComboBox<>(s);
@@ -81,11 +148,10 @@ public class DateChooser extends JPanel{
         dateString.setEditable(false);
         dateString.setBorder(new EtchedBorder(EtchedBorder.LOWERED));
         setCalendar(calendar);
-        ImageIcon image = new ImageIcon(
-                getClass().getResource("/chorke/proprietary/bet/"
-                + "apps/gui/icons/calendar.png"));
+        ImageIcon icon = new ImageIcon(getClass().getResource(
+                "/chorke/proprietary/bet/apps/gui/icons/calendar.png"));
         
-        dateCall = new JButton(image);
+        dateCall = new JButton(icon);
         dateCall.setMargin(new Insets(0, 0, 0, 0));
         dateCall.addActionListener(new ActionListener() {
 
@@ -127,11 +193,12 @@ public class DateChooser extends JPanel{
      * Inicializuje okno pre výber dátumu.
      */
     private void initDateWin(){
-        dateWin = new JFrame();
+        dateWin = new JDialog();
         dateWin.setUndecorated(true);
         dateWin.add(datePanel);
         dateWin.addWindowFocusListener(focus);
         dateWin.pack();
+        dateWin.setFocusable(false);
     }
     
     /**
@@ -141,18 +208,44 @@ public class DateChooser extends JPanel{
         datePanel = new JPanel();
         datePanel.setBorder(new EtchedBorder(EtchedBorder.RAISED));
         initDaysPanel();
+        JLabel leftArrow = getArrowForMonthFeed("<<", -1);
+        JLabel rightArrow = getArrowForMonthFeed(">>", 1);
+        
         GroupLayout gl = new GroupLayout(datePanel);
         gl.setHorizontalGroup(gl.createParallelGroup()
                 .addGroup(gl.createSequentialGroup()
-                    .addComponent(monthChooser, 120, 120, 120)
-                    .addComponent(yearChooser, 80, 80, 100))
-                .addComponent(daysPanel, 200, 200, 220));
+                    .addComponent(monthChooser, 140, 140, 140)
+                    .addComponent(yearChooser, 100, 100, 120))
+                .addGroup(gl.createSequentialGroup()
+                    .addComponent(leftArrow)
+                    .addComponent(daysPanel, 200, 200, 220)
+                    .addComponent(rightArrow)));
         gl.setVerticalGroup(gl.createSequentialGroup()
                 .addGroup(gl.createParallelGroup()
                     .addComponent(monthChooser)
                     .addComponent(yearChooser))
-                .addComponent(daysPanel, 150, 150, 200));
+                .addGroup(gl.createParallelGroup()
+                    .addGroup(Alignment.CENTER, gl.createSequentialGroup()
+                        .addComponent(leftArrow))
+                    .addComponent(daysPanel, 150, 150, 200)
+                    .addGroup(Alignment.CENTER, gl.createSequentialGroup()
+                        .addComponent(rightArrow))));
         datePanel.setLayout(gl);
+    }
+    
+    /**
+     * Pripraví JLabel ktorá bude mať text label a po kliknutí na ňu
+     * posunie mesiac o monthFeed.
+     * 
+     * @param label text pre JLabel
+     * @param monthFeed požadovaný posun po kliknutí.
+     * @return 
+     */
+    private JLabel getArrowForMonthFeed(String label, int monthFeed){
+        JLabel arrow = new JLabel(label);
+        arrow.setFont(new Font(arrow.getFont().getName(), Font.PLAIN, 20));
+        arrow.addMouseListener(new ArrowMouseListener(monthFeed));
+        return arrow;
     }
     
     /**
@@ -168,7 +261,7 @@ public class DateChooser extends JPanel{
         for(int i = 0; i < 7; i++){
             daysName[i] = new JLabel(c.getDisplayName(Calendar.DAY_OF_WEEK, 
                     Calendar.SHORT, 
-                    StaticConstants.getDefaultLocale()));
+                    defaulLocale));
             daysName[i].setHorizontalAlignment(SwingConstants.CENTER);
             c.roll(Calendar.DAY_OF_WEEK, true);
         }
@@ -177,10 +270,15 @@ public class DateChooser extends JPanel{
     
     /**
      * Nastaví správne dni a na správne miesta pre daysPanel podľa kalendára cal.
+     * Ak je {@link #putProperDaysNow} false, tak dni nedáva. 
      * @param cal 
      */
     private void putProperDays(Calendar cal){
         int start = whereIsStart(cal);
+        today.setTimeInMillis(System.currentTimeMillis());
+        boolean thisMonth = today.get(Calendar.YEAR) == cal.get(Calendar.YEAR)
+                && today.get(Calendar.MONTH) == cal.get(Calendar.MONTH);
+        int todayDate = today.get(Calendar.DATE) - 1;
         daysPanel.removeAll();
         for(int i = 0; i < 7; i++){
             daysPanel.add(daysName[i]);
@@ -190,6 +288,8 @@ public class DateChooser extends JPanel{
         }
         for(int i = 0; i < cal.getActualMaximum(Calendar.DAY_OF_MONTH); i++){
             daysPanel.add(days[i]);
+            days[i].setBackground(thisMonth && i == todayDate ?
+                    todayColor : otherDaysColor);
         }
         for(int i = (cal.getActualMaximum(Calendar.DAY_OF_MONTH) 
                 + start + 7); i < 49 ;i++){
@@ -269,7 +369,7 @@ public class DateChooser extends JPanel{
      * @return 
      */
     private String simpleDateString(){
-        return DateFormat.getDateInstance(DateFormat.SHORT, StaticConstants.getDefaultLocale())
+        return DateFormat.getDateInstance(DateFormat.SHORT, defaulLocale)
                 .format(calendar.getTime());
     }
     
@@ -357,5 +457,40 @@ public class DateChooser extends JPanel{
         
         @Override
         public void windowGainedFocus(WindowEvent e) {}
+    }
+    
+    /**
+     * Po kliknutí posunie zobrazenie dátumu o stanovaný počet mesiacov.
+     */
+    private class ArrowMouseListener extends MouseAdapter{
+
+        private int monthFeed;
+
+        /**
+         * Po kliknutí bude posúvať mesiace o monthFeed.
+         * @param monthFeed 
+         */
+        public ArrowMouseListener(int monthFeed) {
+            this.monthFeed = monthFeed;
+        }
+        
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            int reqMonth = monthChooser.getSelectedIndex() + monthFeed;
+            int reqYear = (int)yearChooser.getModel().getValue();
+            if(reqMonth > Calendar.DECEMBER){
+                while(reqMonth > Calendar.DECEMBER){
+                    reqMonth -= 12;
+                    reqYear++;
+                }
+            } else if(reqMonth < Calendar.JANUARY){
+                while(reqMonth < Calendar.JANUARY){
+                    reqMonth += 12;
+                    reqYear--;
+                }
+            }
+            yearChooser.getModel().setValue(reqYear);
+            monthChooser.setSelectedIndex(reqMonth);
+        }
     }
 }

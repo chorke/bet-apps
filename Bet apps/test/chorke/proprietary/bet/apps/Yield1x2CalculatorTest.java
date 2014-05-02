@@ -69,9 +69,9 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
                 new BigDecimal("0.31"));
         assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
                 new BigDecimal("-0.35"));
-        assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 0, false),
+        assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
                 new BigDecimal("-2.33"));
-        assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 1, false),
+        assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
                 new BigDecimal("-0.35"));
         assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
                 new BigDecimal("-4"));
@@ -101,9 +101,9 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
                         new BigDecimal("-0.23"));
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
                         new BigDecimal("0.65"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
                         new BigDecimal("-1.33"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
                         new BigDecimal("0.65"));
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
                         new BigDecimal("-3"));
@@ -122,9 +122,9 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
                         new BigDecimal("0.54"));
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
                         new BigDecimal("-1"));
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
                         new BigDecimal("-1"));
@@ -156,9 +156,9 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
                         new BigDecimal("0.56"));
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
                         new BigDecimal("0"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
                         new BigDecimal("0"));
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
                         new BigDecimal("-1"));
@@ -177,9 +177,9 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
                         new BigDecimal("-0.79"));
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
                         new BigDecimal("0.65"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
                         new BigDecimal("-0.33"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
                         new BigDecimal("0.65"));
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
                         new BigDecimal("-2"));
@@ -198,9 +198,9 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
                         new BigDecimal("0.54"));
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
                         new BigDecimal("-1"));
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
                         new BigDecimal("-1"));
@@ -232,9 +232,9 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
                         new BigDecimal("0.56"));
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
                         new BigDecimal("0"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
                         new BigDecimal("0"));
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
                         new BigDecimal("-1"));
@@ -253,9 +253,9 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
                         new BigDecimal("0.21"));
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
                         new BigDecimal("0.65"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
                         new BigDecimal("0.65"));
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
                         new BigDecimal("-1"));
@@ -274,9 +274,9 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
                         new BigDecimal("-0.46"));
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
                         new BigDecimal("-0.33"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Looser, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
                         new BigDecimal("-1"));
                 assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
                         new BigDecimal("-2"));

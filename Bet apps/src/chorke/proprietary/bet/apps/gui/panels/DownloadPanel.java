@@ -7,6 +7,7 @@ import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser;
 import chorke.proprietary.bet.apps.StaticConstants.BettingSports;
 import chorke.proprietary.bet.apps.core.httpparsing.MultithreadHTMLBetParser;
 import chorke.proprietary.bet.apps.core.match.Match;
+import chorke.proprietary.bet.apps.gui.GuiUtils;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Window;
@@ -19,6 +20,8 @@ import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.ResourceBundle;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
@@ -34,6 +37,9 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.PlainDocument;
 
 /**
  * Panel pre sťahovanie stávok do DB
@@ -150,6 +156,9 @@ public class DownloadPanel extends JPanel {
         private BettingSports sport;
         private HTMLBetParser betParser;
         
+        /**
+         * Počet stiahnutých zápasov.
+         */
         private int matchesCount;
         /**
          * Informácie o viditeľnosti aktuálnych okien pre znovuobnovenie stavu
@@ -180,6 +189,11 @@ public class DownloadPanel extends JPanel {
         private volatile boolean stop;
 
         /**
+         * Nestiahnuté športy.
+         */
+        private Collection<Tuple<BettingSports, Calendar>> allUndownloadedSports;
+        
+        /**
          * Vytvorí no downloader, ktorý sťiahne zápasy od startDate do endDate.
          * Pre sťahovanie používa parser.
          * @param startDate
@@ -204,6 +218,7 @@ public class DownloadPanel extends JPanel {
             defaultPrintStream = System.out;
             System.setOut(ps);
             downloadInfoWin.setVisible(true);
+            allUndownloadedSports = new LinkedList<>();
             
             Calendar partStartDate = (Calendar)startDate.clone();
             betParser.setExploredSport(sport);
@@ -216,6 +231,7 @@ public class DownloadPanel extends JPanel {
                 Collection<Match> matches = betParser.getMatches();
                 matchesCount += matches.size();
                 matches.clear();
+                allUndownloadedSports.addAll(parser.getUndownloadedSports());
                 end = lastIteration(partEndDate);
                 partStartDate = partEndDate;
                 partStartDate.add(Calendar.DATE, 1);
@@ -228,24 +244,26 @@ public class DownloadPanel extends JPanel {
          * @return 
          */
         private JFrame getDownloadInfoWindow(){
-            JFrame win = new JFrame();
             infoTextArea = new JTextArea();
             infoTextArea.setEditable(false);
+            infoTextArea.setDocument(new LinesLimitedDocument(6000));
             JScrollPane pane = new JScrollPane(infoTextArea);
             pane.setPreferredSize(new Dimension(500, 500));
             JPanel mainInfoPanel = new JPanel();
             mainInfoPanel.setPreferredSize(new Dimension(500, 550));
-            JButton stopButtom = new JButton("Stop");
+            JButton stopButtom = new JButton(bundle.getString("stop"));
             stopButtom.addActionListener(new StopDownloading(this));
             
             mainInfoPanel.add(pane);
             mainInfoPanel.add(stopButtom);
             
-            win.add(mainInfoPanel);
-            win.pack();
-            win.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-            win.setLocationRelativeTo(null);
-            win.setResizable(false);
+            JFrame win = GuiUtils.getDefaultFrame(null, JFrame.DO_NOTHING_ON_CLOSE,
+                    false, null, mainInfoPanel);
+//            win.add(mainInfoPanel);
+//            win.pack();
+//            win.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+//            win.setLocationRelativeTo(null);
+//            win.setResizable(false);
             return win;
         }
         
@@ -254,6 +272,7 @@ public class DownloadPanel extends JPanel {
             if(downloadInfoWin != null){
                 downloadInfoWin.dispose();
             }
+            GuiUtils.hideWaitingDialog();
             int i = 0;
             for(Window w : windows){
                 w.setVisible(windowsVisibility[i++]);
@@ -277,11 +296,11 @@ public class DownloadPanel extends JPanel {
             JScrollPane pane = new JScrollPane(infoTextArea);
             pane.setPreferredSize(new Dimension(500, 400));
             int collSize = parser.getUndownloadedSports().size();
-            JLabel undwnSportsLable = new JLabel("Undownloaded sports: " + collSize);
-            JLabel matchesCountLabel = new JLabel("Matches downloaded: " + matchesCount);
+            JLabel undwnSportsLable = new JLabel(bundle.getString("undwnSports") + ": " + collSize);
+            JLabel matchesCountLabel = new JLabel(bundle.getString("dwnMatches") + ": " + matchesCount);
             JLabel emptyLabel = new JLabel();
-            JButton showButton = new JButton("Show");
-            showButton.addActionListener(new ShowInfoAboutUndownloadedSports());
+            JButton showButton = new JButton(bundle.getString("show"));
+            showButton.addActionListener(new ShowInfoAboutUndownloadedSports(allUndownloadedSports));
             showButton.setEnabled(collSize != 0);
             JPanel mainPanel = new JPanel();
             GroupLayout gl = new GroupLayout(mainPanel);
@@ -309,11 +328,8 @@ public class DownloadPanel extends JPanel {
             gl.linkSize(SwingConstants.VERTICAL, matchesCountLabel, emptyLabel);
             mainPanel.setLayout(gl);            
             
-            JFrame resultInfo = new JFrame();
-            resultInfo.add(mainPanel);
-            resultInfo.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            resultInfo.pack();
-            resultInfo.setLocationRelativeTo(null);
+            JFrame resultInfo = GuiUtils.getDefaultFrame(null, JFrame.DISPOSE_ON_CLOSE,
+                    true, null, mainPanel);
             return resultInfo;
         }
         
@@ -322,27 +338,29 @@ public class DownloadPanel extends JPanel {
          */
         private class ShowInfoAboutUndownloadedSports implements ActionListener{
             
+            private Collection<Tuple<BettingSports, Calendar>> undownloadedSports;
+
+            public ShowInfoAboutUndownloadedSports(Collection<Tuple<BettingSports, Calendar>> undownloadedMatches) {
+                this.undownloadedSports = undownloadedMatches;
+            }
+            
             @Override
             public void actionPerformed(ActionEvent e) {
                 StringBuilder builder = new StringBuilder();
                 DateFormat df = DateFormat.getDateInstance(
                         DateFormat.SHORT, StaticConstants.getDefaultLocale());
-                for(Tuple<BettingSports, Calendar> sports : parser.getUndownloadedSports()){
+                for(Tuple<BettingSports, Calendar> sports : undownloadedSports){
                     builder.append(df.format(sports.second.getTime()))
                             .append("   ")
-                            .append(sports.first)
+                            .append(bundle.getString(sports.first.toString()))
                             .append(System.lineSeparator());
                 }
                 JTextArea text = new JTextArea(builder.toString());
                 text.setEditable(false);
-                JFrame info = new JFrame();
                 JScrollPane pane = new JScrollPane(text);
                 pane.setPreferredSize(new Dimension(300, 200));
-                info.add(pane);
-                info.pack();
-                info.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                info.setLocationRelativeTo(null);
-                info.setVisible(true);
+                GuiUtils.getDefaultFrame(null, JFrame.DISPOSE_ON_CLOSE,
+                    true, null, pane).setVisible(true);
             }
         }
         
@@ -416,9 +434,12 @@ public class DownloadPanel extends JPanel {
         
         @Override
         public void actionPerformed(ActionEvent e) {
-            String[] options = {"Imediately", "After this iteration", "Cancel"};
-            int option = JOptionPane.showOptionDialog(null, "interrupt?", "interr",
-                    JOptionPane.DEFAULT_OPTION,JOptionPane.QUESTION_MESSAGE, null, 
+            String[] options = {bundle.getString("immediately"),
+                bundle.getString("afterIteration"),
+                bundle.getString("cancel")};
+            int option = JOptionPane.showOptionDialog(null,
+                    bundle.getString("interruptQuestion"), "",
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, 
                     options, options[2]);
             if(option == 2 || option == -1){
                 return;
@@ -428,7 +449,7 @@ public class DownloadPanel extends JPanel {
                 if(downloader.betParser instanceof MultithreadHTMLBetParser){
                     ((MultithreadHTMLBetParser)downloader.betParser).stopThreads();
                 }
-                downloader.cancel(true);
+                GuiUtils.showWaitingDialog(bundle.getString("stopping"));
             }
         }
     }
@@ -463,6 +484,49 @@ public class DownloadPanel extends JPanel {
             textArea.append(new String(b, off, len, Charset.forName("UTF-8")));
             if(isCaretAtEnd){
                 textArea.setCaretPosition(textArea.getDocument().getLength());
+            }
+        }
+    }
+    
+    /**
+     * Dokument s obmedzeným počtom riadkov. Každý nový pridaný riadok nad limit
+     * ostráni najstarší (teda prvý) riadok v dokumente.
+     * 
+     */
+    private class LinesLimitedDocument extends PlainDocument{
+
+        private int linesLimit;
+        private int linesCount = 0;
+        private List<String> linesShowed = new LinkedList<>();
+
+        public LinesLimitedDocument(int linesLimit) {
+            super();
+            this.linesLimit = linesLimit;
+        }
+        
+        @Override
+        public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
+            String lineSep = System.lineSeparator();
+            String[] lines = str.split("[" + lineSep + "]+");
+            if(lines.length > linesLimit){
+                linesShowed.clear();
+                remove(0, getLength());
+                int off = 0;
+                for(int i = lines.length - linesLimit; i < lines.length; i++){
+                    super.insertString(off, lines[i] + lineSep, a);
+                    off += lines[i].length();
+                }
+                linesCount = linesLimit;
+            } else {
+                for(String l : lines){
+                    if(linesCount >= linesLimit){
+                        remove(0, linesShowed.remove(0).length() + lineSep.length());
+                        linesCount--;
+                    }
+                    linesShowed.add(l);
+                    super.insertString(getLength(), l + lineSep, a);
+                    linesCount++;
+                }
             }
         }
     }

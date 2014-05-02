@@ -12,6 +12,14 @@ public class BetDoubleChance extends Bet{
     public final BigDecimal betX2;
     public final BigDecimal bet12;
 
+    /**
+     * Vytvorí stávku so spoločnosťou betCompany, kurzom na domáceho alebo remízu
+     * bet1X, kurzom na neremízu bet12 a kurzom na hosťa alebo remízu betX2.
+     * @param betCompany
+     * @param bet1X  
+     * @param bet12  
+     * @param betX2 
+     */
     public BetDoubleChance(String betCompany, BigDecimal bet1X, BigDecimal bet12, BigDecimal betX2) {
         super(betCompany);
         this.bet1X = bet1X;

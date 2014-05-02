@@ -13,7 +13,18 @@ public class BetOverUnder extends Bet{
     public final BigDecimal under;
     public final String description;
 
-    public BetOverUnder(String betCompany, BigDecimal total, BigDecimal over, BigDecimal under, String description) {
+    /**
+     * Vytvorí novú stávku so spoločnousťou betCompany, kurzom na nad
+     * over, kurzom na pod under, totálnym súčtom total a popisom description.
+     * 
+     * @param betCompany
+     * @param total
+     * @param over
+     * @param under
+     * @param description 
+     */
+    public BetOverUnder(String betCompany, BigDecimal total, BigDecimal over, 
+            BigDecimal under, String description) {
         super(betCompany);
         this.total = total;
         this.over = over;

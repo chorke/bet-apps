@@ -19,6 +19,7 @@ import java.util.ListIterator;
 import java.util.Map;
 
 /**
+ * Počítadlo zisku pre stávky na 1x2.
  * @author Chorke
  */
 public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
@@ -68,6 +69,15 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         throw new UnsupportedOperationException("Not supported yet.");
     }
     
+    /**
+     * Vypočíta periodické zisky zo zápasov matches a podľa nastavení properties.
+     * Obdobia, ktoré sú zlučované sú rozhodované podľa periodHolder. 
+     * 
+     * @param matches
+     * @param properties
+     * @param periodHolder
+     * @return 
+     */
     private Map<Calendar, Yield1x2> innerPeriodicYield(Collection<Match> matches,
                 YieldProperties properties, PeriodHolder periodHolder) {
         splitToScales(matches, properties);
@@ -101,13 +111,22 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         return yields;
     }
     
+    /**
+     * Vypočíta a vráti zisk zo všetkých zápasov matches, podľa nastavení 
+     * properties a pre zvolené stávkovú možnosť.
+     * 
+     * @param matches
+     * @param properties
+     * @param betPosibility
+     * @return 
+     */
     private BigDecimal getYield(Collection<Match> matches, YieldProperties properties, 
             BetPossibility betPosibility){
         BigDecimal yield = new BigDecimal("0");
         Iterator<Bet1x2> betIter;
         for(Match m : matches){
             betIter = m.getBet(properties.getBetCompany(), Bet1x2.class).iterator();
-            if(betIter.hasNext()){
+            if(betIter.hasNext()){ // there is only one bet for every bet company
                 switch (betPosibility){
                     case Home: 
                         yield = yield.add(yieldHome(m.getRegularTimeWinner(), betIter.next()));
@@ -118,7 +137,7 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
                     case Favorit:
                         yield = yield.add(yieldFavorit(m.getRegularTimeWinner(), betIter.next()));
                         break;
-                    case Looser:
+                    case Loser:
                         yield = yield.add(yieldLooser(m.getRegularTimeWinner(), betIter.next()));
                         break;
                     case Tie:
@@ -130,6 +149,13 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         return yield;
     }
     
+    /**
+     * Vráti zisk za predpokladu stávky na domáceho. Je to buď čistý zisk
+     * (kurz - 1) pri výhre, alebo -1 pri prehre.
+     * @param winner
+     * @param bet
+     * @return 
+     */
     private BigDecimal yieldHome(Winner winner, Bet1x2 bet){
         if(winner == Winner.Team1){
             return bet.getHomeBet().subtract(BigDecimal.ONE);
@@ -137,6 +163,13 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         return new BigDecimal("-1");
     }
     
+    /**
+     * Vráti zisk za predpokladu stávky na hosťa. Je to buď čistý zisk
+     * (kurz - 1) pri výhre, alebo -1 pri prehre.
+     * @param winner
+     * @param bet
+     * @return 
+     */
     private BigDecimal yieldGuest(Winner winner, Bet1x2 bet){
         if(winner == Winner.Team2){
             return bet.getGuestBet().subtract(BigDecimal.ONE);
@@ -144,6 +177,13 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         return new BigDecimal("-1");
     }
     
+    /**
+     * Vráti zisk za predpokladu stávky na favorita. Je to buď čistý zisk
+     * (kurz - 1) pri výhre, alebo -1 pri prehre.
+     * @param winner
+     * @param bet
+     * @return 
+     */
     private BigDecimal yieldFavorit(Winner winner, Bet1x2 bet){
         if((winner == Winner.Team1 && bet.bet1.compareTo(bet.bet2) == -1)
                 || (winner == Winner.Team2 && bet.bet2.compareTo(bet.bet1) == -1)){
@@ -152,6 +192,13 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         return new BigDecimal("-1");
     }
     
+    /**
+     * Vráti zisk za predpokladu stávky na stávkovo slabšieho. Je to buď 
+     * čistý zisk (kurz - 1) pri výhre, alebo -1 pri prehre.
+     * @param winner
+     * @param bet
+     * @return 
+     */
     private BigDecimal yieldLooser(Winner winner, Bet1x2 bet){
         if((winner == Winner.Team1 && bet.bet1.compareTo(bet.bet2) == 1)
                 || (winner == Winner.Team2 && bet.bet2.compareTo(bet.bet1) == 1)){
@@ -160,6 +207,13 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         return new BigDecimal("-1");
     }
     
+    /**
+     * Vráti zisk za predpokladu stávky na remízu. Je to buď čistý zisk
+     * (kurz - 1) pri výhre, alebo -1 pri prehre.
+     * @param winner
+     * @param bet
+     * @return 
+     */
     private BigDecimal yieldTie(Winner winner, Bet1x2 bet){
         if(winner == Winner.Tie){
             return bet.getTieBet().subtract(BigDecimal.ONE);
@@ -235,7 +289,13 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         return -1;
     }
     
-    
+    /**
+     * Rozhodne, či hodnota value je v zadanom rozsahu range. Range je braný
+     * ako uzavretý (vrátane krajných bodov) interval.
+     * @param value
+     * @param range
+     * @return 
+     */
     protected boolean fitRange(BigDecimal value, Tuple<BigDecimal, BigDecimal> range){
         return range.first.compareTo(value) <= 0 && range.second.compareTo(value) >= 0;
     }
@@ -243,9 +303,12 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
     @Override
     public BetPossibility[] getBetPossibilities() {
         return new BetPossibility[]{BetPossibility.Guest, BetPossibility.Home, 
-            BetPossibility.Favorit, BetPossibility.Looser, BetPossibility.Tie};
+            BetPossibility.Favorit, BetPossibility.Loser, BetPossibility.Tie};
     }
     
+    /**
+     * Trieda pre spravovanie období, ktoré sú zlučované.
+     */
     private abstract class PeriodHolder{
         private Calendar date;
         
@@ -265,7 +328,8 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         
         /**
          * Vráti posledný index zápasu v matches, ktorý ešte vyhovuje akutálne
-         * nastavenému dátumu.
+         * nastavenému dátumu. Používa metódu suits, teda ak nevyhovuje už ani 
+         * počiatočný index from, je vrátené číslo from.
          * 
          * @param from počiatočný index, od ktorého sa má hľadať
          * @param matches zápasy
@@ -303,6 +367,10 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         }
     }
     
+    /**
+     * Trieda pre spravovanie období, ktoré sú zlučované.
+     * Za obdobie uvažuje jeden deň.
+     */
     private class PeriodHolderDAY extends PeriodHolder{
 
         @Override
@@ -319,6 +387,10 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         }
     }
     
+    /**
+     * Trieda pre spravovanie období, ktoré sú zlučované.
+     * Za obdobie uvažuje jeden týždeň.
+     */
     private class PeriodHolderWEEK extends PeriodHolder{
 
         @Override
@@ -343,7 +415,11 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         }
         
     }
-        
+    
+    /**
+     * Trieda pre spravovanie období, ktoré sú zlučované.
+     * Za obdobie uvažuje jeden mesiac.
+     */
     private class PeriodHolderMONTH extends PeriodHolder{
 
         @Override
@@ -365,6 +441,10 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         }
     }
     
+    /**
+     * Trieda pre spravovanie období, ktoré sú zlučované.
+     * Za obdobie uvažuje jeden rok.
+     */
     private class PeriodHolderYEAR extends PeriodHolder{
 
         @Override
@@ -382,7 +462,7 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         void setDate(Calendar date) {
             super.setDate(date);
             super.date.set(Calendar.DATE, 1);
-            super.date.set(Calendar.MONTH, 0);
+            super.date.set(Calendar.MONTH, Calendar.JANUARY);
         }
     }
 }

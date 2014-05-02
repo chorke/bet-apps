@@ -9,6 +9,10 @@ public abstract class Bet {
     
     public String betCompany;
 
+    /**
+     * Vytvorí novú stávku so spoločnosťou betCompany.
+     * @param betCompany 
+     */
     public Bet(String betCompany) {
         this.betCompany = betCompany;
     }

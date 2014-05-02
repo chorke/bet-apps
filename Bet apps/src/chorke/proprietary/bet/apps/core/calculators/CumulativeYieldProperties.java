@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package chorke.proprietary.bet.apps.core.calculators;
 
 import java.math.BigDecimal;

@@ -14,7 +14,18 @@ public class BetAsianHandicap extends Bet{
     public final BigDecimal handicap;
     public final String description;
 
-    public BetAsianHandicap(String betCompany, BigDecimal bet1, BigDecimal bet2, BigDecimal handicap, String description) {
+    /**
+     * Vytvorí novú stávku so spoločnousťou betCompany, kurzom na domáceho
+     * bet1, kurzom na hosťa bet2, handikepom handicap a popisom handikapu 
+     * description.
+     * @param betCompany
+     * @param bet1
+     * @param bet2
+     * @param handicap
+     * @param description 
+     */
+    public BetAsianHandicap(String betCompany, BigDecimal bet1, BigDecimal bet2,
+            BigDecimal handicap, String description) {
         super(betCompany);
         this.bet1 = bet1;
         this.bet2 = bet2;

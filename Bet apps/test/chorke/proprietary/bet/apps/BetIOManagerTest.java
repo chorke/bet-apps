@@ -24,11 +24,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.junit.After;
@@ -1232,6 +1236,128 @@ public class BetIOManagerTest {
             hasNumberOfRows(betou.executeQuery(), 1, "betou", match3.getId());
         } catch (SQLException ex){
             fail("Error in SQL statements: " + ex);
+        }
+    }
+    
+    @Test
+    public void saveGetAvailableCountriesAndLeaguesTest(){
+        Map<String, Collection<String>> ctrLgs = testingManager.getAvailableCountriesAndLeagues();
+        if(ctrLgs == null){
+            fail("Empty DB and null result.");
+        }
+        if(!ctrLgs.isEmpty()){
+            fail("Empty DB and nonempty result.");
+        }
+        testingManager.saveMatch(match1);
+        testingManager.saveMatch(match2);
+        testingManager.saveMatch(match3);
+        ctrLgs = testingManager.getAvailableCountriesAndLeagues();
+        Map<String, Collection<String>> req = new HashMap<>();
+        req.put(match1.getProperties().getCountry(), 
+                Arrays.asList(new String[]{
+                        match1.getProperties().getLeague(),
+                        match2.getProperties().getLeague()}));
+        req.put(match3.getProperties().getCountry(), 
+                Arrays.asList(new String[]{match3.getProperties().getLeague()}));
+        checkMapEquality(ctrLgs, req);
+        testingManager.saveMatch(match4);
+        testingManager.deleteMatch(match1);
+        
+        ctrLgs = testingManager.getAvailableCountriesAndLeagues();
+        req.clear();
+        req.put(match2.getProperties().getCountry(), 
+                Arrays.asList(new String[]{match2.getProperties().getLeague()}));
+        req.put(match3.getProperties().getCountry(), 
+                Arrays.asList(new String[]{match3.getProperties().getLeague()}));
+        req.put(match4.getProperties().getCountry(), 
+                Arrays.asList(new String[]{match4.getProperties().getLeague()}));
+        checkMapEquality(ctrLgs, req);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void saveGetAvialableCompaniesNullArgumentTest(){
+        testingManager.getAvailableBetCompanies(null);
+    }
+    
+    @Test
+    public void saveGetAvialableCompaniesTest(){
+        Collection<String> companies = testingManager.getAvailableBetCompanies(Bet.class);
+        if(companies == null){
+            fail("Returned collection is null");
+        }
+        companies = testingManager.getAvailableBetCompanies(Bet1x2.class);
+        if(!companies.isEmpty()){
+            fail("Epmty DB and nonepmty result.");
+        }
+        testingManager.saveMatch(match4);
+        availableCompaniesShouldBeEmpty(Bet1x2.class, BetAsianHandicap.class,
+                BetDoubleChance.class, BetDoubleChance.class, BetOverUnder.class);
+        ensureEquality(BetBothTeamsToScore.class, "fortuna", "bet365");
+        testingManager.saveMatch(match2);
+        ensureEquality(BetBothTeamsToScore.class, "fortuna", "bet365");
+        ensureEquality(Bet1x2.class, "fortuna", "bet365", "tipsport");
+        ensureEquality(BetAsianHandicap.class, "bet365");
+    }
+    
+    /**
+     * Skontorluje, či testovaný manažér pre triedu clazz vráti presne zoznam
+     * spoločností companies.
+     * @param <T>
+     * @param clazz
+     * @param companies 
+     */
+    private <T extends Bet> void ensureEquality(Class<T> clazz, String... companies){
+        assertEqualsCollectionsString(testingManager.getAvailableBetCompanies(clazz),
+                Arrays.asList(companies));
+    }
+    
+    /**
+     * Skontroluje, či manažér vráti prázdnu kolekciu pre daný typ stávky.
+     * @param <T>
+     * @param clazz 
+     */
+    private <T extends Bet> void availableCompaniesShouldBeEmpty(Class... clazz){
+        for(Class c : clazz){
+            if(!testingManager.getAvailableBetCompanies((Class<T>)c).isEmpty()){
+                fail("No records for class " + clazz + "and nonepmty result.");
+            }
+        }
+    }
+    
+    /**
+     * Skontorluje, či sú mapy rovnaké.
+     * @param map1
+     * @param map2 
+     */
+    private void checkMapEquality(Map<String, Collection<String>> map1,
+            Map<String, Collection<String>> map2){
+        if(assertAreBothNull(map1, map2)){
+            return;
+        }
+        if(map1.size() != map2.size()){
+            fail("Not same size.");
+        }
+        for(String key : map1.keySet()){
+            assertEqualsCollectionsString(map1.get(key), map2.get(key));
+        }
+    }
+    
+    /**
+     * Skontorluje dve kolekcie reťazcov.
+     * @param col1
+     * @param col2 
+     */
+    private void assertEqualsCollectionsString(Collection<String> col1, Collection<String> col2){
+        if(collectionChecker(col1, col2)){
+            List<String> l1 = new LinkedList<>(col1);
+            List<String> l2 = new LinkedList<>(col2);
+            Collections.sort(l1);
+            Collections.sort(l2);
+            for(int i = 0; i < l1.size(); i++){
+                if(!l1.remove(0).equals(l2.remove(0))){
+                    fail("Not same elemnts");
+                }
+            }
         }
     }
     

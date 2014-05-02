@@ -11,6 +11,13 @@ public class BetDrawNoBet extends Bet{
     public final BigDecimal bet1;
     public final BigDecimal bet2;
 
+    /**
+     * Vytvorí stávku so spoločnosťou betCompany, kurzom na domáceho bet1 
+     * a kurzom na hosťa bet2.
+     * @param betCompany
+     * @param bet1 
+     * @param bet2 
+     */
     public BetDrawNoBet(String betCompany, BigDecimal bet1, BigDecimal bet2) {
         super(betCompany);
         this.bet1 = bet1;

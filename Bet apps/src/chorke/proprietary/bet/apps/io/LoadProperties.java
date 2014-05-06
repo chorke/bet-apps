@@ -24,7 +24,7 @@ public class LoadProperties extends Properties{
     public static final int START_DATE = 1;
     public static final int END_DATE = 2;
     public static final int BET_COMPANY = 3;
-    public static final int LEAGUE_COUNTRY = 4;
+    public static final int COUNTRY_LEAGUE = 4;
     public static final int BET_CLASS = 5;
     
     /**
@@ -107,21 +107,21 @@ public class LoadProperties extends Properties{
     
     /**
      * Pridá vyžadovanú ligu a krajinu ligy. Ligy sú ukladané v množine.
-     * Ukladaný formát je (liga, krajina).
+     * Ukladaný formát je (krajina, liga).
      * @param league  
      * @see Set
      */
-    public void addLeague(String league, String country){
-        addToSet(LEAGUE_COUNTRY, new Tuple<>(league, country));
+    public void addLeague(String country, String league){
+        addToSet(COUNTRY_LEAGUE, new Tuple<>(country, league));
     }
     
     /**
-     * Vráti požadované ligy. Ukladaný formát je (liga, krajina).
+     * Vráti požadované ligy. Ukladaný formát je (krajina, liga).
      * @return 
      */
     @SuppressWarnings("unchecked")
     public Set<Tuple<String, String>> getLeagues(){
-        return (Set<Tuple<String, String>>)get(LEAGUE_COUNTRY);
+        return (Set<Tuple<String, String>>)get(COUNTRY_LEAGUE);
     }
     
     /**
@@ -267,12 +267,12 @@ public class LoadProperties extends Properties{
         }
         if(leagues != null && !leagues.isEmpty()){
             for(Tuple<String, String> tp : leagues){
-                if(tp.second != null && !tp.second.isEmpty()){
-                    ps.setString(i, tp.second);
-                    i++;
-                }
                 if(tp.first != null && !tp.first.isEmpty()){
                     ps.setString(i, tp.first);
+                    i++;
+                }
+                if(tp.second != null && !tp.second.isEmpty()){
+                    ps.setString(i, tp.second);
                     i++;
                 }
             }
@@ -351,8 +351,8 @@ public class LoadProperties extends Properties{
      * @return 
      */
     private String getCountryLeagueWherePart(Tuple<String, String> tuple){
-        String league = tuple.first;
-        String country = tuple.second;
+        String league = tuple.second;
+        String country = tuple.first;
         StringBuilder out = new StringBuilder("");
         boolean needAnd = false;
         if(country != null && !country.isEmpty()){

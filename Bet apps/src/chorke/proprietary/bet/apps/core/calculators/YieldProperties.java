@@ -126,7 +126,7 @@ public class YieldProperties {
             throw new IndexOutOfBoundsException("Index out of bounds " + index);
         }
         if(index == 0){
-            return new Tuple<>(BigDecimal.ONE, scale.isEmpty() ? BigDecimal.ONE : scale.get(0));
+            return new Tuple<>(BigDecimal.ONE, scale.isEmpty() ? MAX_VALUE : scale.get(0));
         } else if(index == scale.size()){
             return new Tuple<>(scale.get(index - 1).add(ZERO_POINT_ZERO_ONE), MAX_VALUE);
         } else {
@@ -278,5 +278,13 @@ public class YieldProperties {
         return 31 * this.betCompany.hashCode() 
                 * this.properties.hashCode()
                 * this.scale.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder("Yield properties: ").append(System.lineSeparator())
+                .append(scale).append(System.lineSeparator())
+                .append(betCompany).append(System.lineSeparator())
+                .append(properties).toString();
     }
 }

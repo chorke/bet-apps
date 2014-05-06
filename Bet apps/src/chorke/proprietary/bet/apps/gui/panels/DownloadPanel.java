@@ -8,6 +8,7 @@ import chorke.proprietary.bet.apps.StaticConstants.BettingSports;
 import chorke.proprietary.bet.apps.core.httpparsing.MultithreadHTMLBetParser;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.gui.GuiUtils;
+import chorke.proprietary.bet.apps.gui.Season;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Window;
@@ -47,22 +48,27 @@ import javax.swing.text.PlainDocument;
  */
 public class DownloadPanel extends JPanel {
 
-    private HTMLBetParser parser;
     private JComboBox<String> sportToDownload;
     private DateChooser from;
     private DateChooser by;
     private JButton downloadButton;
     
-    private ResourceBundle bundle = StaticConstants.BUNDLE;
+    private Season season;
     
-    public DownloadPanel(HTMLBetParser parser) {
-        this.parser = parser;
+    private ResourceBundle bundle;
+    
+    public DownloadPanel(Season season) {
+        if(season == null){
+            throw new IllegalArgumentException("Season cannot be null.");
+        }
+        this.season = season;
+        bundle = this.season.getDefaultBundle();
         init();
     }
     
     private void init(){
-        from = new DateChooser();
-        by = new DateChooser();
+        from = new DateChooser(season.getDefaultLocale());
+        by = new DateChooser(season.getDefaultLocale());
         from.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED),
                 bundle.getString("from")));
         by.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED),
@@ -135,7 +141,7 @@ public class DownloadPanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent e) {
             Downloader d = new Downloader(from.getActualDate(), by.getActualDate(),
-                    BettingSports.values()[sportToDownload.getSelectedIndex()], parser);
+                    BettingSports.values()[sportToDownload.getSelectedIndex()], season.getParser());
             d.execute();
         }
     }
@@ -231,7 +237,7 @@ public class DownloadPanel extends JPanel {
                 Collection<Match> matches = betParser.getMatches();
                 matchesCount += matches.size();
                 matches.clear();
-                allUndownloadedSports.addAll(parser.getUndownloadedSports());
+                allUndownloadedSports.addAll(betParser.getUndownloadedSports());
                 end = lastIteration(partEndDate);
                 partStartDate = partEndDate;
                 partStartDate.add(Calendar.DATE, 1);
@@ -257,14 +263,8 @@ public class DownloadPanel extends JPanel {
             mainInfoPanel.add(pane);
             mainInfoPanel.add(stopButtom);
             
-            JFrame win = GuiUtils.getDefaultFrame(null, JFrame.DO_NOTHING_ON_CLOSE,
+            return GuiUtils.getDefaultFrame(null, JFrame.DO_NOTHING_ON_CLOSE,
                     false, null, mainInfoPanel);
-//            win.add(mainInfoPanel);
-//            win.pack();
-//            win.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-//            win.setLocationRelativeTo(null);
-//            win.setResizable(false);
-            return win;
         }
         
         @Override
@@ -279,12 +279,12 @@ public class DownloadPanel extends JPanel {
             }
             System.setOut(defaultPrintStream);
             getDownloadResultsInfoWin().setVisible(true);
-            System.err.println("unsaved {" + parser.getUnsavedMatches().size()
-                + "}: " + parser.getUnsavedMatches());
-            System.err.println("matches {" + parser.getUndownloadedMatches().size()
-                + "}: " + parser.getUndownloadedMatches());
-            System.err.println("sports {" + parser.getUndownloadedSports().size()
-                + "}: " + parser.getUndownloadedSports());
+            System.err.println("unsaved {" + betParser.getUnsavedMatches().size()
+                + "}: " + betParser.getUnsavedMatches());
+            System.err.println("matches {" + betParser.getUndownloadedMatches().size()
+                + "}: " + betParser.getUndownloadedMatches());
+            System.err.println("sports {" + betParser.getUndownloadedSports().size()
+                + "}: " + betParser.getUndownloadedSports());
             
         }
         
@@ -295,7 +295,7 @@ public class DownloadPanel extends JPanel {
         private JFrame getDownloadResultsInfoWin(){
             JScrollPane pane = new JScrollPane(infoTextArea);
             pane.setPreferredSize(new Dimension(500, 400));
-            int collSize = parser.getUndownloadedSports().size();
+            int collSize = betParser.getUndownloadedSports().size();
             JLabel undwnSportsLable = new JLabel(bundle.getString("undwnSports") + ": " + collSize);
             JLabel matchesCountLabel = new JLabel(bundle.getString("dwnMatches") + ": " + matchesCount);
             JLabel emptyLabel = new JLabel();
@@ -328,9 +328,8 @@ public class DownloadPanel extends JPanel {
             gl.linkSize(SwingConstants.VERTICAL, matchesCountLabel, emptyLabel);
             mainPanel.setLayout(gl);            
             
-            JFrame resultInfo = GuiUtils.getDefaultFrame(null, JFrame.DISPOSE_ON_CLOSE,
+            return GuiUtils.getDefaultFrame(null, JFrame.DISPOSE_ON_CLOSE,
                     true, null, mainPanel);
-            return resultInfo;
         }
         
         /**
@@ -340,7 +339,8 @@ public class DownloadPanel extends JPanel {
             
             private Collection<Tuple<BettingSports, Calendar>> undownloadedSports;
 
-            public ShowInfoAboutUndownloadedSports(Collection<Tuple<BettingSports, Calendar>> undownloadedMatches) {
+            public ShowInfoAboutUndownloadedSports(
+                    Collection<Tuple<BettingSports, Calendar>> undownloadedMatches) {
                 this.undownloadedSports = undownloadedMatches;
             }
             

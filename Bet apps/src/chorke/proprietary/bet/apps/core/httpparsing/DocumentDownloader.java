@@ -16,7 +16,7 @@ public class DocumentDownloader {
      */
     public static final int CONNECTION_TRIES = 5;
     
-    private static final int CONNECTION_TIMEOUT = 10_000;
+    private static final int CONNECTION_TIMEOUT = 8_000;
     
     /**
      * Pokúsi sa stiahnuť web stránku. Počet pokusov je {@link #CONNECTION_TRIES}.

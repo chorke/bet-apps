@@ -22,7 +22,6 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -688,7 +687,6 @@ public class DBBetIOManager implements CloneableBetIOManager{
     }
 
     @Override
-    @SuppressWarnings("possibleNullPointerException")
     public Map<String, Collection<String>> getAvailableCountriesAndLeagues() 
             throws BetIOException {
         if(dataSource == null){
@@ -718,6 +716,48 @@ public class DBBetIOManager implements CloneableBetIOManager{
             return ctryAndlgs;
         } catch (SQLException ex){
             throw new BetIOException("Exception while getting available leagues.", ex);
+        }
+    }
+
+    @Override
+    public Calendar getFirstDate() throws BetIOException {
+        return getDate("MIN");
+    }
+    
+    @Override
+    public Calendar getLastDate() throws BetIOException {
+        return getDate("MAX");
+    }
+    
+    /**
+     * Vráti časový údaj z DB, ktorý je špecifický pre modifier.
+     * Konkrétne podľa SQL príkazu SELECT {@code <modifier>}(matchdate) FROM matches.
+     * Vracia prvý nájdený údaj, alebo dnešný dátum, ak nie je nájdený žiaden.
+     * 
+     * @param modifier
+     * @return
+     * @throws BetIOException 
+     */
+    private Calendar getDate(String modifier) throws BetIOException{
+        if(dataSource == null){
+            throw new BetIOException("No data source");
+        }
+        try(Connection con = dataSource.getConnection();
+                PreparedStatement ps = con.prepareStatement(
+                        "SELECT " + modifier + "(matchdate) AS mdate FROM matches")){
+            ResultSet rs = ps.executeQuery();
+            Calendar c = new GregorianCalendar();
+            if(!rs.next()){
+                return c;
+            }
+            Timestamp ts = rs.getTimestamp("mdate");
+            if(ts == null){
+                return c;
+            }
+            c.setTimeInMillis(ts.getTime());
+            return c;
+        } catch (SQLException ex){
+            throw new BetIOException("Exception while getting " + modifier + " date.", ex);
         }
     }
     

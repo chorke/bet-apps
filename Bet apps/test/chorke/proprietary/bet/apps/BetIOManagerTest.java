@@ -791,10 +791,10 @@ public class BetIOManagerTest {
      */
     private void league(Collection<Match> expectedMatches,
             LoadProperties properties){
-        properties.addLeague("1. liga", "Česká republika");
+        properties.addLeague("Česká republika", "1. liga");
         expectedMatches.add(match3);
         checkLoading(expectedMatches, properties);
-        properties.addLeague("Extraliga", "Slovensko");
+        properties.addLeague("Slovensko", "Extraliga");
         expectedMatches.add(match2);
         checkLoading(expectedMatches, properties);
         
@@ -811,7 +811,7 @@ public class BetIOManagerTest {
         match.addBet(new Bet1x2("my", BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
         testingManager.saveMatch(match);
         
-        properties.addLeague("1. liga", "Slovensko");
+        properties.addLeague("Slovensko", "1. liga");
         expectedMatches.add(match);
         
         checkLoading(expectedMatches, properties);
@@ -819,14 +819,14 @@ public class BetIOManagerTest {
         
         clearThem(properties, expectedMatches);
         
-        properties.addLeague("", "Slovensko");
+        properties.addLeague("Slovensko", "");
         expectedMatches.add(match1);
         expectedMatches.add(match2);
         checkLoading(expectedMatches, properties);
         
         clearThem(properties, expectedMatches);
         
-        properties.addLeague("1. liga", null);
+        properties.addLeague(null, "1. liga");
         expectedMatches.add(match3);
         expectedMatches.add(match);
         match.setId(null);
@@ -937,8 +937,8 @@ public class BetIOManagerTest {
      */
     private void startDateLeague(Collection<Match> expectedMatches,
             LoadProperties properties){
-        properties.addLeague("2. league", "USA");
-        properties.addLeague("1. liga", "Česká republika");
+        properties.addLeague("USA", "2. league");
+        properties.addLeague("Česká republika", "1. liga");
         expectedMatches.add(match4);
         expectedMatches.add(match3);
         properties.addStartDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 15));
@@ -983,8 +983,8 @@ public class BetIOManagerTest {
      */
     private void endDateLeague(Collection<Match> expectedMatches,
             LoadProperties properties){
-        properties.addLeague("Corgoň liga", "Slovensko");
-        properties.addLeague("1. liga", "Česká republika");
+        properties.addLeague("Slovensko", "Corgoň liga");
+        properties.addLeague("Česká republika", "1. liga");
         expectedMatches.add(match1);
         expectedMatches.add(match3);
         properties.addEndDate(new GregorianCalendar(2013, Calendar.DECEMBER, 31));
@@ -1000,8 +1000,8 @@ public class BetIOManagerTest {
             LoadProperties properties){
         properties.addBetCompany("doublebet");
         properties.addBetCompany("tipsport");
-        properties.addLeague("Corgoň liga", "Slovensko");
-        properties.addLeague("2. league", "USA");
+        properties.addLeague("Slovensko", "Corgoň liga");
+        properties.addLeague("USA", "2. league");
         Match m1 = getMatchCopyWithoutBets(match1);
         m1.addBet(bet1x2_Tipsport_Match1);
         m1.addBet(betou_Tipsport_1p0_Match1);
@@ -1038,7 +1038,7 @@ public class BetIOManagerTest {
      */
     private void startDateEndDateLeague(Collection<Match> expectedMatches,
             LoadProperties properties){
-        properties.addLeague("Extraliga", "Slovensko");
+        properties.addLeague("Slovensko", "Extraliga");
         properties.addStartDate(new GregorianCalendar(2013, Calendar.OCTOBER, 31));
         properties.addEndDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 15));
         expectedMatches.add(match2);
@@ -1079,8 +1079,8 @@ public class BetIOManagerTest {
     private void startDateLeagueBetCompany(Collection<Match> expectedMatches,
             LoadProperties properties){
         properties.addStartDate(new GregorianCalendar(2013, Calendar.DECEMBER, 21));
-        properties.addLeague("1. liga", "Česká republika");
-        properties.addLeague("2. league", "USA");
+        properties.addLeague("Česká republika", "1. liga");
+        properties.addLeague("USA", "2. league");
         properties.addBetCompany("fortuna");
         properties.addBetCompany("bet365");
         Match m3 = getMatchCopyWithoutBets(match3);
@@ -1099,8 +1099,8 @@ public class BetIOManagerTest {
      */
     private void endDateLeagueBetCompany(Collection<Match> expectedMatches,
             LoadProperties properties){
-        properties.addLeague("Extraliga", "Slovensko");
-        properties.addLeague("Corgoň liga", "Slovensko");
+        properties.addLeague("Slovensko", "Extraliga");
+        properties.addLeague("Slovensko", "Corgoň liga");
         properties.addBetCompany("fortuna");
         properties.addBetCompany("bet365");
         properties.addEndDate(new GregorianCalendar(2014, Calendar.JANUARY, 2));
@@ -1133,7 +1133,7 @@ public class BetIOManagerTest {
             LoadProperties properties){
         properties.addStartDate(new GregorianCalendar(2013, Calendar.NOVEMBER, 15));
         properties.addEndDate(new GregorianCalendar(2014, Calendar.JANUARY, 1));
-        properties.addLeague("Extraliga", "Slovensko");
+        properties.addLeague("Slovensko", "Extraliga");
         properties.addBetCompany("tipsport");
         properties.addBetCompany("bet365");
         Match m2 = getMatchCopyWithoutBets(match2);
@@ -1297,6 +1297,57 @@ public class BetIOManagerTest {
         ensureEquality(BetBothTeamsToScore.class, "fortuna", "bet365");
         ensureEquality(Bet1x2.class, "fortuna", "bet365", "tipsport");
         ensureEquality(BetAsianHandicap.class, "bet365");
+    }
+    
+    @Test
+    public void saveGetFristDateTest(){
+        isToday(testingManager.getFirstDate());
+        testingManager.saveMatch(match3);
+        assertEqualsCalendars(match3.getProperties().getDate(), testingManager.getFirstDate());
+        testingManager.saveMatch(match1);
+        testingManager.saveMatch(match2);
+        assertEqualsCalendars(match1.getProperties().getDate(), testingManager.getFirstDate());
+        testingManager.deleteMatch(match1);
+        assertEqualsCalendars(match2.getProperties().getDate(), testingManager.getFirstDate());
+    }
+    
+    @Test
+    public void saveGetLastDateTest(){
+        isToday(testingManager.getLastDate());
+        testingManager.saveMatch(match1);
+        assertEqualsCalendars(match1.getProperties().getDate(), testingManager.getLastDate());
+        testingManager.saveMatch(match3);
+        testingManager.saveMatch(match2);
+        assertEqualsCalendars(match3.getProperties().getDate(), testingManager.getLastDate());
+        testingManager.deleteMatch(match3);
+        assertEqualsCalendars(match2.getProperties().getDate(), testingManager.getLastDate());
+    }
+    
+    /**
+     * Skontroluje, či sú dva dátumy rovnaké. Používa compareTo vc Calendar.
+     * @param c1
+     * @param c2 
+     */
+    private void assertEqualsCalendars(Calendar c1, Calendar c2){
+        if(c1.compareTo(c2) != 0){
+            fail("Calendars are not equals. " + System.lineSeparator() + c1 
+                    + System.lineSeparator() + c2);
+        }
+    }
+    
+     /**
+      * Skontorluje, či kalendár c má dnešný dátum. Kontorluje iba deň,
+      * mesiac a rok.
+      * 
+      * @param c 
+      */
+    private void isToday(Calendar c) {
+        Calendar today = new GregorianCalendar();
+        if(!(c.get(Calendar.YEAR) == today.get(Calendar.YEAR)
+                && c.get(Calendar.MONTH) == today.get(Calendar.MONTH)
+                && c.get(Calendar.DATE) == today.get(Calendar.DATE))){
+            fail("Calendar date is not today");
+        }
     }
     
     /**

@@ -1,46 +1,33 @@
 
 package chorke.proprietary.bet.apps;
 
-import chorke.proprietary.bet.apps.StaticConstants.BetPossibility;
 import chorke.proprietary.bet.apps.StaticConstants.Periode;
-import chorke.proprietary.bet.apps.core.graphs.Graph;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
-import chorke.proprietary.bet.apps.core.bets.BetBothTeamsToScore;
-import chorke.proprietary.bet.apps.core.bets.BetDoubleChance;
-import chorke.proprietary.bet.apps.core.bets.BetDrawNoBet;
-import chorke.proprietary.bet.apps.core.bets.BetOverUnder;
-import chorke.proprietary.bet.apps.core.calculators.CumulativeYieldProperties;
-import chorke.proprietary.bet.apps.core.calculators.Yield;
 import chorke.proprietary.bet.apps.core.calculators.Yield1x2;
 import chorke.proprietary.bet.apps.core.calculators.Yield1x2Calculator;
-import chorke.proprietary.bet.apps.core.calculators.YieldCalculator;
 import chorke.proprietary.bet.apps.core.calculators.YieldProperties;
 import chorke.proprietary.bet.apps.core.graphs.GraphBuilderYield1x2;
 import chorke.proprietary.bet.apps.core.httpparsing.BetexplorerComMultithreadParser;
-import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser;
 import chorke.proprietary.bet.apps.StaticConstants.BettingSports;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.gui.GuiUtils;
+import chorke.proprietary.bet.apps.gui.Season;
 import chorke.proprietary.bet.apps.gui.panels.DownloadPanel;
 import chorke.proprietary.bet.apps.gui.panels.GraphPanel;
 import chorke.proprietary.bet.apps.gui.panels.GraphsCollectingPanel;
 import chorke.proprietary.bet.apps.gui.panels.LoadingPanel;
-import chorke.proprietary.bet.apps.io.CloneableBetIOManager;
+import chorke.proprietary.bet.apps.gui.panels.MainPanel;
+import chorke.proprietary.bet.apps.io.BetIOManager;
 import chorke.proprietary.bet.apps.io.DBBetIOManager;
 import chorke.proprietary.bet.apps.io.LoadProperties;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.GraphicsConfiguration;
-import java.awt.Window;
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.LinkedList;
 import java.util.Map;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 
@@ -59,24 +46,21 @@ public class MainClass {
     private void guiTester(){
         DBBetIOManager man = new DBBetIOManager(StaticConstants.DATA_SOURCE);
         
-//        Yield1x2Calculator calcul = new Yield1x2Calculator();
-//        Graph g = new GraphBuilderYield1x2().getGraph(
-//                calcul.getPeriodicYield(matches,
-//                    yieldProp, Periode.Month),
-//                BetPossibility.Tie, 0);
-//        GraphPanel p = new GraphPanel(g);
-//        p.setPreferredSize(new Dimension(500, 300));
+        Season season = new Season();
+//        season.setYieldProperties(new YieldProperties(new LinkedList<>(
+//                Arrays.asList(new BigDecimal[]{new BigDecimal("1.22"),
+//                new BigDecimal("1.23"), new BigDecimal("1.24"),
+//                new BigDecimal("1.27"), new BigDecimal("1.28"),
+//                new BigDecimal("1.25"), new BigDecimal("1.26")})),
+//                "bet365"));
+        season.setCalculator(new Yield1x2Calculator());
+        season.setMatches(new LinkedList<Match>());
+        season.setManager(man);
+        season.setParser(new BetexplorerComMultithreadParser(null));
+        season.setGraphBuilder(new GraphBuilderYield1x2());
         
-        
-//        YieldProperties yieldProp = new YieldProperties();
-//        yieldProp.setBetCompany("bet365");
-//        yieldProp.addScale(new BigDecimal("1.60"));
-//        yieldProp.addScale(new BigDecimal("1.70"));
-//        yieldProp.addScale(new BigDecimal("2.00"));
-//        
-//        Yield1x2Calculator calcul = new Yield1x2Calculator();
-//        Collection<Match> matches = load(man);
-//        GraphsCollectingPanel panel = new GraphsCollectingPanel(calcul, new GraphBuilderYield1x2());
+//        season.setMatches(load(season.getManager()));
+//        GraphsCollectingPanel panel = new GraphsCollectingPanel(season);
 //        panel.setPreferredSize(new Dimension(400, 350));
 //        panel.setMatches(matches);
 //        panel.setProperties(yieldProp);
@@ -84,13 +68,18 @@ public class MainClass {
 //        DownloadPanel panel = new DownloadPanel(parser);
 //        panel.setPreferredSize(new Dimension(400, 150));
         
-        LoadingPanel panel = new LoadingPanel(man);
+//        LoadProperties prop = new LoadProperties();
+//        prop.addBetClass(BetAsianHandicap.class);
+//        prop.addBetCompany("bet365");
+//        LoadingPanel panel = new LoadingPanel(season);
         
+        MainPanel panel = new MainPanel(season);
         
         JScrollPane pane = new JScrollPane(panel);
-        pane.setPreferredSize(new Dimension(600, 500));
+        pane.setPreferredSize(new Dimension(500, 400));
         GuiUtils.getDefaultFrame(null, JFrame.EXIT_ON_CLOSE,
                 true, null, pane).setVisible(true);
+        
     }
     
     private void betsDownloading(){
@@ -129,7 +118,7 @@ public class MainClass {
                 + "}: " + parser.getUndownloadedSports());
     }
     
-    private Collection<Match> load(DBBetIOManager man){
+    private Collection<Match> load(BetIOManager man){
         LoadProperties properties = new LoadProperties();
 //        properties.addStartDate(new GregorianCalendar(2013, Calendar.OCTOBER, 20));
         properties.addBetClass(Bet1x2.class);
@@ -137,7 +126,7 @@ public class MainClass {
 //        properties.addBetClass(BetDoubleChance.class);
 //        properties.addBetClass(BetDrawNoBet.class);
         properties.addBetCompany("bet365");
-        properties.addLeague("", "Slovakia");
+        properties.addLeague("Slovakia", "");
         Collection<Match> matches = man.loadMatches(properties);
         System.out.println("loaded: " + matches.size());
         return matches;

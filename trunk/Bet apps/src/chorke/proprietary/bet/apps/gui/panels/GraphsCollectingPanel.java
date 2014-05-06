@@ -1,31 +1,23 @@
 
 package chorke.proprietary.bet.apps.gui.panels;
 
-import chorke.proprietary.bet.apps.StaticConstants;
 import chorke.proprietary.bet.apps.StaticConstants.BetPossibility;
 import chorke.proprietary.bet.apps.StaticConstants.Periode;
 import chorke.proprietary.bet.apps.core.calculators.Yield;
-import chorke.proprietary.bet.apps.core.calculators.YieldCalculator;
-import chorke.proprietary.bet.apps.core.calculators.YieldProperties;
 import chorke.proprietary.bet.apps.core.graphs.Graph;
-import chorke.proprietary.bet.apps.core.graphs.GraphBuilder;
-import chorke.proprietary.bet.apps.core.match.Match;
+import chorke.proprietary.bet.apps.gui.GuiUtils;
+import chorke.proprietary.bet.apps.gui.Season;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
-import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
-import javax.swing.AbstractButton;
-import javax.swing.ButtonGroup;
-import javax.swing.ButtonModel;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Group;
 import javax.swing.JLabel;
@@ -44,59 +36,58 @@ import javax.swing.border.TitledBorder;
  */
 public class GraphsCollectingPanel extends JPanel{
     
-    private YieldCalculator calculator;
-    private GraphBuilder graphBuilder;
-    private List<Match> matches;
-    private YieldProperties properties;
     /**
      * forma (perióda, idx stávkovej možnosti, idx rozsahu)
      */
     private Map<Periode, GraphPanel[][]> graphs;
-    private String[] scale;
-    private String[] periode;
-    private String[] betPoss;
-    private ButtonGroup periodeGroup;
-    private ButtonGroup scaleGroup;
-    private ButtonGroup betPossGroup;
+    private JRadioButton[] periodeButtons;
+    private JRadioButton[] scaleButtons;
+    private JRadioButton[] betPossButtons;
+    /**
+     * Panel, kde je zobrazený aktuálny graf.
+     */
     private JPanel visibleGraph;
     private Dimension graphDim = new Dimension(490, 130);
     private JPanel propertiesPanel;
     private GraphPanel emptyGraph;
     private Dimension graphScrollPaneDim = new Dimension(500, 150);
     
-    private ResourceBundle bundle = StaticConstants.BUNDLE;
+    private ResourceBundle bundle;
+    
+    private Season season;
 
     /**
      * Vytvorí nový panel, ktorý zobrazuje grafy.
      * 
-     * @param calculator podľa ktorého sa budú počítať zisky
-     * @param graphBuilder ktorý je schopný vytvoriť graf pre zisky získané 
-     * od calculator
+     * @param season 
      */
-    public GraphsCollectingPanel(YieldCalculator calculator, GraphBuilder graphBuilder) {
-        this.calculator = calculator;
-        this.graphBuilder = graphBuilder;
-        matches = new ArrayList<>();
-        properties = new YieldProperties();
+    public GraphsCollectingPanel(Season season) {
+        if(season == null){
+            throw new IllegalArgumentException("Season cannot be null.");
+        }
+        GuiUtils.showWaitingDialog("Initializing graphs");
+        this.season = season;
+        bundle = season.getDefaultBundle();
         graphs = new HashMap<>();
-        periodeGroup = new ButtonGroup();
-        periode = new String[Periode.values().length];
+        periodeButtons = new JRadioButton[Periode.values().length];
         int i = 0;
         for(Periode p : Periode.values()){
-            periode[i] = bundle.getString(p.toString());
-            periodeGroup.add(getRadioButton(periode[i++]));
+            periodeButtons[i++] = GuiUtils.getRadioButton(bundle.getString(p.toString()),
+                    new SetRequireGraphAction());
         }
-        betPoss = new String[calculator.getBetPossibilities().length];
-        betPossGroup = new ButtonGroup();
+        betPossButtons = new JRadioButton[season.getCalculator().getBetPossibilities().length];
         i = 0;
-        for(BetPossibility bp : calculator.getBetPossibilities()){
-            betPoss[i] = bundle.getString(bp.toString());
-            betPossGroup.add(getRadioButton(betPoss[i++]));
+        for(BetPossibility bp : season.getCalculator().getBetPossibilities()){
+            betPossButtons[i++] = GuiUtils.getRadioButton(bundle.getString(bp.toString()),
+                    new SetRequireGraphAction());
         }
-        scaleGroup = new ButtonGroup();
+        GuiUtils.mergeToOneButtonGroup(betPossButtons);
+        GuiUtils.mergeToOneButtonGroup(periodeButtons);
+        scaleButtons = new JRadioButton[0];
         visibleGraph = new JPanel();
         visibleGraph.setPreferredSize(graphScrollPaneDim);
         init();
+        GuiUtils.hideWaitingDialog();
     }
     
     /**
@@ -104,6 +95,7 @@ public class GraphsCollectingPanel extends JPanel{
      * pre nastavenia.
      */
     private void init(){
+        prepareScale();
         propertiesPanel = new JPanel();
         propertiesPanel.add(initPropPanel());
         GroupLayout gl = new GroupLayout(this);
@@ -134,9 +126,9 @@ public class GraphsCollectingPanel extends JPanel{
      * rozsah, možnosť stývky), je zobrazený prázdny graf.
      */
     private void setRequiredGraph(){
-        int per = getSelectedIdx(periodeGroup, periode);
-        int scal = getSelectedIdx(scaleGroup, scale);
-        int betPossIdx = getSelectedIdx(betPossGroup, betPoss);
+        int per = GuiUtils.getSelectedIdx(periodeButtons);
+        int scal = GuiUtils.getSelectedIdx(scaleButtons);
+        int betPossIdx = GuiUtils.getSelectedIdx(betPossButtons);
         visibleGraph.removeAll();
         if(per == -1 || scal == -1 || betPossIdx == -1){
             visibleGraph.add(emptyGraph);
@@ -147,33 +139,6 @@ public class GraphsCollectingPanel extends JPanel{
             visibleGraph.add(pane);
         }
         visibleGraph.paintAll(visibleGraph.getGraphics());
-    }
-    
-    /**
-     * Vráti index, ktorý je zvolený v rámci group. Porovnáva actionComands
-     * v skupine group a v commands. Ak nie je zvolené žiadne tlačítko
-     * alebo ak sa zvolený action command nenachádza medzi commands, 
-     * tak metóda vráti -1.
-     * 
-     * @param group
-     * @param commands pole acctionCommands, kuz ktorému budú príslušne vracané
-     * indexy.
-     * @return 
-     */
-    private int getSelectedIdx(ButtonGroup group, String[] commands){
-        ButtonModel selection = group.getSelection();
-        if(selection == null){
-            return -1;
-        }
-        String selStr = selection.getActionCommand();
-        int i = 0;
-        for(String s : commands){
-            if(s.equals(selStr)){
-                return i;
-            }
-            i++;
-        }
-        return -1;
     }
     
     /**
@@ -190,9 +155,9 @@ public class GraphsCollectingPanel extends JPanel{
         JLabel periodeLabel = new JLabel(bundle.getString("periode"));
         JLabel scaleLabel = new JLabel(bundle.getString("scale"));
         JLabel betPossLabel = new JLabel(bundle.getString("betPoss"));
-        JPanel periodePanel = getButtonsPanel(periodeGroup);
-        JPanel scalePanel = getButtonsPanel(scaleGroup);
-        JPanel betPossPanel = getButtonsPanel(betPossGroup);
+        JPanel periodePanel = getButtonsPanel(periodeButtons);
+        JPanel scalePanel = getButtonsPanel(scaleButtons);
+        JPanel betPossPanel = getButtonsPanel(betPossButtons);
         GroupLayout gl = new GroupLayout(propPanel);
         gl.setHorizontalGroup(gl.createSequentialGroup()
                 .addGroup(gl.createParallelGroup()
@@ -230,17 +195,17 @@ public class GraphsCollectingPanel extends JPanel{
      * @param buttons
      * @return 
      */
-    private JPanel getButtonsPanel(ButtonGroup buttons){
+    private JPanel getButtonsPanel(JRadioButton[] buttons){
         JPanel p = new JPanel();
         GroupLayout gl = new GroupLayout(p);
         Group g = gl.createSequentialGroup();
-        for(Enumeration<AbstractButton> b = buttons.getElements(); b.hasMoreElements();){
-            g = g.addComponent(b.nextElement());
+        for(JRadioButton b : buttons){
+            g = g.addComponent(b);
         }
         gl.setHorizontalGroup(g);
         g = gl.createParallelGroup();
-        for(Enumeration<AbstractButton> b = buttons.getElements(); b.hasMoreElements();){
-            g = g.addComponent(b.nextElement());
+        for(JRadioButton b : buttons){
+            g = g.addComponent(b);
         }
         gl.setVerticalGroup(g);
         p.setLayout(gl);
@@ -251,19 +216,23 @@ public class GraphsCollectingPanel extends JPanel{
      * Pripraví rozsahy podľa YieldProperties. Zároveň nastavý scales.
      */
     private void prepareScale(){
-        scale = new String[properties.getScale().size() + 1];
+        if(season.getYieldProperties() == null){
+            return;
+        }
+        List<BigDecimal> scList = season.getYieldProperties().getScale();
+        if(scList == null){
+            scList = new LinkedList<>();
+        }
+        scaleButtons = new JRadioButton[scList.size() + 1];
         String last = BigDecimal.ONE.toPlainString();
         int i = 0;
-        for(BigDecimal bd : properties.getScale()){
+        for(BigDecimal bd : scList){
             String next = bd.toPlainString();
-            scale[i++] = last + "-" + next;
+            scaleButtons[i++] = GuiUtils.getRadioButton(last + "-" + next, new SetRequireGraphAction());
             last = next;
         }
-        scale[i] = last + " +";
-        scaleGroup = new ButtonGroup();
-        for(String s : scale){
-            scaleGroup.add(getRadioButton(s));
-        }
+        scaleButtons[i] = GuiUtils.getRadioButton(last + " +", new SetRequireGraphAction());
+        GuiUtils.mergeToOneButtonGroup(scaleButtons);
     }
     
     /**
@@ -282,14 +251,21 @@ public class GraphsCollectingPanel extends JPanel{
      * @return 
      */
     private GraphPanel[][] prepareGraphsPanel(Periode periode){
-        Map<Calendar, Yield> yields = calculator.getPeriodicYield(matches, properties, periode);
-        BetPossibility[] poss = calculator.getBetPossibilities();
+        if(season.getCalculator() == null
+                || season.getMatches() == null
+                || season.getYieldProperties() == null){
+            return new GraphPanel[0][0];
+        }
+        Map<Calendar, Yield> yields = season.getCalculator().getPeriodicYield(
+                season.getMatches(), season.getYieldProperties(), periode);
+        BetPossibility[] poss = season.getCalculator().getBetPossibilities();
         
-        List<BigDecimal> scales = properties.getScale();
-        GraphPanel[][] graphsForPeriode = new GraphPanel[poss.length][properties.getScale().size() + 1];
+        List<BigDecimal> scales = season.getYieldProperties().getScale();
+        GraphPanel[][] graphsForPeriode = new GraphPanel[poss.length][scales.size() + 1];
         for(int i = 0; i < poss.length; i++){
             for(int j = 0; j <= scales.size(); j++){
-                graphsForPeriode[i][j] = new GraphPanel(graphBuilder.getGraph(yields, poss[i], j));
+                graphsForPeriode[i][j] = new GraphPanel(season.getGraphBuilder()
+                        .getGraph(yields, poss[i], j));
                 graphsForPeriode[i][j].setPreferredSize(graphDim);
             }
         }
@@ -297,52 +273,14 @@ public class GraphsCollectingPanel extends JPanel{
     }
     
     /**
-     * Nastaví zápasy, z ktorých sa budú počítať zisky. Pripravý nové grafy ku nim
-     * a vymaže všetky zvolené nastavenia.
-     * 
-     * @param matches 
+     * Akcia, ktorá po aktivácii nastaví požadovaný graf (aktuálne
+     * nastavné parametre).
      */
-    public void setMatches(Collection<Match> matches){
-        this.matches.clear();
-        this.matches.addAll(matches);
-        periodeGroup.clearSelection();
-        scaleGroup.clearSelection();
-        betPossGroup.clearSelection();
-        prepareGraphsAndSetRequired();
-    }
+    private class SetRequireGraphAction implements ActionListener{
 
-    /**
-     * Nastaví YieldProperties. Podľa nich sa budú počítať zisky. Pripraví
-     * nové grafy. Vhodne upraví panel s nastaveniami.
-     * 
-     * @param properties 
-     */
-    public void setProperties(YieldProperties properties) {
-        this.properties = properties;
-        prepareScale();
-        propertiesPanel.removeAll();
-        propertiesPanel.add(initPropPanel());
-        propertiesPanel.paintAll(propertiesPanel.getGraphics());
-        prepareGraphsAndSetRequired();
-    }
-    
-    /**
-     * Vytvorí nové JRadioButton s textom a actionCommands text. Nastaví mu 
-     * ActionListener tak, že po stlačení sa znovu vykreslí požadovaný graf.
-     * 
-     * @param text
-     * @return 
-     */
-    private JRadioButton getRadioButton(String text){
-        JRadioButton butt = new JRadioButton(text);
-        butt.setActionCommand(text);
-        butt.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setRequiredGraph();
-            }
-        });
-        return butt;
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            setRequiredGraph();
+        }
     }
 }

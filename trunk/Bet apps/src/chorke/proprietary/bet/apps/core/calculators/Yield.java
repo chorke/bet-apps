@@ -279,7 +279,7 @@ public abstract class Yield {
      * 
      * @return 
      */
-    abstract BetPossibility[] getSupportedBetPossibilities();
+    public abstract BetPossibility[] getSupportedBetPossibilities();
     
     /**
      * Vráti požadovanú mapu, podľa betPossibillity a akutálne nastaveným 

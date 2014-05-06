@@ -1,9 +1,9 @@
 
 package chorke.proprietary.bet.apps.io;
 
-import chorke.proprietary.bet.apps.core.Tuple;
 import chorke.proprietary.bet.apps.core.bets.Bet;
 import chorke.proprietary.bet.apps.core.match.Match;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Map;
 
@@ -60,4 +60,22 @@ public interface BetIOManager{
      * @throws BetIOException ak nastane nejaká chyba pri práci s DB
      */
     Map<String, Collection<String>> getAvailableCountriesAndLeagues() throws BetIOException;
+    
+    /**
+     * Vráti prvý dátum, ktorý sa vyskytuje v DB. Ak je DB prázdna, vráti
+     * dnešný dátum.
+     * 
+     * @return
+     * @throws BetIOException ak nastane nejaká chyba pri práci s DB
+     */
+    Calendar getFirstDate() throws BetIOException;
+    
+    /**
+     * Vráti posledný dátum, ktorý sa vyskytuje v DB. Ak je DB prázdna, vráti
+     * dnešný dátum.
+     * 
+     * @return
+     * @throws BetIOException ak nastane nejaká chyba pri práci s DB
+     */
+    Calendar getLastDate() throws BetIOException;
 }

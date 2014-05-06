@@ -1,7 +1,6 @@
 
 package chorke.proprietary.bet.apps.gui.panels;
 
-import chorke.proprietary.bet.apps.StaticConstants;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -99,7 +98,7 @@ public class DateChooser extends JPanel{
     /**
      * Defaultné Locale pre aplikáciu
      */
-    private Locale defaulLocale = StaticConstants.getDefaultLocale();
+    private Locale defaulLocale;
     
     /**
      * Farba tlačítka, ktorou je zobrazený dnešný dátum.
@@ -113,7 +112,11 @@ public class DateChooser extends JPanel{
     /**
      * Vytvorí novú inštanciu DateChooser s počiatočným dnešným dátumom.
      */
-    public DateChooser() {
+    public DateChooser(Locale locale) {
+        if(locale == null){
+            throw new IllegalArgumentException("Locale cannot be null.");
+        }
+        this.defaulLocale = locale;
         today = new GregorianCalendar(defaulLocale);
         calendar = new GregorianCalendar(defaulLocale);
         tmpCal = new GregorianCalendar(defaulLocale);
@@ -147,7 +150,7 @@ public class DateChooser extends JPanel{
         dateString = new JTextArea();
         dateString.setEditable(false);
         dateString.setBorder(new EtchedBorder(EtchedBorder.LOWERED));
-        setCalendar(calendar);
+        setActualDate(calendar);
         ImageIcon icon = new ImageIcon(getClass().getResource(
                 "/chorke/proprietary/bet/apps/gui/icons/calendar.png"));
         
@@ -345,7 +348,7 @@ public class DateChooser extends JPanel{
      * deň mesiac a rok v príslušnych poliach.
      * @param cal 
      */
-    public void setCalendar(Calendar cal){
+    public void setActualDate(Calendar cal){
         calendar = cal;
         monthChooser.setSelectedIndex(calendar.get(Calendar.MONTH));
         yearChooser.setValue(calendar.get(Calendar.YEAR));

@@ -22,7 +22,6 @@ public abstract class Action {
      */
     public Action() {
         id = getNextId();
-        System.out.println(id);
     }
 
     @Override

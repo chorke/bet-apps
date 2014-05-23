@@ -4,7 +4,7 @@ package chorke.proprietary.bet.apps.core.bets;
 import java.math.BigDecimal;
 
 /**
- *
+ * Trieda pre stávku na dvojitú čancu (1x, x2, 12).
  * @author Chorke
  */
 public class BetDoubleChance extends Bet{

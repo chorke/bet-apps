@@ -1,15 +1,18 @@
 
 package chorke.proprietary.bet.apps.gui;
 
+import chorke.proprietary.bet.apps.core.bets.Bet;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.reflect.Array;
 import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
+import javax.swing.GroupLayout.Group;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -25,13 +28,15 @@ import javax.swing.border.EtchedBorder;
  */
 public class GuiUtils {
 
-    public static final Class[] SUPPORTED_BET_TYPES = {Bet1x2.class
-//            , BetAsianHandicap.class
-//            , BetBothTeamsToScore.class
-//            , BetDoubleChance.class
-//            , BetDrawNoBet.class
-//            , BetOverUnder.class
-    };
+    public static final Class<? extends Bet>[] SUPPORTED_BET_TYPES = initSupportedTypes();
+    
+    
+    private static Class<? extends  Bet>[] initSupportedTypes() {
+        @SuppressWarnings("unchecked")
+        Class<? extends Bet>[] bets = (Class<? extends Bet>[])Array.newInstance(Class.class, 1);
+        bets[0] = Bet1x2.class;
+        return bets;
+    }
     
     private GuiUtils(){}
     
@@ -67,15 +72,21 @@ public class GuiUtils {
      * pracovať, ale samotné volajúce vlákno môže pokračovať vo svojej práci.
      * Volajúce vlákno je počas zviditeľnovania čakacieho dialógu uspané a čaká,
      * pokým nie je dialóg úspešne aktivovaný. Potom je jeho činnosť obnovená.
+     * Metóda by nemala byť volaná z vlákna EDT (vlákno pre správu udalostí a.i.,
+     * teda z metód ActionListnerov, WindowListnerov atď.) inak hrozí zamrznutie.
      * 
      * @param waitingMessage 
      */
-    public static void showWaitingDialog(String waitingMessage){
-        if(waitingDialog == null){
-            initWaitingDialog();
-        } else if(waitingDialog.isVisible()){
+    public static void showWaitingDialog(String waitingMessage, JButton... buttons){
+//        if(waitingDialog == null){
+//            initWaitingDialog();
+//        } else if(waitingDialog.isVisible()){
+//            return;
+//        }
+        if(waitingDialog != null && waitingDialog.isActive()){
             return;
         }
+        initWaitingDialog(buttons);
         message.setText(waitingMessage);
         waitingDialog.pack();
         waitingDialog.setLocationRelativeTo(null);
@@ -97,7 +108,7 @@ public class GuiUtils {
      * viditeľný, nestane sa nič.
      */
     public static void hideWaitingDialog(){
-        if(waitingDialog != null && waitingDialog.isActive()){
+        if(waitingDialog != null && waitingDialog.isVisible()){
             waitingDialog.setVisible(false);
         }
     }
@@ -106,12 +117,12 @@ public class GuiUtils {
      * Pripraví čakaci dialóg. Správu je potom možné jednoducho meniť nastavením
      * textu pre {@link #message}.
      */
-    private static void initWaitingDialog(){
+    private static void initWaitingDialog(JButton... buttons){
         JPanel panel = new JPanel();
-        panel.setPreferredSize(new Dimension(200, 100));
         panel.setBorder(new EtchedBorder(EtchedBorder.LOWERED));
         message = new JLabel();
         GroupLayout gl = new GroupLayout(panel);
+        if(buttons == null || buttons.length == 0){
         gl.setVerticalGroup(gl.createParallelGroup(GroupLayout.Alignment.CENTER)
                 .addGap(10, 40, 100)
                 .addComponent(message)
@@ -120,7 +131,26 @@ public class GuiUtils {
                 .addGap(10, 100, 200)
                 .addComponent(message)
                 .addGap(10, 100, 200));
+        } else {
+            Group buttVer = gl.createParallelGroup(GroupLayout.Alignment.CENTER);
+            Group buttHor = gl.createSequentialGroup();
+            for(JButton b : buttons){
+                buttVer.addComponent(b);
+                buttHor.addComponent(b);
+            }
+            gl.setVerticalGroup(gl.createSequentialGroup()
+                    .addComponent(message)
+                    .addGap(20)
+                    .addGroup(buttVer));
+            gl.setHorizontalGroup(gl.createSequentialGroup()
+                    .addGap(40)
+                    .addGroup(gl.createParallelGroup(GroupLayout.Alignment.CENTER)
+                        .addComponent(message)
+                        .addGroup(buttHor))
+                    .addGap(40));
+        }
         gl.setAutoCreateContainerGaps(true);
+        gl.setAutoCreateGaps(true);
         panel.setLayout(gl);
 
         waitingDialog = new JDialog();

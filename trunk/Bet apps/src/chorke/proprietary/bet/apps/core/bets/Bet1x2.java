@@ -4,7 +4,7 @@ package chorke.proprietary.bet.apps.core.bets;
 import java.math.BigDecimal;
 
 /**
- *
+ * Trieda pre stávky 1x2.
  * @author Chorke
  */
 public class Bet1x2 extends Bet{

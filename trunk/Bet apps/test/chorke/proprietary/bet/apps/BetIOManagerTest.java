@@ -3,6 +3,7 @@ package chorke.proprietary.bet.apps;
 
 import static chorke.proprietary.bet.apps.BasicTests.collectionChecker;
 import static chorke.proprietary.bet.apps.BasicTests.assertAreBothNull;
+import chorke.proprietary.bet.apps.StaticConstants.BettingSports;
 import chorke.proprietary.bet.apps.core.bets.Bet;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
 import chorke.proprietary.bet.apps.core.bets.BetAsianHandicap;
@@ -1323,6 +1324,178 @@ public class BetIOManagerTest {
         assertEqualsCalendars(match2.getProperties().getDate(), testingManager.getLastDate());
     }
     
+    @Test
+    public void saveDeleteBetCompanyTest(){
+        testingManager.saveMatch(match1);
+        testingManager.saveMatch(match2);
+        testingManager.saveMatch(match3);
+        testingManager.saveMatch(match4);
+        testingManager.deleteBetCompany("fortuna");
+        Match m1 = getMatchCopyWithoutBets(match1);
+        Match m2 = getMatchCopyWithoutBets(match2);
+        Match m3 = getMatchCopyWithoutBets(match3);
+        Match m4 = getMatchCopyWithoutBets(match4);
+        m1.addBet(bet1x2_Tipsport_Match1);
+        m1.addBet(bet1x2_Bet365_Match1);
+        m1.addBet(betah_Bet365_Minus0p5_Match1);
+        m1.addBet(betah_Bet365_Minus0p75_Match1);
+        m1.addBet(betah_Doublebet_Plus1p5_Match1);
+        m1.addBet(betah_Doublebet_Plus0p75_Match1);
+        m1.addBet(betdc_Bet365_Match1);
+        m1.addBet(betou_Tipsport_1p0_Match1);
+        m1.addBet(betou_Tipsport_1p5_Match1);
+        
+        m2.addBet(bet1x2_Tipsport_Match2);
+        m2.addBet(bet1x2_Bet365_Match2);
+        m2.addBet(betah_Bet365_Plus0p75_Match2);
+        m2.addBet(betah_Bet365_Plus1p0_Match2);
+        
+        m3.addBet(bet1x2_Tipsport_Match3);
+        m3.addBet(betdc_Tipsport_Match3);
+        m3.addBet(betdnb_Tipsport_Match3);
+        m3.addBet(betah_Bet365_Plus1p0_Match3);
+        m3.addBet(betou_Bet365_1p5_Match3);
+        
+        m4.addBet(betbtts_Bet365_Match4);
+        Collection<Match> exp = new LinkedList<>();
+        exp.add(m1);
+        exp.add(m2);
+        exp.add(m3);
+        exp.add(m4);
+        assertEqualsCollectionsMatches(exp, testingManager.loadAllMatches());
+        
+        //match1
+        shouldBeEmptyResultSet("SELECT * FROM bet1x2 WHERE matchid = " + match1.getId() 
+                + " AND betCompany LIKE 'fortuna'");
+        shouldBeEmptyResultSet("SELECT * FROM betah WHERE matchid = " + match1.getId() 
+                + " AND betCompany LIKE 'fortuna'");
+        shouldBeEmptyResultSet("SELECT * FROM betou WHERE matchid = " + match1.getId() 
+                + " AND betCompany LIKE 'fortuna'");
+        
+        //match2
+        shouldBeEmptyResultSet("SELECT * FROM bet1x2 WHERE matchid = " + match2.getId() 
+                + " AND betCompany LIKE 'fortuna'");
+        //match3
+        shouldBeEmptyResultSet("SELECT * FROM betbtts WHERE matchid = " + match3.getId() 
+                + " AND betCompany LIKE 'fortuna'");
+        //match4
+        shouldBeEmptyResultSet("SELECT * FROM betbtts WHERE matchid = " + match4.getId() 
+                + " AND betCompany LIKE 'fortuna'");
+        
+        
+        testingManager.deleteBetCompany("bet365");
+        m1 = getMatchCopyWithoutBets(m1);
+        m2 = getMatchCopyWithoutBets(m2);
+        m3 = getMatchCopyWithoutBets(m3);
+        
+        m1.addBet(bet1x2_Tipsport_Match1);
+        m1.addBet(betah_Doublebet_Plus1p5_Match1);
+        m1.addBet(betah_Doublebet_Plus0p75_Match1);
+        m1.addBet(betou_Tipsport_1p0_Match1);
+        m1.addBet(betou_Tipsport_1p5_Match1);
+        
+        m2.addBet(bet1x2_Tipsport_Match2);
+        
+        m3.addBet(bet1x2_Tipsport_Match3);
+        m3.addBet(betdc_Tipsport_Match3);
+        m3.addBet(betdnb_Tipsport_Match3);
+        exp.clear();
+        exp.add(m1);
+        exp.add(m2);
+        exp.add(m3);
+        assertEqualsCollectionsMatches(exp, testingManager.loadAllMatches());
+        
+        //match1
+        shouldBeEmptyResultSet("SELECT * FROM bet1x2 WHERE matchid = " + match1.getId() 
+                + " AND betCompany LIKE 'bet365'");
+        shouldBeEmptyResultSet("SELECT * FROM betah WHERE matchid = " + match1.getId() 
+                + " AND betCompany LIKE 'bet365'");
+        shouldBeEmptyResultSet("SELECT * FROM betdc WHERE matchid = " + match1.getId() 
+                + " AND betCompany LIKE 'bet365'");
+        //match2
+        shouldBeEmptyResultSet("SELECT * FROM bet1x2 WHERE matchid = " + match2.getId() 
+                + " AND betCompany LIKE 'bet365'");
+        shouldBeEmptyResultSet("SELECT * FROM betah WHERE matchid = " + match2.getId() 
+                + " AND betCompany LIKE 'bet365'");
+        //match3
+        shouldBeEmptyResultSet("SELECT * FROM betou WHERE matchid = " + match3.getId() 
+                + " AND betCompany LIKE 'bet365'");
+        shouldBeEmptyResultSet("SELECT * FROM betah WHERE matchid = " + match3.getId() 
+                + " AND betCompany LIKE 'bet365'");
+        //match4
+        shouldBeEmptyResultSet("SELECT * FROM betbtts WHERE matchid = " + match4.getId());
+        shouldBeEmptyResultSet("SELECT * FROM scores WHERE matchid = " + match4.getId());
+        shouldBeEmptyResultSet("SELECT * FROM matches WHERE id = " + match4.getId());
+    }
+    
+    @Test
+    public void saveDeleteLeagueTest(){
+        testingManager.saveMatch(match1);
+        testingManager.saveMatch(match2);
+        testingManager.saveMatch(match3);
+        testingManager.saveMatch(match4);
+        testingManager.deleteLeague("Slovensko", "Corgoň liga");
+        Collection<Match> exp = new LinkedList<>();
+        exp.add(match2);
+        exp.add(match3);
+        exp.add(match4);
+        assertEqualsCollectionsMatches(exp, testingManager.loadAllMatches());
+        shouldBeEmptyResultSet("SELECT * FROM bet1x2 WHERE matchid = " + match1.getId());
+        shouldBeEmptyResultSet("SELECT * FROM betah WHERE matchid = " + match1.getId());
+        shouldBeEmptyResultSet("SELECT * FROM betbtts WHERE matchid = " + match1.getId());
+        shouldBeEmptyResultSet("SELECT * FROM betdc WHERE matchid = " + match1.getId());
+        shouldBeEmptyResultSet("SELECT * FROM betdnb WHERE matchid = " + match1.getId());
+        shouldBeEmptyResultSet("SELECT * FROM betou WHERE matchid = " + match1.getId());
+        shouldBeEmptyResultSet("SELECT * FROM scores WHERE matchid = " + match1.getId());
+        shouldBeEmptyResultSet("SELECT * FROM matches WHERE id = " + match1.getId());
+    }
+    
+    /**
+     * Skontroluje, či zadaný sql výraz vráti z DB prázdny výsledok.
+     * 
+     * @param sql sql dotaz
+     */
+    private void shouldBeEmptyResultSet(String sql){
+        try(PreparedStatement ps = connection.prepareStatement(sql)){
+            if(ps.executeQuery().next()){
+                fail("Nonempty result. (" + sql + ")");
+            }
+        } catch (SQLException ex){
+            fail(ex.toString());
+        }
+    }
+    
+    @Test
+    public void saveDeleteSportTest(){
+        testingManager.saveMatch(match1);
+        testingManager.saveMatch(match2);
+        testingManager.saveMatch(match3);
+        testingManager.saveMatch(match4);
+        testingManager.deleteSport(Sport.getSport(BettingSports.Soccer));
+        Collection<Match> exp = new LinkedList<>();
+        exp.add(match2);
+        exp.add(match3);
+        assertEqualsCollectionsMatches(exp, testingManager.loadAllMatches());
+        
+        shouldBeEmptyResultSet("SELECT * FROM bet1x2 WHERE matchid = " + match1.getId());
+        shouldBeEmptyResultSet("SELECT * FROM betah WHERE matchid = " + match1.getId());
+        shouldBeEmptyResultSet("SELECT * FROM betbtts WHERE matchid = " + match1.getId());
+        shouldBeEmptyResultSet("SELECT * FROM betdc WHERE matchid = " + match1.getId());
+        shouldBeEmptyResultSet("SELECT * FROM betdnb WHERE matchid = " + match1.getId());
+        shouldBeEmptyResultSet("SELECT * FROM betou WHERE matchid = " + match1.getId());
+        shouldBeEmptyResultSet("SELECT * FROM scores WHERE matchid = " + match1.getId());
+        shouldBeEmptyResultSet("SELECT * FROM matches WHERE id = " + match1.getId());
+        
+        shouldBeEmptyResultSet("SELECT * FROM bet1x2 WHERE matchid = " + match4.getId());
+        shouldBeEmptyResultSet("SELECT * FROM betah WHERE matchid = " + match4.getId());
+        shouldBeEmptyResultSet("SELECT * FROM betbtts WHERE matchid = " + match4.getId());
+        shouldBeEmptyResultSet("SELECT * FROM betdc WHERE matchid = " + match4.getId());
+        shouldBeEmptyResultSet("SELECT * FROM betdnb WHERE matchid = " + match4.getId());
+        shouldBeEmptyResultSet("SELECT * FROM betou WHERE matchid = " + match4.getId());
+        shouldBeEmptyResultSet("SELECT * FROM scores WHERE matchid = " + match4.getId());
+        shouldBeEmptyResultSet("SELECT * FROM matches WHERE id = " + match4.getId());
+    }
+    
     /**
      * Skontroluje, či sú dva dátumy rovnaké. Používa compareTo vc Calendar.
      * @param c1
@@ -1368,8 +1541,8 @@ public class BetIOManagerTest {
      * @param clazz 
      */
     private <T extends Bet> void availableCompaniesShouldBeEmpty(Class... clazz){
-        for(Class c : clazz){
-            if(!testingManager.getAvailableBetCompanies((Class<T>)c).isEmpty()){
+        for(Class<T> c : clazz){
+            if(!testingManager.getAvailableBetCompanies(c).isEmpty()){
                 fail("No records for class " + clazz + "and nonepmty result.");
             }
         }

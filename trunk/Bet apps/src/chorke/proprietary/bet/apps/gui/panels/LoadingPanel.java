@@ -1,11 +1,13 @@
 
 package chorke.proprietary.bet.apps.gui.panels;
 
+import chorke.proprietary.bet.apps.StaticConstants;
 import chorke.proprietary.bet.apps.core.Tuple;
 import chorke.proprietary.bet.apps.core.bets.Bet;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.gui.GuiUtils;
 import chorke.proprietary.bet.apps.gui.Season;
+import chorke.proprietary.bet.apps.io.BetIOException;
 import chorke.proprietary.bet.apps.io.BetIOManager;
 import chorke.proprietary.bet.apps.io.LoadProperties;
 import java.awt.BorderLayout;
@@ -24,6 +26,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
@@ -56,7 +59,7 @@ public class LoadingPanel extends JPanel{
     /**
      * Podporované typy stávok.
      */
-    private Class[] supportedBetsType = GuiUtils.SUPPORTED_BET_TYPES;
+    private Class<? extends Bet>[] supportedBetsType = GuiUtils.SUPPORTED_BET_TYPES;
     
     /**
      * Sedenie, kde sa uložia zápasy a LoadProperties po načítaní.
@@ -95,7 +98,7 @@ public class LoadingPanel extends JPanel{
      * Dostupné stávkové spoločnosti v DB. Ukladaný formát je (typ stávky,
      * zoznam spoločností).
      */
-    private Map<Class, Collection<String>> betCompanies;
+    private Map<Class<? extends Bet>, Collection<String>> betCompanies;
     
     /**
      * ComboBoxModel pre zoznam krajín.
@@ -128,7 +131,7 @@ public class LoadingPanel extends JPanel{
     /**
      * Akutálne zvolený požedovaný typ stávky.
      */
-    private Class betClassRequired;
+    private Class<? extends Bet> betClassRequired;
     
     /**
      * Tlačítko pre pridávanie líg.
@@ -150,7 +153,7 @@ public class LoadingPanel extends JPanel{
     /**
      * Možnosť, ktorá značí zvolenie všetkých krajín, prípadne líg. 
      */
-    private String allOption = "All";
+    private String allOption;
     
     /**
      * Manažér pre načítavanie stávok a získavanie informácii o stávkach z DB.
@@ -167,15 +170,18 @@ public class LoadingPanel extends JPanel{
      * 
      * @param season 
      * @throws IllegalArgumentException ak je season == null
+     * @throws BetIOException ak nastane nejaká chyba pri inicializácii okna
+     * a čítaní niektorých hodnôt z DB
      */
-    public LoadingPanel(Season season) throws IllegalArgumentException{
+    public LoadingPanel(Season season) throws IllegalArgumentException, BetIOException{
         if(season == null){
             throw new IllegalArgumentException("Season cannot be null.");
         }
         this.bundle = season.getDefaultBundle();
+        allOption = bundle.getString("all");
         this.manager = season.getManager();
         this.season = season;
-        GuiUtils.showWaitingDialog("Inicializing loading");
+        GuiUtils.showWaitingDialog(bundle.getString("initLoad"));
         init();
         GuiUtils.hideWaitingDialog();
     }
@@ -190,7 +196,7 @@ public class LoadingPanel extends JPanel{
         
         int w = 450;
         
-        loadButton = new JButton("load");
+        loadButton = new JButton(bundle.getString("load"));
         loadButton.addActionListener(new LoadAction());
         GroupLayout gl = new GroupLayout(this);
         gl.setAutoCreateContainerGaps(true);
@@ -218,11 +224,12 @@ public class LoadingPanel extends JPanel{
      */
     private void initBetCompaniesPanel(){
         betCompaniesPanel = new JPanel();
-        betCompaniesPanel.setBorder(new TitledBorder(new LineBorder(Color.BLACK), "Bet companies"));
+        betCompaniesPanel.setBorder(new TitledBorder(new LineBorder(Color.BLACK),
+                bundle.getString("betComp")));
         
         betCompanies = new HashMap<>();
         
-        for(Class c : supportedBetsType){
+        for(Class<? extends Bet> c : supportedBetsType){
             betCompanies.put(c, manager.getAvailableBetCompanies(c));
         }
         
@@ -240,8 +247,8 @@ public class LoadingPanel extends JPanel{
         
         betTypeButtons = new JRadioButton[supportedBetsType.length];
         int i = 0;
-        for(Class c : supportedBetsType){
-            betTypeButtons[i] = GuiUtils.getRadioButton(c.getSimpleName(),
+        for(Class<? extends Bet> c : supportedBetsType){
+            betTypeButtons[i] = GuiUtils.getRadioButton(bundle.getString(c.getSimpleName()),
                     new BetTypeSet(c));
             if(i == initIdx){
                 betTypeButtons[i].setSelected(true);
@@ -352,7 +359,8 @@ public class LoadingPanel extends JPanel{
                     .addGap(10, 10, 20));
         gl.linkSize(from, by);
         datesPanel.setLayout(gl);
-        datesPanel.setBorder(new TitledBorder(new LineBorder(Color.BLACK), "Dates"));
+        datesPanel.setBorder(new TitledBorder(new LineBorder(Color.BLACK),
+                bundle.getString("dates")));
     }
     
     /**
@@ -399,16 +407,16 @@ public class LoadingPanel extends JPanel{
         JComboBox<String> leaguesCB = new JComboBox<>(leagues);
         countriesCB.addActionListener(new CountrySelected());
         
-        addButton = new JButton("add");
-        removeButton = new JButton("remove");
+        addButton = new JButton(bundle.getString("add"));
+        removeButton = new JButton(bundle.getString("remove"));
         removeButton.setEnabled(false);
         addButton.addActionListener(new AddingToListAction());
         removeButton.addActionListener(new RemovingFromListAction());
         
         countriesAndLeaguesPanel = new JPanel();
         
-        JLabel countryLabel = new JLabel("Country");
-        JLabel leagueLabel = new JLabel("League");
+        JLabel countryLabel = new JLabel(bundle.getString("country"));
+        JLabel leagueLabel = new JLabel(bundle.getString("league"));
         GroupLayout gl = new GroupLayout(countriesAndLeaguesPanel);
         gl.setAutoCreateContainerGaps(true);
         gl.setAutoCreateGaps(true);
@@ -443,7 +451,8 @@ public class LoadingPanel extends JPanel{
         gl.linkSize(addButton, removeButton);
         gl.linkSize(SwingConstants.VERTICAL, countriesCB, countryLabel, leagueLabel, leaguesCB);
         countriesAndLeaguesPanel.setLayout(gl);
-        countriesAndLeaguesPanel.setBorder(new TitledBorder(new LineBorder(Color.BLACK), "Leagues"));
+        countriesAndLeaguesPanel.setBorder(new TitledBorder(new LineBorder(Color.BLACK),
+                bundle.getString("leagues")));
     }
     
     /**
@@ -533,14 +542,14 @@ public class LoadingPanel extends JPanel{
     }
     
     /**
-     * Akcia, ktorá nastaví stávkové spoločnosti. Spoločnosti tú nastavené podľa
+     * Akcia, ktorá nastaví stávkové spoločnosti. Spoločnosti sú nastavené podľa
      * argumentu {@link #cls}, ktorý je predávaný pri konštruktore.
      */
     private class BetTypeSet implements ActionListener {
 
-        private Class cls;
+        private Class<? extends Bet> cls;
 
-        public BetTypeSet(Class cls) {
+        public BetTypeSet(Class<? extends Bet> cls) {
             this.cls = cls;
         }
         
@@ -578,18 +587,30 @@ public class LoadingPanel extends JPanel{
         
         @Override
         protected Tuple<LoadProperties, Collection<Match>> doInBackground() throws Exception {
-            GuiUtils.showWaitingDialog("loading");
+            JButton cancel = new JButton(bundle.getString("cancel"));
+            cancel.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    manager.cancelActualQuery();
+                    ((JButton)e.getSource()).setEnabled(false);
+                }
+            });
+            GuiUtils.showWaitingDialog(bundle.getString("loading"), cancel);
+            errors.clear();
             LoadProperties prop = getLoadProperties();
             if(checkLoadingProperties(prop)){
-                season.getMatches().clear();
+                if(season.getMatches() != null){
+                    season.getMatches().clear();
+                }
                 return new Tuple<>(prop, manager.loadMatches(prop));
             } else {
-                StringBuilder message = new StringBuilder("Bad properties")
+                StringBuilder message = new StringBuilder(bundle.getString("badProperties"))
                         .append(System.lineSeparator());
                 for(String err : errors){
                     message.append(err).append(System.lineSeparator());
                 }
-                JOptionPane.showOptionDialog(null, message, "Bad properties", 
+                JOptionPane.showOptionDialog(null, message, bundle.getString("badProperties"), 
                         JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
                         null, null, null);
                 return new Tuple<>(prop, (Collection<Match>)new LinkedList<Match>());
@@ -603,10 +624,14 @@ public class LoadingPanel extends JPanel{
                 if(errors.isEmpty()){
                     season.setLoadProperties(m.first);
                     season.setMatches(m.second);
+                    JOptionPane.showMessageDialog(null, bundle.getString("loadingSuccessful"));
                 }
-                System.out.println(season.getMatches().size());
-            } catch (ExecutionException | InterruptedException ex){
+            } catch (ExecutionException | InterruptedException | CancellationException ex){
+                if(ex.getCause() instanceof Error){
+                    System.gc();
+                }
                 System.out.println(ex);
+                JOptionPane.showMessageDialog(null, bundle.getString("loadingFailed"));
             }
             GuiUtils.hideWaitingDialog();
         }
@@ -619,18 +644,11 @@ public class LoadingPanel extends JPanel{
          * @return 
          */
         private boolean checkLoadingProperties(LoadProperties prop){
-            System.out.println("checking load prop");
-            errors.clear();
-            if(prop.getEndDate().before(prop.getStartDate())){
-                errors.add("End date before start date.");
+            if(prop.getBetCompanies() == null || prop.getBetCompanies().isEmpty()){
+                errors.add(bundle.getString("noBetComp"));
             }
-            Set s = prop.getBetCompanies();
-            if(s == null || s.isEmpty()){
-                errors.add("No bet companies.");
-            }
-            s = prop.getLeagues();
-            if(s == null || s.isEmpty()){
-                errors.add("No leagues");
+            if(prop.getLeagues() == null || prop.getLeagues().isEmpty()){
+                errors.add(bundle.getString("noLeagues"));
             }
             return errors.isEmpty();
         }    
@@ -640,10 +658,20 @@ public class LoadingPanel extends JPanel{
          * @return 
          */
         private LoadProperties getLoadProperties() {
-            System.out.println("getting load prop");
             LoadProperties prop = new LoadProperties();
-            prop.addStartDate(from.getActualDate());
-            prop.addEndDate(by.getActualDate());
+            Calendar firstDate = manager.getFirstDate();
+            Calendar lastDate = manager.getLastDate();
+            if(by.getActualDate().before(from.getActualDate())){
+                errors.add(bundle.getString("endBeforeStart"));
+            }
+            if(!StaticConstants.areSameDates(from.getActualDate(), firstDate)
+                    && !from.getActualDate().before(firstDate)){
+                prop.addStartDate(from.getActualDate());
+            }
+            if(!StaticConstants.areSameDates(by.getActualDate(), lastDate)
+                    && !by.getActualDate().after(lastDate)){
+                prop.addEndDate(by.getActualDate());
+            }
             prop.addBetClass(betClassRequired);
             for(JCheckBox cb : betCompaniesButtons){
                 if(cb.isSelected()){
@@ -655,7 +683,7 @@ public class LoadingPanel extends JPanel{
                     e.hasMoreElements();){
                 Tuple<String, String> el = e.nextElement();
                 if(leagues.containsKey(el.first)){
-                    ((Set<String>)leagues.get(el.first)).add(el.second);
+                    leagues.get(el.first).add(el.second);
                 } else {
                     Set<String> set = new HashSet<>();
                     set.add(el.second);
@@ -667,14 +695,14 @@ public class LoadingPanel extends JPanel{
                 prop.addLeague("", "");
             } else {
                 for(String s : leagues.keySet()){
-                    Set<String> set = (Set<String>)leagues.get(s);
+                    Set<String> set = leagues.get(s);
                     if(set.contains(allOption)){ // required all leagues of country
                         set.clear();
                         set.add("");
                     }
                 }
                 for(String c : leagues.keySet()){
-                    for(String l : (Set<String>)leagues.get(c)){
+                    for(String l : leagues.get(c)){
                         prop.addLeague(c, l);
                     }
                 }

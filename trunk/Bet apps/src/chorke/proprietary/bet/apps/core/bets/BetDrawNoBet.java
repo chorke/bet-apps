@@ -4,7 +4,7 @@ package chorke.proprietary.bet.apps.core.bets;
 import java.math.BigDecimal;
 
 /**
- *
+ * Trieda pre stávky bez remízy.
  * @author Chorke
  */
 public class BetDrawNoBet extends Bet{

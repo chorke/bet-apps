@@ -4,7 +4,7 @@ package chorke.proprietary.bet.apps.core.bets;
 import java.math.BigDecimal;
 
 /**
- *
+ * Trieda pre stávky over/under.
  * @author Chorke
  */
 public class BetOverUnder extends Bet{

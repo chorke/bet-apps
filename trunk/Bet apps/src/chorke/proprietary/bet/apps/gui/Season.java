@@ -10,6 +10,7 @@ import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.io.CloneableBetIOManager;
 import chorke.proprietary.bet.apps.io.IOTransferable;
 import chorke.proprietary.bet.apps.io.LoadProperties;
+import chorke.proprietary.bet.apps.users.User;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -36,6 +37,8 @@ public class Season implements IOTransferable{
     private CloneableBetIOManager manager;
     
     private GraphBuilder graphBuilder;
+    
+    private User user;
     
     /**
      * Akcie, ktoré budú vykonané po nastavení LoadProperties
@@ -339,5 +342,23 @@ public class Season implements IOTransferable{
         for(Action a : actions){
             a.doAction();
         }
+    }
+    
+    /**
+     * Nastaví užívateľa pre túto season.
+     * 
+     * @param user aktuálny užívateľ
+     */
+    public void setUser(User user){
+        this.user = user;
+    }
+    
+    /**
+     * Vráti aktuálneho užívateľa v tejto season.
+     * 
+     * @return aktuálny užívateľ
+     */
+    public User getUser(){
+        return user;
     }
 }

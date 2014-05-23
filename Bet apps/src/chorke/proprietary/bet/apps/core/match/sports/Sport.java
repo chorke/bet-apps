@@ -19,6 +19,11 @@ public abstract class Sport {
     public static final String VOLLEYBALL_STRING = "volleyball";
     public static final String BASEBALL_STRING = "baseball";
     
+    /**
+     * Vráti výhercu celého zápasu vrátane nadstavenia atď.
+     * @param score
+     * @return 
+     */
     public Winner getWinner(Score score){
         if(score.getScoreFirstParty() > score.getScoreSecondParty()){
             return Winner.Team1;
@@ -28,19 +33,52 @@ public abstract class Sport {
         return Winner.Tie;
     }
     
+    /**
+     * Vráti výhercu zápasu v riadnom hracom čase podľa skóre score.
+     * @param score
+     * @return 
+     */
     public abstract Winner getRegularTimeWinner(Score score);
     
+    /**
+     * Upraví skóre tak, aby zodpovedalo skutočnému výsledku (napríklad
+     * po nájazdoch v hokeji sa pridáva iba jeden bod,...)
+     * @param partialScore
+     * @param score 
+     */
     abstract void updateScore(PartialScore partialScore, Score score);
     
+    /**
+     * Pridá nové čiastočné skóre ku celkovému skóre zápasu score. 
+     * 
+     * @param firstParty
+     * @param secondParty
+     * @param score 
+     */
     public void addPartialScore(PartialScore partialScore, Score score){
         score.addPartialScore(partialScore);
         updateScore(partialScore, score);
     }
     
+    /**
+     * Pridá nové čiastočné skóre ku celkovému skóre zápasu score. 
+     * 
+     * @param firstParty
+     * @param secondParty
+     * @param score 
+     */
     public void addPartialScore(int firstParty, int secondParty, Score score){
         addPartialScore(new PartialScore(firstParty, secondParty), score);
     }
     
+    /**
+     * Vráti implementáciu triedy Sport podľa požadovaného športu sport.
+     * Možnosti sú {@link BettingSports#Baseball}, {@link BettingSports#Basketball},
+     * {@link BettingSports#Handball}, {@link BettingSports#Hockey},
+     * {@link BettingSports#Soccer}, {@link BettingSports#Volleyball}.
+     * @param sport
+     * @return 
+     */
     public static Sport getSport(BettingSports sport){
         switch (sport){
             case Soccer:
@@ -60,6 +98,14 @@ public abstract class Sport {
         }
     }
     
+    /**
+     * Vráti implementáciu triedy Sport podľa požadovaného športu sport.
+     * Možnosti sú {@link #BASEBALL_STRING}, {@link #BASKETBALL_STRING},
+     * {@link #HANDBALL_STRING}, {@link #HOCKEY_STRING}, {@link #SOCCER_STRING}
+     * {@link #VOLLEYBALL_STRING}.
+     * @param sport
+     * @return 
+     */
     public static Sport getSport(String sport){
         switch (sport){
             case SOCCER_STRING:
@@ -138,7 +184,7 @@ public abstract class Sport {
             } else {
                 if(partialScore.firstParty < partialScore.secondParty){
                     score.setScoreSecondParty(score.getScoreSecondParty() + 1);
-                } else {
+                } else if(partialScore.firstParty > partialScore.secondParty) {
                     score.setScoreFirstParty(score.getScoreFirstParty() + 1);
                 }
             }
@@ -159,16 +205,8 @@ public abstract class Sport {
 
         @Override
         void updateScore(PartialScore partialScore, Score score) {
-            if(score.getPartialScore().size() <= 5){
-                score.setScoreFirstParty(score.getScoreFirstParty() + partialScore.firstParty);
-                score.setScoreSecondParty(score.getScoreSecondParty()+ partialScore.secondParty);
-            } else {
-                if(partialScore.firstParty < partialScore.secondParty){
-                    score.setScoreSecondParty(score.getScoreSecondParty() + 1);
-                } else {
-                    score.setScoreFirstParty(score.getScoreFirstParty() + 1);
-                }
-            }
+            score.setScoreFirstParty(score.getScoreFirstParty() + partialScore.firstParty);
+            score.setScoreSecondParty(score.getScoreSecondParty()+ partialScore.secondParty);
         }
     }
     

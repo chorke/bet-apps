@@ -1,8 +1,2 @@
-TODO:
-    vyťahovanie stávok - pre jednotlivé typy (dokončin asian handicap)
-
-    rozdelenie - najskôr vytiahnuť Collection<textingMatch> - multivláknovo
-            - potom znova multivláknovo z každého textingMatch dostať Match
-            - prečo? - niektoré vlákna stoja - viac zápasov zo športu
-            - vytvoriť 2 interfaces pre tieto účely, nechať aj pôvodné, použiť časti
-                - vytvoriť BetExplorerComParser - bude to spracovávať multivláknovo
+﻿TODO:
+    mazanie stávok - mazanie športov, líg, zápasov, stávkových kancelárií

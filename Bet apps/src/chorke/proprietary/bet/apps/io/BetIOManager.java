@@ -3,6 +3,7 @@ package chorke.proprietary.bet.apps.io;
 
 import chorke.proprietary.bet.apps.core.bets.Bet;
 import chorke.proprietary.bet.apps.core.match.Match;
+import chorke.proprietary.bet.apps.core.match.sports.Sport;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Map;
@@ -31,7 +32,7 @@ public interface BetIOManager{
      * Načíta zápasy z databázi podľa zvolených {@link LoadProperties}.
      * @param properties
      * @return
-     * @throws BetIOException ak sa vyskytne chyba pri čítanú zápasov z databázi
+     * @throws BetIOException ak sa vyskytne chyba pri čítaní zápasov z databázi
      * @see LoadProperties
      */
     Collection<Match> loadMatches(LoadProperties properties) throws BetIOException;
@@ -78,4 +79,40 @@ public interface BetIOManager{
      * @throws BetIOException ak nastane nejaká chyba pri práci s DB
      */
     Calendar getLastDate() throws BetIOException;
+    
+    /**
+     * Zastaví vykonávanie všetkých aktuálnych dotazov. Volaná metóda, ktorá 
+     * aktuálne vykonáva nejaký SQL dotaz vyhodí novú výnimku BetIOException.
+     */
+    void cancelActualQuery();
+    
+    /**
+     * Vymaže z DB všetky stávky spoločnosti {@code betCompany}. Ak ostane 
+     * niektorý zápas bez stávok, vymaže ho tiež.
+     * 
+     * @param betCompany názov stávkovej spoločnosti
+     * @throws BetIOException ak vznikne nejaká chyba počas mazania alebo
+     *      je {@code betCompany == null} alebo prázdny reťazec
+     */
+    void deleteBetCompany(String betCompany) throws BetIOException;
+    
+    /**
+     * Vymaže z DB všetky zápasy z ligy {@code league}, ktorá sa hrá v krajine
+     * {@code country}.
+     * 
+     * @param country krajina, kde sa hrá liga
+     * @param league názov ligy
+     * @throws BetIOException ak vznikne nejaká chyba počas mazania alebo
+     *      sú liga a kranjina {@code null} alebo prázdne reťazce
+     */
+    void deleteLeague(String country, String league) throws BetIOException;
+    
+    /**
+     * Vymaže z DB všetky zápasy z daného športu.
+     * 
+     * @param sport šport
+     * @throws BetIOException ak vznikne nejaká chyba počas mazania alebo 
+     *          je {@code sport == null}.
+     */
+    void deleteSport(Sport sport) throws BetIOException;
 }

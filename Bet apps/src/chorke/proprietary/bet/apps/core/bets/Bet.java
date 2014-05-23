@@ -2,7 +2,7 @@
 package chorke.proprietary.bet.apps.core.bets;
 
 /**
- *
+ * Trieda reprezentujúca stávku.
  * @author Chorke
  */
 public abstract class Bet {

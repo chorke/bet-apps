@@ -103,6 +103,7 @@ public class Match implements Comparable<Match>{
         return properties;
     }
     
+    @SuppressWarnings("unchecked")
     public <T extends Bet> Collection<T> getBet(String betCompany, Class<T> clazz){
         Collection<T> out = new LinkedList<>();
         if(bets.containsKey(betCompany)){

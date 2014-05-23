@@ -449,8 +449,19 @@ public class DownloadPanel extends JPanel {
                 if(downloader.betParser instanceof MultithreadHTMLBetParser){
                     ((MultithreadHTMLBetParser)downloader.betParser).stopThreads();
                 }
-                GuiUtils.showWaitingDialog(bundle.getString("stopping"));
+                new Thread(new ShowWaitingDialog()).start();
             }
+        }
+    }
+    
+    /**
+     * Spustí waiting dialóg, aby sa nespúšťal v EDT.
+     */
+    private class ShowWaitingDialog implements Runnable{
+
+        @Override
+        public void run() {
+            GuiUtils.showWaitingDialog(bundle.getString("stopping"));
         }
     }
     

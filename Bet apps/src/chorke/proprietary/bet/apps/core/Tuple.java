@@ -1,17 +1,19 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package chorke.proprietary.bet.apps.core;
 
 /**
- *
+ * Trieda, ktorá je reprezentuje dvojicu. 
  * @author Chorke
  */
 public final class Tuple<X, Y> {
     public final X first;
     public final Y second;
 
+    /**
+     * Vytvorí novú dvojicu.
+     * @param first prvý prvok dvojice
+     * @param second druhý prvok dvojice.
+     */
     public Tuple(X first, Y second) {
         this.first = first;
         this.second = second;

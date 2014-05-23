@@ -21,10 +21,12 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -69,11 +71,11 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
     /**
      * Požadované dni a športy na stiahnutie.
      */
-    private List<Tuple<BettingSports, Calendar>> toDownload;
+    private Set<Tuple<BettingSports, Calendar>> toDownload;
     /**
      * Iterátor pre dni a športy na stiahnutie.
      */
-    private ListIterator<Tuple<BettingSports, Calendar>> toDownloadIterator;
+    private Iterator<Tuple<BettingSports, Calendar>> toDownloadIterator;
     /**
      * Požadované zápasy na stiahnutie.
      */
@@ -288,7 +290,7 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
      */
     private List<TextingMatch> getAllTextingMatches(){
         toDownload = prepareSportsAndDates();
-        toDownloadIterator = toDownload.listIterator();
+        toDownloadIterator = toDownload.iterator();
         TMCThread[] tmcThreads = new TMCThread[NUM_OF_TMCTHREAD];
         Arrays.fill(TMCThreadsDoneStatus, false);
         areAllTMCDone = false;
@@ -408,14 +410,12 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
      * športu a začiatočného a koncového dátumu
      * @return 
      */
-    private List<Tuple<BettingSports, Calendar>> prepareSportsAndDates(){
-        List<Tuple<BettingSports, Calendar>> out = new LinkedList<>();
-        Calendar c;
-        for(long i = startDate.getTimeInMillis(); 
-                i <= endDate.getTimeInMillis();
-                i += 86_400_000){
-            c = new GregorianCalendar();
-            c.setTimeInMillis(i);
+    private Set<Tuple<BettingSports, Calendar>> prepareSportsAndDates(){
+        Set<Tuple<BettingSports, Calendar>> out = new HashSet<>();
+        for(Calendar tmp = (Calendar)startDate.clone();
+                tmp.compareTo(endDate) < 1;
+                tmp.add(Calendar.DATE, 1)){
+            Calendar c = (Calendar)tmp.clone();
             if(sport == BettingSports.All) {
                 out.add(new Tuple<>(BettingSports.Soccer, c));
                 out.add(new Tuple<>(BettingSports.Baseball, c));

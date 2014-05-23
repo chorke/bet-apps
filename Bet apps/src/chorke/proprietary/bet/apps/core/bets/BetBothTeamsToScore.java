@@ -4,7 +4,7 @@ package chorke.proprietary.bet.apps.core.bets;
 import java.math.BigDecimal;
 
 /**
- *
+ * Trieda pre stávky na skórovanie oboch týmov.
  * @author Chorke
  */
 public class BetBothTeamsToScore extends Bet{

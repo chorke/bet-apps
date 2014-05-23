@@ -47,10 +47,10 @@ public class GraphsCollectingPanel extends JPanel{
      * Panel, kde je zobrazený aktuálny graf.
      */
     private JPanel visibleGraph;
-    private Dimension graphDim = new Dimension(490, 130);
+    private Dimension graphDim = new Dimension(490, 150);
     private JPanel propertiesPanel;
     private GraphPanel emptyGraph;
-    private Dimension graphScrollPaneDim = new Dimension(500, 150);
+    private Dimension graphScrollPaneDim = new Dimension(500, 160);
     
     private ResourceBundle bundle;
     
@@ -65,9 +65,9 @@ public class GraphsCollectingPanel extends JPanel{
         if(season == null){
             throw new IllegalArgumentException("Season cannot be null.");
         }
-        GuiUtils.showWaitingDialog("Initializing graphs");
         this.season = season;
         bundle = season.getDefaultBundle();
+        GuiUtils.showWaitingDialog(bundle.getString("initGraphs"));
         graphs = new HashMap<>();
         periodeButtons = new JRadioButton[Periode.values().length];
         int i = 0;
@@ -250,6 +250,7 @@ public class GraphsCollectingPanel extends JPanel{
      * @param periode
      * @return 
      */
+    @SuppressWarnings("unchecked")
     private GraphPanel[][] prepareGraphsPanel(Periode periode){
         if(season.getCalculator() == null
                 || season.getMatches() == null

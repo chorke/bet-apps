@@ -302,8 +302,8 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
 
     @Override
     public BetPossibility[] getBetPossibilities() {
-        return new BetPossibility[]{BetPossibility.Guest, BetPossibility.Home, 
-            BetPossibility.Favorit, BetPossibility.Loser, BetPossibility.Tie};
+        return new BetPossibility[]{BetPossibility.Home, BetPossibility.Tie, 
+            BetPossibility.Guest, BetPossibility.Favorit, BetPossibility.Loser};
     }
     
     /**

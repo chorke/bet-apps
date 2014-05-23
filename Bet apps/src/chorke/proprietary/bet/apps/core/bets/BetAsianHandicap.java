@@ -4,7 +4,8 @@ package chorke.proprietary.bet.apps.core.bets;
 import java.math.BigDecimal;
 
 /**
- *
+ * Trieda pre sátvky azijského hendikepu.
+ * 
  * @author Chorke
  */
 public class BetAsianHandicap extends Bet{

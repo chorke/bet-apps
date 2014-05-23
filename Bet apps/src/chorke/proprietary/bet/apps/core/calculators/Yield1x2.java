@@ -65,8 +65,8 @@ public class Yield1x2 extends Yield{
 
     @Override
     public BetPossibility[] getSupportedBetPossibilities() {
-        return new BetPossibility[]{BetPossibility.Guest, BetPossibility.Home, 
-            BetPossibility.Favorit, BetPossibility.Loser, BetPossibility.Tie};
+        return new BetPossibility[]{BetPossibility.Home, BetPossibility.Tie, 
+            BetPossibility.Guest, BetPossibility.Favorit, BetPossibility.Loser};
     }
 
     @Override

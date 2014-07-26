@@ -1,7 +1,7 @@
 
 package chorke.proprietary.bet.apps.core.match;
 
-import chorke.proprietary.bet.apps.StaticConstants;
+import chorke.proprietary.bet.apps.core.CoreUtils;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
@@ -53,7 +53,7 @@ public class MatchProperties {
     public String toString() {
         return date.get(Calendar.DAY_OF_MONTH) 
                 + ". "
-                + date.getDisplayName(Calendar.MONTH, Calendar.LONG, StaticConstants.SVK_LOCALE)
+                + date.getDisplayName(Calendar.MONTH, Calendar.LONG, CoreUtils.SVK_LOCALE)
                 + " " 
                 + date.get(Calendar.YEAR);
     }

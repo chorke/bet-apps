@@ -11,7 +11,8 @@ import java.util.Map;
 
 
 /**
- *
+ * Nastavenia pre počítanie ziskov.
+ * 
  * @author Chorke
  */
 public class YieldProperties {
@@ -19,8 +20,17 @@ public class YieldProperties {
     private static final BigDecimal ZERO_POINT_ZERO_ONE = new BigDecimal("0.01");
     private static final BigDecimal MAX_VALUE = new BigDecimal(Double.MAX_VALUE);
     
+    /**
+     * Škála pre zisky. Podľa nej sa stávky zhlukujú spolu.
+     */
     private List<BigDecimal> scale;
+    /**
+     * Názov stávkovej spoločnosti, od ktorej sa berú stávky.
+     */
     private String betCompany;
+    /**
+     * Ostatvné nastavenia.
+     */
     private Map<String, Object> properties;
     
     /**

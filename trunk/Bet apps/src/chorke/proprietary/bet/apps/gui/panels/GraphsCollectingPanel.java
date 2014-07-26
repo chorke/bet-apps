@@ -1,8 +1,8 @@
 
 package chorke.proprietary.bet.apps.gui.panels;
 
-import chorke.proprietary.bet.apps.StaticConstants.BetPossibility;
-import chorke.proprietary.bet.apps.StaticConstants.Periode;
+import chorke.proprietary.bet.apps.core.CoreUtils.BetPossibility;
+import chorke.proprietary.bet.apps.core.CoreUtils.Periode;
 import chorke.proprietary.bet.apps.core.calculators.Yield;
 import chorke.proprietary.bet.apps.core.graphs.Graph;
 import chorke.proprietary.bet.apps.gui.GuiUtils;
@@ -29,7 +29,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 
 /**
- * Vytvorí panel so grafmi všetkých možností a podľa všetkých rozsahov.
+ * Vytvorí panel s grafmi všetkých možností a podľa všetkých rozsahov.
  * Grafy budú zahŕňať všetky možné obdobia.
  * 
  * @author Chorke
@@ -67,7 +67,6 @@ public class GraphsCollectingPanel extends JPanel{
         }
         this.season = season;
         bundle = season.getDefaultBundle();
-        GuiUtils.showWaitingDialog(bundle.getString("initGraphs"));
         graphs = new HashMap<>();
         periodeButtons = new JRadioButton[Periode.values().length];
         int i = 0;
@@ -87,7 +86,6 @@ public class GraphsCollectingPanel extends JPanel{
         visibleGraph = new JPanel();
         visibleGraph.setPreferredSize(graphScrollPaneDim);
         init();
-        GuiUtils.hideWaitingDialog();
     }
     
     /**

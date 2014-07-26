@@ -1,11 +1,12 @@
 
 package chorke.proprietary.bet.apps.core.httpparsing;
 
-import chorke.proprietary.bet.apps.StaticConstants.BettingSports;
+import chorke.proprietary.bet.apps.core.CoreUtils.BettingSports;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.core.Tuple;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Stiahne a rozparsuje stávky z web stránky.
@@ -138,4 +139,11 @@ public interface HTMLBetParser {
      * @see #previousDay()
      */
     Collection<Match> getUnsavedMatches();
+    
+    /**
+     * Nastsaví zoznam stávkových spoločností, ktoré nemajú byť sťahované.
+     * 
+     * @param banList zakázané stávkové spoločnosti
+     */
+    void setBetCompaniesBanList(Set<String> banList);
 }

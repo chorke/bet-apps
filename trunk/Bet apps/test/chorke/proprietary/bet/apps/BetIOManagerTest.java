@@ -3,7 +3,7 @@ package chorke.proprietary.bet.apps;
 
 import static chorke.proprietary.bet.apps.BasicTests.collectionChecker;
 import static chorke.proprietary.bet.apps.BasicTests.assertAreBothNull;
-import chorke.proprietary.bet.apps.StaticConstants.BettingSports;
+import chorke.proprietary.bet.apps.core.CoreUtils.BettingSports;
 import chorke.proprietary.bet.apps.core.bets.Bet;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
 import chorke.proprietary.bet.apps.core.bets.BetAsianHandicap;
@@ -14,6 +14,7 @@ import chorke.proprietary.bet.apps.core.bets.BetOverUnder;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.core.match.MatchProperties;
 import chorke.proprietary.bet.apps.core.match.sports.Sport;
+import chorke.proprietary.bet.apps.io.BetIOException;
 import chorke.proprietary.bet.apps.io.BetIOManager;
 import chorke.proprietary.bet.apps.io.DBBetIOManager;
 import chorke.proprietary.bet.apps.io.LoadProperties;
@@ -620,6 +621,7 @@ public class BetIOManagerTest {
     }
     
     @Test
+    @SuppressWarnings("null")
     public void saveLoadAllTest(){
         Collection<Match> result = testingManager.loadAllMatches();
         if(result == null){
@@ -1241,6 +1243,7 @@ public class BetIOManagerTest {
     }
     
     @Test
+    @SuppressWarnings("null")
     public void saveGetAvailableCountriesAndLeaguesTest(){
         Map<String, Collection<String>> ctrLgs = testingManager.getAvailableCountriesAndLeagues();
         if(ctrLgs == null){
@@ -1466,6 +1469,42 @@ public class BetIOManagerTest {
     }
     
     @Test
+    public void saveDeleteCountrytest(){
+        try{
+            testingManager.deleteCountry(null);
+            fail("Null bet company and no exception");
+        } catch (BetIOException ex){
+            //ok
+        } catch (Exception e){
+            fail("Null bet company: Bad exception " + e);
+        }
+        
+        try{
+            testingManager.deleteCountry("");
+            fail("Empty bet company and no exception");
+        } catch (BetIOException ex){
+            //ok
+        } catch (Exception e){
+            fail("Empty bet company: Bad exception " + e);
+        }
+        
+        testingManager.saveMatch(match1);
+        testingManager.saveMatch(match2);
+        testingManager.saveMatch(match3);
+        testingManager.saveMatch(match4);
+        assertEqualsCollectionsMatches(testingManager.loadAllMatches(),
+                Arrays.asList(new Match[] {match1, match2, match3, match4}));
+        
+        testingManager.deleteCountry("Slovensko");
+        assertEqualsCollectionsMatches(testingManager.loadAllMatches(),
+                Arrays.asList(new Match[] {match3, match4}));
+        
+        testingManager.deleteCountry("USA");
+        assertEqualsCollectionsMatches(testingManager.loadAllMatches(),
+                Arrays.asList(new Match[] {match3}));
+    }
+    
+    @Test
     public void saveDeleteSportTest(){
         testingManager.saveMatch(match1);
         testingManager.saveMatch(match2);
@@ -1494,6 +1533,19 @@ public class BetIOManagerTest {
         shouldBeEmptyResultSet("SELECT * FROM betou WHERE matchid = " + match4.getId());
         shouldBeEmptyResultSet("SELECT * FROM scores WHERE matchid = " + match4.getId());
         shouldBeEmptyResultSet("SELECT * FROM matches WHERE id = " + match4.getId());
+    }
+    
+    @Test
+    public void saveDeleteAllTest(){
+        testingManager.saveMatch(match1);
+        testingManager.saveMatch(match2);
+        testingManager.saveMatch(match3);
+        testingManager.saveMatch(match4);
+        assertEqualsCollectionsMatches(testingManager.loadAllMatches(),
+                Arrays.asList(new Match[] {match1, match2, match3, match4}));
+        testingManager.deleteAll();
+        assertEqualsCollectionsMatches(testingManager.loadAllMatches(),
+                Arrays.asList(new Match[] {}));
     }
     
     /**
@@ -1540,6 +1592,7 @@ public class BetIOManagerTest {
      * @param <T>
      * @param clazz 
      */
+    @SuppressWarnings("unchecked")
     private <T extends Bet> void availableCompaniesShouldBeEmpty(Class... clazz){
         for(Class<T> c : clazz){
             if(!testingManager.getAvailableBetCompanies(c).isEmpty()){

@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.Array;
+import java.util.ResourceBundle;
 import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Group;
@@ -17,6 +18,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.ToolTipManager;
@@ -88,6 +90,7 @@ public class GuiUtils {
         }
         initWaitingDialog(buttons);
         message.setText(waitingMessage);
+//        waitingDialog.setResizable(true);
         waitingDialog.pack();
         waitingDialog.setLocationRelativeTo(null);
         waitUntilShowed = true;
@@ -109,7 +112,20 @@ public class GuiUtils {
      */
     public static void hideWaitingDialog(){
         if(waitingDialog != null && waitingDialog.isVisible()){
-            waitingDialog.setVisible(false);
+            waitingDialog.dispose();
+            waitingDialog = null;
+        }
+    }
+    
+    /**
+     * Aktualizuje správu, ktorá je zobrazená na čakacom dialógu. 
+     * 
+     * @param newMessage nová správa pre čakací dialóg
+     */
+    public static void updateWaitingDialogMessage(String newMessage){
+        if(waitingDialog != null && waitingDialog.isVisible()){
+            message.setText(newMessage);
+            waitingDialog.repaint();
         }
     }
     
@@ -292,6 +308,44 @@ public class GuiUtils {
      */
     public static int getNumOfRows(int col, int elemCount){
         return elemCount % col == 0 ? elemCount / col : (elemCount / col) + 1;
+    }
+    
+    /**
+     * Zobrazí potvrdzovací dialóg, ktorý bude mať lokalizované hlášku, názov
+     * a možnosti. 
+     * 
+     * @param bundle {@link ResourceBundle}, ktoré budú použité pre lokalizované texty
+     * @param messageKey kľúč pre {@code bundle} pre správu
+     * @param titleKey kľúč pre {@code bundle} pre názov
+     * @param parentComponent rodičovská komponenta
+     * @return podľa zvolenej možnosti to bude buď {@link JOptionPane#YES_OPTION},
+     *          {@link JOptionPane#NO_OPTION},
+     *          {@link JOptionPane#CANCEL_OPTION} alebo {@link JOptionPane#CLOSED_OPTION}
+     *      ak užívateľ zatvoril dialóg.
+     */
+    public static int showLocalizedConfirmDialog(ResourceBundle bundle,
+            String messageKey, String titleKey, Component parentComponent){
+        Object[] options = {bundle.getString("yes"), bundle.getString("no"),
+                            bundle.getString("cancel")};
+        int option = JOptionPane.showOptionDialog(
+                parentComponent,
+                bundle.getString(messageKey),
+                bundle.getString(titleKey),
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[2]);
+        if(option == 0){
+            return JOptionPane.YES_OPTION;
+        }
+        if(option == 1){
+            return JOptionPane.NO_OPTION;
+        }
+        if(option == 2){
+            return JOptionPane.CANCEL_OPTION;
+        }
+        return option;
     }
     
     /**

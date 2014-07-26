@@ -1,10 +1,10 @@
 
 package chorke.proprietary.bet.apps.gui.panels;
 
-import chorke.proprietary.bet.apps.StaticConstants;
+import chorke.proprietary.bet.apps.core.CoreUtils;
 import chorke.proprietary.bet.apps.core.Tuple;
 import chorke.proprietary.bet.apps.core.httpparsing.HTMLBetParser;
-import chorke.proprietary.bet.apps.StaticConstants.BettingSports;
+import chorke.proprietary.bet.apps.core.CoreUtils.BettingSports;
 import chorke.proprietary.bet.apps.core.httpparsing.MultithreadHTMLBetParser;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.gui.GuiUtils;
@@ -234,6 +234,7 @@ public class DownloadPanel extends JPanel {
                 Calendar partEndDate = getNextPartEndDate(partStartDate);
                 betParser.setStartDate(partStartDate);
                 betParser.setEndDate(partEndDate);
+                betParser.setBetCompaniesBanList(season.getUser().getBetCompniesBanList());
                 Collection<Match> matches = betParser.getMatches();
                 matchesCount += matches.size();
                 matches.clear();
@@ -348,7 +349,7 @@ public class DownloadPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 StringBuilder builder = new StringBuilder();
                 DateFormat df = DateFormat.getDateInstance(
-                        DateFormat.SHORT, StaticConstants.getDefaultLocale());
+                        DateFormat.SHORT, CoreUtils.getDefaultLocale());
                 for(Tuple<BettingSports, Calendar> sports : undownloadedSports){
                     builder.append(df.format(sports.second.getTime()))
                             .append("   ")

@@ -1,7 +1,7 @@
 
 package chorke.proprietary.bet.apps.core.httpparsing;
 
-import chorke.proprietary.bet.apps.StaticConstants.BettingSports;
+import chorke.proprietary.bet.apps.core.CoreUtils.BettingSports;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.core.match.MatchProperties;
 import chorke.proprietary.bet.apps.core.Tuple;
@@ -159,6 +159,11 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
     private volatile boolean stopDownloading;
     
     /**
+     * Zoznam zakázaných stávkových spoločností.
+     */
+    private Set<String> betCompaniesBanList;
+    
+    /**
      * Vytvorí nový parser. Používa IOManager pre ukladanie zápasov ihneď 
      * po ich stiahnutí. Ak je IOManager == null, tak zápasy nie sú ukladané.
      * 
@@ -172,6 +177,7 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
         undownloadedMatches = new LinkedList<>();
         undownloadedSports = new LinkedList<>();
         unsavedMatches = new LinkedList<>();
+        betCompaniesBanList = new HashSet<>();
         this.IOManager = IOManager;
     }
     
@@ -464,6 +470,27 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
         c.set(Calendar.MILLISECOND, 1);
     }
 
+    @Override
+    public void setBetCompaniesBanList(Set<String> banList) {
+        if(banList != null){
+            betCompaniesBanList.addAll(banList);
+        }
+    }
+
+    /**
+     * Skontorluje, či stávkové spoločnosť {@code betCompanyName} je zakázaná.
+     * 
+     * @param betCompanyName
+     * @return 
+     * @see #betCompaniesBanList
+     */
+    private synchronized String checkBanList(String betCompanyName){
+        if(betCompaniesBanList.contains(betCompanyName)){
+            return null;
+        }
+        return betCompanyName;
+    }
+    
     /**
      * TMC - Texting Match Collector. Vlákno pre získavanie {@link TextingMatch}
      * zo stránky. Podľa zvoleného športu a dňa stiahne a pripravý všetky zápasy.
@@ -825,6 +852,15 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
             }
         }
         
+        /**
+         * Vráti názov stávkovej spoločnosti. Ak je spoločnosť v banliste,
+         * tak vráti {@code null}.
+         * 
+         * @param row riadok, kotrý obsahuje názov spoločnosti
+         * @return názov stávkovej spoločnosti, alebo {@code null} ak je 
+         *      spoločnosť v banliste
+         * @see BetexplorerComMultithreadParser#setBetCompaniesBanList(java.util.Set)
+         */
         private String getBetCompanyName(Element row){
             StringBuilder builder = new StringBuilder();
             for(byte b : row.select("th").first().text().getBytes()){
@@ -833,7 +869,7 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
                 }
             }
             builder.delete(builder.length() - 6, builder.length());
-            return builder.toString();
+            return checkBanList(builder.toString());
         }
         
         /**
@@ -846,6 +882,7 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
             Elements bets;
             for(Element row : tableRows){
                 name = getBetCompanyName(row);
+                if(name == null){ continue; }
                 bets = row.select("td");
                 match.addBet(new Bet1x2(name,
                         parseNumber(bets.get(0).attr("data-odd")),
@@ -864,6 +901,7 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
             Elements bets;
             for(Element row : tableRows){
                 name = getBetCompanyName(row);
+                if(name == null){ continue; }
                 bets = row.select("td");
                 if(bets.get(0).select(".doublepar").isEmpty()){
                     String[] s = bets.get(0).select(".doublepar-w").first().text().split("[ ]+");
@@ -893,6 +931,7 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
             String[] handicaps;
             for(Element row : tableRows){
                 name = getBetCompanyName(row);
+                if(name == null){ continue; }
                 bets = row.select("td");
                 if(!bets.get(0).select(".doublepar").isEmpty()){
                     handicaps = bets.get(0).select(".doublepar").first().text().split("[ ,]+");
@@ -938,6 +977,7 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
             Elements bets;
             for(Element row : tableRows){
                 name = getBetCompanyName(row);
+                if(name == null){ continue; }
                 bets = row.select("td");
                 match.addBet(new BetDrawNoBet(name,
                         parseNumber(bets.get(0).attr("data-odd")),
@@ -955,6 +995,7 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
             Elements bets;
             for(Element row : tableRows){
                 name = getBetCompanyName(row);
+                if(name == null){ continue; }
                 bets = row.select("td");
                 match.addBet(new BetDoubleChance(name,
                         parseNumber(bets.get(0).attr("data-odd")),
@@ -973,6 +1014,7 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
             Elements bets;
             for(Element row : tableRows){
                 name = getBetCompanyName(row);
+                if(name == null){ continue; }
                 bets = row.select("td");
                 match.addBet(new BetBothTeamsToScore(name,
                         parseNumber(bets.get(0).attr("data-odd")),

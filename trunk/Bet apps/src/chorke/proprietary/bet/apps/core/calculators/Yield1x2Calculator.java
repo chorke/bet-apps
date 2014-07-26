@@ -1,9 +1,9 @@
 
 package chorke.proprietary.bet.apps.core.calculators;
 
-import chorke.proprietary.bet.apps.StaticConstants.BetPossibility;
-import chorke.proprietary.bet.apps.StaticConstants.Periode;
-import chorke.proprietary.bet.apps.StaticConstants.Winner;
+import chorke.proprietary.bet.apps.core.CoreUtils.BetPossibility;
+import chorke.proprietary.bet.apps.core.CoreUtils.Periode;
+import chorke.proprietary.bet.apps.core.CoreUtils.Winner;
 import chorke.proprietary.bet.apps.core.Tuple;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
 import chorke.proprietary.bet.apps.core.match.Match;
@@ -25,6 +25,7 @@ import java.util.Map;
 public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
 
    private Map<Integer, List<Match>> splittedMatches;
+   private static final BigDecimal MINUS_ONE = new BigDecimal("-1");
     
     @Override
     public Yield1x2 getOverallYield(Collection<Match> matches, YieldProperties properties) {
@@ -54,7 +55,7 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
             case Year:
                 return innerPeriodicYield(matches, properties, new PeriodHolderYEAR());
         }
-        throw new UnsupportedOperationException("Periode " + periode + "is not supported.");
+        throw new UnsupportedOperationException("Periode " + periode + " is not supported.");
     }
 
     @Override
@@ -122,7 +123,7 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
      */
     private BigDecimal getYield(Collection<Match> matches, YieldProperties properties, 
             BetPossibility betPosibility){
-        BigDecimal yield = new BigDecimal("0");
+        BigDecimal yield = BigDecimal.ZERO;
         Iterator<Bet1x2> betIter;
         for(Match m : matches){
             betIter = m.getBet(properties.getBetCompany(), Bet1x2.class).iterator();
@@ -160,7 +161,7 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         if(winner == Winner.Team1){
             return bet.getHomeBet().subtract(BigDecimal.ONE);
         }
-        return new BigDecimal("-1");
+        return MINUS_ONE;
     }
     
     /**
@@ -174,7 +175,7 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         if(winner == Winner.Team2){
             return bet.getGuestBet().subtract(BigDecimal.ONE);
         }
-        return new BigDecimal("-1");
+        return MINUS_ONE;
     }
     
     /**
@@ -189,7 +190,7 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
                 || (winner == Winner.Team2 && bet.bet2.compareTo(bet.bet1) == -1)){
             return bet.getFavoritBet().subtract(BigDecimal.ONE);
         }
-        return new BigDecimal("-1");
+        return MINUS_ONE;
     }
     
     /**
@@ -204,7 +205,7 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
                 || (winner == Winner.Team2 && bet.bet2.compareTo(bet.bet1) == 1)){
             return bet.getLooserBet().subtract(BigDecimal.ONE);
         }
-        return new BigDecimal("-1");
+        return MINUS_ONE;
     }
     
     /**
@@ -218,7 +219,7 @@ public class Yield1x2Calculator implements YieldCalculator<Yield1x2>{
         if(winner == Winner.Tie){
             return bet.getTieBet().subtract(BigDecimal.ONE);
         }
-        return new BigDecimal("-1");
+        return MINUS_ONE;
     }
     
     /**

@@ -38,7 +38,7 @@ public abstract class Action {
     }
     
     /**
-     * Vracia jedinečné id v rámci všetkých inčtancií tejto triedy.
+     * Vracia jedinečné id v rámci všetkých inštancií tejto triedy.
      * @return 
      */
     private static synchronized long getNextId(){

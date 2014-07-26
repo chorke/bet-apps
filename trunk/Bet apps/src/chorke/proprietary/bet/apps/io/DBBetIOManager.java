@@ -49,16 +49,24 @@ public class DBBetIOManager implements CloneableBetIOManager{
     
     private Set<PreparedStatement> actualPreparedStatements = new HashSet<>();
     
+    /**
+     * Vytvorí novú inštanciu. Pre komunikáci s DB bude používať {@link DataSource}
+     * {@code dataSource}.
+     * 
+     * @param dataSource {@link DataSource}, ktorý bude použitý pre vytváranie 
+     *      spojení s DB
+     * @throws IllegalArgumentException ak je {@code dataSource == null}
+     */
     public DBBetIOManager(DataSource dataSource) {
+        if(dataSource == null){
+            throw new IllegalArgumentException("Data source cannot be null.");
+        }
         this.dataSource = dataSource;
     }
     
     @Override
     public void saveMatch(Match match) throws BetIOException {
         isCanceled = false;
-        if(dataSource == null){
-            throw new BetIOException("No data source");
-        }
         if(match == null){
             throw new IllegalArgumentException("Match can no be null.");
         }
@@ -158,12 +166,22 @@ public class DBBetIOManager implements CloneableBetIOManager{
         }
     }
     
+    /**
+     * Odtráni {@link PreparedStatement} z aktuálne spracovývanách.
+     * @param ps 
+     */
     private void removeFromActualPS(PreparedStatement... ps){
         for(PreparedStatement p : ps){
             actualPreparedStatements.remove(p);
         }
     }
     
+    /**
+     * Pridá {@link PreparedStatement} ku aktuálne spracovývaným. Ak sa má zrušiť
+     * aktuálne vykonávaná práca, potom budú prerušené všetky statementy z 
+     * {@link #actualPreparedStatements}.
+     * @param ps 
+     */
     private void addToActualPS(PreparedStatement... ps){
         actualPreparedStatements.addAll(Arrays.asList(ps));
     }
@@ -314,9 +332,6 @@ public class DBBetIOManager implements CloneableBetIOManager{
     @Override
     public Collection<Match> loadAllMatches() throws BetIOException {
         isCanceled = false;
-        if(dataSource == null){
-            throw new BetIOException("No data source");
-        }
         LoadProperties prop = new LoadProperties();
         try(Connection con = dataSource.getConnection();
                 PreparedStatement matchesPS = prop.prepareMatchStatement(con);
@@ -615,9 +630,6 @@ public class DBBetIOManager implements CloneableBetIOManager{
     @Override
     public Collection<Match> loadMatches(LoadProperties properties) throws BetIOException {
         isCanceled = false;
-        if(dataSource == null){
-            throw new BetIOException("No data source");
-        }
         if(properties == null){
             throw new IllegalArgumentException("Load properties can not be null");
         }
@@ -654,9 +666,6 @@ public class DBBetIOManager implements CloneableBetIOManager{
     @Override
     public void deleteMatch(Match match) throws BetIOException {
         isCanceled = false;
-        if(dataSource == null){
-            throw new BetIOException("No data source");
-        }
         if(match == null){
             throw new IllegalArgumentException("Match can no be null.");
         }
@@ -720,9 +729,6 @@ public class DBBetIOManager implements CloneableBetIOManager{
     public <T extends Bet> Collection<String> getAvailableBetCompanies(Class<T> clazz) 
             throws BetIOException, IllegalArgumentException{
         isCanceled = false;
-        if(dataSource == null){
-            throw new BetIOException("No data source");
-        }
         if(clazz == null){
             throw new IllegalArgumentException("Class argument cannot be null.");
         }
@@ -763,12 +769,10 @@ public class DBBetIOManager implements CloneableBetIOManager{
     }
 
     @Override
+    @SuppressWarnings("null")
     public Map<String, Collection<String>> getAvailableCountriesAndLeagues() 
             throws BetIOException {
         isCanceled = false;
-        if(dataSource == null){
-            throw new BetIOException("No data source");
-        }
         try(Connection con = dataSource.getConnection();
                 PreparedStatement ps = con.prepareStatement(
                         "SELECT DISTINCT country, league FROM matches ORDER BY country")){
@@ -820,9 +824,6 @@ public class DBBetIOManager implements CloneableBetIOManager{
      */
     private Calendar getDate(String modifier) throws BetIOException{
         isCanceled = false;
-        if(dataSource == null){
-            throw new BetIOException("No data source");
-        }
         try(Connection con = dataSource.getConnection();
                 PreparedStatement ps = con.prepareStatement(
                         "SELECT " + modifier + "(matchdate) AS mdate FROM matches")){
@@ -847,20 +848,18 @@ public class DBBetIOManager implements CloneableBetIOManager{
 
     @Override
     public void deleteBetCompany(String betCompany) throws BetIOException {
-        if(dataSource == null){
-            throw new BetIOException("No data source");
-        }
+        isCanceled = false;
         if(betCompany == null || betCompany.isEmpty()){
             throw new BetIOException("Bet company cannot be null or empty.");
         }
         try(Connection con = dataSource.getConnection();
-                PreparedStatement bet1x2 = con.prepareStatement(getDeleteQuery("bet1x2", "betCompany LIKE ? "));
-                PreparedStatement betah = con.prepareStatement(getDeleteQuery("betah", "betCompany LIKE ? "));
-                PreparedStatement betbtts = con.prepareStatement(getDeleteQuery("betbtts", "betCompany LIKE ? "));
-                PreparedStatement betdc = con.prepareStatement(getDeleteQuery("betdc", "betCompany LIKE ? "));
-                PreparedStatement betdnb = con.prepareStatement(getDeleteQuery("betdnb", "betCompany LIKE ? "));
-                PreparedStatement betou = con.prepareStatement(getDeleteQuery("betou", "betCompany LIKE ? "));
-                PreparedStatement scores = con.prepareStatement("DELETE FROM scores "
+                PreparedStatement bet1x2Ps = con.prepareStatement(getDeleteQuery("bet1x2", "betCompany LIKE ? "));
+                PreparedStatement betahPs = con.prepareStatement(getDeleteQuery("betah", "betCompany LIKE ? "));
+                PreparedStatement betbttsPs = con.prepareStatement(getDeleteQuery("betbtts", "betCompany LIKE ? "));
+                PreparedStatement betdcPs = con.prepareStatement(getDeleteQuery("betdc", "betCompany LIKE ? "));
+                PreparedStatement betdnbPs = con.prepareStatement(getDeleteQuery("betdnb", "betCompany LIKE ? "));
+                PreparedStatement betouPs = con.prepareStatement(getDeleteQuery("betou", "betCompany LIKE ? "));
+                PreparedStatement scoresPs = con.prepareStatement("DELETE FROM scores "
                         + "WHERE matchid NOT IN (SELECT id FROM matches)");
                 PreparedStatement matches = con.prepareStatement("DELETE FROM matches WHERE id NOT IN "
                     + "((SELECT DISTINCT matchid FROM bet1x2) "
@@ -869,23 +868,23 @@ public class DBBetIOManager implements CloneableBetIOManager{
                     + "UNION (SELECT DISTINCT matchid FROM betdc) "
                     + "UNION (SELECT DISTINCT matchid FROM betdnb) "
                     + "UNION (SELECT DISTINCT matchid FROM betou))")){
-            addToActualPS(bet1x2, betah, betbtts, betdc, betdnb, betou, matches, scores);
-            bet1x2.setString(1, betCompany);
-            betah.setString(1, betCompany);
-            betbtts.setString(1, betCompany);
-            betdc.setString(1, betCompany);
-            betdnb.setString(1, betCompany);
-            betou.setString(1, betCompany);
-            checkCancelationAndExecuteUpdate(bet1x2);
-            checkCancelationAndExecuteUpdate(betah);
-            checkCancelationAndExecuteUpdate(betbtts);
-            checkCancelationAndExecuteUpdate(betdc);
-            checkCancelationAndExecuteUpdate(betdnb);
-            checkCancelationAndExecuteUpdate(betou);
+            addToActualPS(bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matches, scoresPs);
+            bet1x2Ps.setString(1, betCompany);
+            betahPs.setString(1, betCompany);
+            betbttsPs.setString(1, betCompany);
+            betdcPs.setString(1, betCompany);
+            betdnbPs.setString(1, betCompany);
+            betouPs.setString(1, betCompany);
+            checkCancelationAndExecuteUpdate(bet1x2Ps);
+            checkCancelationAndExecuteUpdate(betahPs);
+            checkCancelationAndExecuteUpdate(betbttsPs);
+            checkCancelationAndExecuteUpdate(betdcPs);
+            checkCancelationAndExecuteUpdate(betdnbPs);
+            checkCancelationAndExecuteUpdate(betouPs);
             //matches najskôr -- scores berie NOT IN matches.id
             checkCancelationAndExecuteUpdate(matches);
-            checkCancelationAndExecuteUpdate(scores);
-            removeFromActualPS(bet1x2, betah, betbtts, betdc, betdnb, betou, matches, scores);
+            checkCancelationAndExecuteUpdate(scoresPs);
+            removeFromActualPS(bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matches, scoresPs);
         } catch (SQLException ex){
             throw new BetIOException("Exception while deleting bet company.", ex);
         }
@@ -893,52 +892,94 @@ public class DBBetIOManager implements CloneableBetIOManager{
 
     @Override
     public void deleteLeague(String country, String league) throws BetIOException {
-        if(dataSource == null){
-            throw new BetIOException("No data source");
-        }
+        isCanceled = false;
         if(country == null || country.isEmpty()){
             throw new BetIOException("Country cannot be null or empty.");
         }
         if(league == null || league.isEmpty()){
             throw new BetIOException("League cannot be null or empty.");
         }
-        String whereforIds = "country LIKE ? AND league LIKE ?";
         try(Connection con = dataSource.getConnection();
-                PreparedStatement scores = con.prepareStatement(getDeleteQuery("scores", whereforIds));
-                PreparedStatement bet1x2 = con.prepareStatement(getDeleteQuery("bet1x2", whereforIds));
-                PreparedStatement betah = con.prepareStatement(getDeleteQuery("betah", whereforIds));
-                PreparedStatement betbtts = con.prepareStatement(getDeleteQuery("betbtts", whereforIds));
-                PreparedStatement betdc = con.prepareStatement(getDeleteQuery("betdc", whereforIds));
-                PreparedStatement betdnb = con.prepareStatement(getDeleteQuery("betdnb", whereforIds));
-                PreparedStatement betou = con.prepareStatement(getDeleteQuery("betou", whereforIds));
-                PreparedStatement matches = con.prepareStatement(
-                        "DELETE FROM matches WHERE " + whereforIds)){
-            addToActualPS(bet1x2, betah, betbtts, betdc, betdnb, betou, matches, scores);
-            scores.setString(1, country);
-            scores.setString(2, league);
-            bet1x2.setString(1, country);
-            bet1x2.setString(2, league);
-            betah.setString(1, country);
-            betah.setString(2, league);
-            betbtts.setString(1, country);
-            betbtts.setString(2, league);
-            betdc.setString(1, country);
-            betdc.setString(2, league);
-            betdnb.setString(1, country);
-            betdnb.setString(2, league);
-            betou.setString(1, country);
-            betou.setString(2, league);
-            matches.setString(1, country);
-            matches.setString(2, league);
-            checkCancelationAndExecuteUpdate(scores);
-            checkCancelationAndExecuteUpdate(bet1x2);
-            checkCancelationAndExecuteUpdate(betah);
-            checkCancelationAndExecuteUpdate(betbtts);
-            checkCancelationAndExecuteUpdate(betdc);
-            checkCancelationAndExecuteUpdate(betdnb);
-            checkCancelationAndExecuteUpdate(betou);
-            checkCancelationAndExecuteUpdate(matches);
-            removeFromActualPS(bet1x2, betah, betbtts, betdc, betdnb, betou, matches, scores);
+                PreparedStatement scoresPs = con.prepareStatement(getDeleteQuery("scores",
+                        "country LIKE ? AND league LIKE ?"));
+                PreparedStatement bet1x2Ps = con.prepareStatement(getDeleteQuery("bet1x2", 
+                        "country LIKE ? AND league LIKE ?"));
+                PreparedStatement betahPs = con.prepareStatement(getDeleteQuery("betah", 
+                        "country LIKE ? AND league LIKE ?"));
+                PreparedStatement betbttsPs = con.prepareStatement(getDeleteQuery("betbtts", 
+                        "country LIKE ? AND league LIKE ?"));
+                PreparedStatement betdcPs = con.prepareStatement(getDeleteQuery("betdc", 
+                        "country LIKE ? AND league LIKE ?"));
+                PreparedStatement betdnbPs = con.prepareStatement(getDeleteQuery("betdnb", 
+                        "country LIKE ? AND league LIKE ?"));
+                PreparedStatement betouPs = con.prepareStatement(getDeleteQuery("betou", 
+                        "country LIKE ? AND league LIKE ?"));
+                PreparedStatement matchesPs = con.prepareStatement(
+                        "DELETE FROM matches WHERE country LIKE ? AND league LIKE ?")){
+            addToActualPS(bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matchesPs, scoresPs);
+            scoresPs.setString(1, country);   scoresPs.setString(2, league);
+            bet1x2Ps.setString(1, country);   bet1x2Ps.setString(2, league);
+            betahPs.setString(1, country);    betahPs.setString(2, league);
+            betbttsPs.setString(1, country);  betbttsPs.setString(2, league);
+            betdcPs.setString(1, country);    betdcPs.setString(2, league);
+            betdnbPs.setString(1, country);   betdnbPs.setString(2, league);
+            betouPs.setString(1, country);    betouPs.setString(2, league);
+            matchesPs.setString(1, country);  matchesPs.setString(2, league);
+            checkCancelationAndExecuteUpdate(scoresPs);
+            checkCancelationAndExecuteUpdate(bet1x2Ps);
+            checkCancelationAndExecuteUpdate(betahPs);
+            checkCancelationAndExecuteUpdate(betbttsPs);
+            checkCancelationAndExecuteUpdate(betdcPs);
+            checkCancelationAndExecuteUpdate(betdnbPs);
+            checkCancelationAndExecuteUpdate(betouPs);
+            checkCancelationAndExecuteUpdate(matchesPs);
+            removeFromActualPS(bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matchesPs, scoresPs);
+        } catch (SQLException ex){
+            throw new BetIOException("Exception while deleting league.", ex);
+        }
+    }
+
+    @Override
+    public void deleteCountry(String country) throws BetIOException {
+        isCanceled = false;
+        if(country == null || country.isEmpty()){
+            throw new BetIOException("Country cannot be null or empty.");
+        }
+        try(Connection con = dataSource.getConnection();
+                PreparedStatement scoresPs = con.prepareStatement(getDeleteQuery("scores",
+                        "country LIKE ?"));
+                PreparedStatement bet1x2Ps = con.prepareStatement(getDeleteQuery("bet1x2", 
+                        "country LIKE ?"));
+                PreparedStatement betahPs = con.prepareStatement(getDeleteQuery("betah", 
+                        "country LIKE ?"));
+                PreparedStatement betbttsPs = con.prepareStatement(getDeleteQuery("betbtts", 
+                        "country LIKE ?"));
+                PreparedStatement betdcPs = con.prepareStatement(getDeleteQuery("betdc", 
+                        "country LIKE ?"));
+                PreparedStatement betdnbPs = con.prepareStatement(getDeleteQuery("betdnb", 
+                        "country LIKE ?"));
+                PreparedStatement betouPs = con.prepareStatement(getDeleteQuery("betou", 
+                        "country LIKE ?"));
+                PreparedStatement matchesPs = con.prepareStatement(
+                        "DELETE FROM matches WHERE country LIKE ?")){
+            addToActualPS(bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matchesPs, scoresPs);
+            scoresPs.setString(1, country);
+            bet1x2Ps.setString(1, country);
+            betahPs.setString(1, country);
+            betbttsPs.setString(1, country);
+            betdcPs.setString(1, country);
+            betdnbPs.setString(1, country);
+            betouPs.setString(1, country);
+            matchesPs.setString(1, country);
+            checkCancelationAndExecuteUpdate(scoresPs);
+            checkCancelationAndExecuteUpdate(bet1x2Ps);
+            checkCancelationAndExecuteUpdate(betahPs);
+            checkCancelationAndExecuteUpdate(betbttsPs);
+            checkCancelationAndExecuteUpdate(betdcPs);
+            checkCancelationAndExecuteUpdate(betdnbPs);
+            checkCancelationAndExecuteUpdate(betouPs);
+            checkCancelationAndExecuteUpdate(matchesPs);
+            removeFromActualPS(bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matchesPs, scoresPs);
         } catch (SQLException ex){
             throw new BetIOException("Exception while deleting league.", ex);
         }
@@ -961,41 +1002,65 @@ public class DBBetIOManager implements CloneableBetIOManager{
 
     @Override
     public void deleteSport(Sport sport) throws BetIOException {
-        if(dataSource == null){
-            throw new BetIOException("No data source");
-        }
+        isCanceled = false;
         if(sport == null){
             throw new BetIOException("Sport cannot be null.");
         }
-        String whereforIds = "sport LIKE ?";
         try(Connection con = dataSource.getConnection();
-                PreparedStatement scores = con.prepareStatement(getDeleteQuery("scores", whereforIds));
-                PreparedStatement bet1x2 = con.prepareStatement(getDeleteQuery("bet1x2", whereforIds));
-                PreparedStatement betah = con.prepareStatement(getDeleteQuery("betah", whereforIds));
-                PreparedStatement betbtts = con.prepareStatement(getDeleteQuery("betbtts", whereforIds));
-                PreparedStatement betdc = con.prepareStatement(getDeleteQuery("betdc", whereforIds));
-                PreparedStatement betdnb = con.prepareStatement(getDeleteQuery("betdnb", whereforIds));
-                PreparedStatement betou = con.prepareStatement(getDeleteQuery("betou", whereforIds));
-                PreparedStatement matches = con.prepareStatement(
-                        "DELETE FROM matches WHERE " + whereforIds)){
-            addToActualPS(bet1x2, betah, betbtts, betdc, betdnb, betou, matches, scores);
-            scores.setString(1, sport.toString());
-            bet1x2.setString(1, sport.toString());
-            betah.setString(1, sport.toString());
-            betbtts.setString(1, sport.toString());
-            betdc.setString(1, sport.toString());
-            betdnb.setString(1, sport.toString());
-            betou.setString(1, sport.toString());
-            matches.setString(1, sport.toString());
-            checkCancelationAndExecuteUpdate(scores);
-            checkCancelationAndExecuteUpdate(bet1x2);
-            checkCancelationAndExecuteUpdate(betah);
-            checkCancelationAndExecuteUpdate(betbtts);
-            checkCancelationAndExecuteUpdate(betdc);
-            checkCancelationAndExecuteUpdate(betdnb);
-            checkCancelationAndExecuteUpdate(betou);
-            checkCancelationAndExecuteUpdate(matches);
-            removeFromActualPS(bet1x2, betah, betbtts, betdc, betdnb, betou, matches, scores);
+                PreparedStatement scoresPs = con.prepareStatement(getDeleteQuery("scores", "sport LIKE ?"));
+                PreparedStatement bet1x2Ps = con.prepareStatement(getDeleteQuery("bet1x2", "sport LIKE ?"));
+                PreparedStatement betahPs = con.prepareStatement(getDeleteQuery("betah", "sport LIKE ?"));
+                PreparedStatement betbttsPs = con.prepareStatement(getDeleteQuery("betbtts", "sport LIKE ?"));
+                PreparedStatement betdcPs = con.prepareStatement(getDeleteQuery("betdc", "sport LIKE ?"));
+                PreparedStatement betdnbPs = con.prepareStatement(getDeleteQuery("betdnb", "sport LIKE ?"));
+                PreparedStatement betouPs = con.prepareStatement(getDeleteQuery("betou", "sport LIKE ?"));
+                PreparedStatement matchesPs = con.prepareStatement(
+                        "DELETE FROM matches WHERE sport LIKE ?")){
+            addToActualPS(bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matchesPs, scoresPs);
+            scoresPs.setString(1, sport.toString());
+            bet1x2Ps.setString(1, sport.toString());
+            betahPs.setString(1, sport.toString());
+            betbttsPs.setString(1, sport.toString());
+            betdcPs.setString(1, sport.toString());
+            betdnbPs.setString(1, sport.toString());
+            betouPs.setString(1, sport.toString());
+            matchesPs.setString(1, sport.toString());
+            checkCancelationAndExecuteUpdate(scoresPs);
+            checkCancelationAndExecuteUpdate(bet1x2Ps);
+            checkCancelationAndExecuteUpdate(betahPs);
+            checkCancelationAndExecuteUpdate(betbttsPs);
+            checkCancelationAndExecuteUpdate(betdcPs);
+            checkCancelationAndExecuteUpdate(betdnbPs);
+            checkCancelationAndExecuteUpdate(betouPs);
+            checkCancelationAndExecuteUpdate(matchesPs);
+            removeFromActualPS(bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matchesPs, scoresPs);
+        } catch (SQLException ex){
+            throw new BetIOException("Exception while deleting sport.", ex);
+        }
+    }
+
+    @Override
+    public void deleteAll() throws BetIOException {
+        isCanceled = false;
+        try(Connection con = dataSource.getConnection();
+                PreparedStatement scoresPs = con.prepareStatement("DELETE FROM scores");
+                PreparedStatement bet1x2Ps = con.prepareStatement("DELETE FROM bet1x2");
+                PreparedStatement betahPs = con.prepareStatement("DELETE FROM betah");
+                PreparedStatement betbttsPs = con.prepareStatement("DELETE FROM betbtts");
+                PreparedStatement betdcPs = con.prepareStatement("DELETE FROM betdc");
+                PreparedStatement betdnbPs = con.prepareStatement("DELETE FROM betdnb");
+                PreparedStatement betouPs = con.prepareStatement("DELETE FROM betou");
+                PreparedStatement matchesPs = con.prepareStatement("DELETE FROM matches")){
+            addToActualPS(bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matchesPs, scoresPs);
+            checkCancelationAndExecuteUpdate(scoresPs);
+            checkCancelationAndExecuteUpdate(bet1x2Ps);
+            checkCancelationAndExecuteUpdate(betahPs);
+            checkCancelationAndExecuteUpdate(betbttsPs);
+            checkCancelationAndExecuteUpdate(betdcPs);
+            checkCancelationAndExecuteUpdate(betdnbPs);
+            checkCancelationAndExecuteUpdate(betouPs);
+            checkCancelationAndExecuteUpdate(matchesPs);
+            removeFromActualPS(bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matchesPs, scoresPs);
         } catch (SQLException ex){
             throw new BetIOException("Exception while deleting sport.", ex);
         }

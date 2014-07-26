@@ -1,7 +1,7 @@
 
 package chorke.proprietary.bet.apps.gui;
 
-import chorke.proprietary.bet.apps.StaticConstants;
+import chorke.proprietary.bet.apps.core.CoreUtils;
 import chorke.proprietary.bet.apps.core.calculators.YieldCalculator;
 import chorke.proprietary.bet.apps.core.calculators.YieldProperties;
 import chorke.proprietary.bet.apps.core.graphs.GraphBuilder;
@@ -199,7 +199,7 @@ public class Season implements IOTransferable{
      * @return 
      */
     public Locale getDefaultLocale(){
-        return StaticConstants.getDefaultLocale();
+        return CoreUtils.getDefaultLocale();
     }
     
     /**
@@ -207,7 +207,7 @@ public class Season implements IOTransferable{
      * @return 
      */
     public ResourceBundle getDefaultBundle(){
-        return StaticConstants.BUNDLE;
+        return CoreUtils.BUNDLE;
     }
     /**
      * Vráti aktuálne nastavené LoadProperties.

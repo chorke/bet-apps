@@ -1,7 +1,7 @@
 
 package chorke.proprietary.bet.apps;
 
-import chorke.proprietary.bet.apps.StaticConstants.BettingSports;
+import chorke.proprietary.bet.apps.core.CoreUtils.BettingSports;
 import chorke.proprietary.bet.apps.core.match.Match;
 import chorke.proprietary.bet.apps.core.match.sports.Sport;
 import java.util.Calendar;

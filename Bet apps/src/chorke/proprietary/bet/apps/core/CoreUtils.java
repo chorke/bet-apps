@@ -1,25 +1,34 @@
 
-package chorke.proprietary.bet.apps;
+package chorke.proprietary.bet.apps.core;
 
+import chorke.proprietary.bet.apps.core.bets.Bet;
+import chorke.proprietary.bet.apps.io.BetIOManager;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 import javax.sql.DataSource;
 import org.postgresql.jdbc2.optional.PoolingDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Statické konštanty, enumerácie a iniciálne hodnoty pre aplikáciu.
  * 
  * @author Chorke
  */
-public class StaticConstants {
+public class CoreUtils {
+    
+    private static final Logger log = LoggerFactory.getLogger(CoreUtils.class);
     
     /**
      * Privátny konštruktor.
      */
-    private StaticConstants(){}
+    private CoreUtils(){}
     
     /**
      * Víťaz zápasu.
@@ -48,7 +57,23 @@ public class StaticConstants {
     /**
      * Defaultný DataSource.
      */
-    public static final DataSource DATA_SOURCE = initDataSource();
+    public static final DataSource DATA_SOURCE;
+    
+    /**
+     * Inicializácia DATA_SOURCE.
+     */
+    static {
+        PoolingDataSource outDs = new PoolingDataSource();
+        outDs.setPortNumber(5432);
+        outDs.setServerName("localhost");
+        outDs.setUser("Juraj Durani");
+        outDs.setPassword("288charlotte462");
+//        outDs.setUser("Marek");
+//        outDs.setPassword("8888");
+        outDs.setDatabaseName("BetAppsDB");
+        DATA_SOURCE = outDs;
+        log.info("Data source has been initialized.");
+    }
     /**
      * ResourceBundle s defaultným locale pre aplikáciu.
      */
@@ -71,22 +96,6 @@ public class StaticConstants {
     }
     
     /**
-     * Inicializuje DataSource pre aplikáciu.
-     * @return 
-     */
-    private static DataSource initDataSource(){
-        PoolingDataSource outDs = new PoolingDataSource();
-        outDs.setPortNumber(5432);
-        outDs.setServerName("localhost");
-        outDs.setUser("Juraj Durani");
-        outDs.setPassword("288charlotte462");
-//        outDs.setUser("Marek");
-//        outDs.setPassword("8888");
-        outDs.setDatabaseName("BetAppsDB");
-        return outDs;
-    }
-    
-    /**
      * Zložka s užívateľskými profilmi.
      */
     private static File usersDirectory;
@@ -96,25 +105,36 @@ public class StaticConstants {
      * 
      * @return zložku s užívateľskými profilmi.
      */
-    public static File getUsersDirectory(){
+    public static File getBaseUsersDirectory(){
         if(usersDirectory == null){
-            try{
-                usersDirectory = new File(
-                                new File(StaticConstants.class
-                                        .getProtectionDomain()
-                                        .getCodeSource()
-                                        .getLocation()
-                                        .toURI())
-                                    .getParentFile()
-                                    .getParentFile(), "users");
-                if(!usersDirectory.exists()){
-                    usersDirectory.mkdirs();
-                }
-            } catch(URISyntaxException ex){
-                //nemalo by sa stať
+            usersDirectory = new File(getApplicationBaseDir(), "users");
+            if(!usersDirectory.exists()){
+                usersDirectory.mkdirs();
+                log.info("Base users directory has been created.");
             }
+            log.info("Base user directory has been succesfully initialized.");
         }
         return usersDirectory;
+    }
+    
+    /**
+     * Vráti zložku, v ktorej sa nachádza celá aplikácia.
+     * 
+     * @return zložku, v ktorej sa nachádza aplikáca
+     */
+    public static File getApplicationBaseDir(){
+        try{
+            return new File(CoreUtils.class
+                        .getProtectionDomain()
+                        .getCodeSource()
+                        .getLocation()
+                        .toURI())
+                    .getParentFile()
+                    .getParentFile();
+        } catch(URISyntaxException ex){
+            //nemalo by sa stať
+        }
+        return null;
     }
     
     /**
@@ -129,6 +149,21 @@ public class StaticConstants {
         return c1.get(Calendar.DATE) == c2.get(Calendar.DATE)
                 && c1.get(Calendar.MONTH) == c2.get(Calendar.MONTH)
                 && c1.get(Calendar.YEAR) == c2.get(Calendar.YEAR);
+    }
+    
+    /**
+     * Vráti všetky dostupné stávkové spoločnosti pre požadované typy stávok.
+     * @param manager
+     * @param betTypes 
+     * @return mapu tzpov stávok a k nim dostupných stávkových spoločností
+     */
+    public static Map<Class<? extends Bet>, Collection<String>> getAllAvailableBetCompanies(
+            BetIOManager manager, Class<? extends Bet>[] betTypes ){
+        Map<Class<? extends Bet>, Collection<String>> betCompanies = new HashMap<>();
+        for(Class<? extends Bet> c : betTypes){
+            betCompanies.put(c, manager.getAvailableBetCompanies(c));
+        }
+        return betCompanies;
     }
     
     /**

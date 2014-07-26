@@ -7,6 +7,9 @@ package chorke.proprietary.bet.apps.core.bets;
  */
 public abstract class Bet {
     
+    /**
+     * Názov stávkovej spoločnosti.
+     */
     public String betCompany;
 
     /**

@@ -1,7 +1,7 @@
 
 package chorke.proprietary.bet.apps.gui.panels;
 
-import chorke.proprietary.bet.apps.StaticConstants.BetPossibility;
+import chorke.proprietary.bet.apps.core.CoreUtils.BetPossibility;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
 import chorke.proprietary.bet.apps.core.bets.BetAsianHandicap;
 import chorke.proprietary.bet.apps.core.bets.BetBothTeamsToScore;
@@ -62,12 +62,14 @@ public class MainPanel extends JPanel{
     private DownloadPanel dwnPanel;
     private LoadingPanel loadPanel;
     private NotesPanel notes;
+    private DeletePanel deletePanel;
     private Season season;
     
     private JButton dwnButton;
     private JButton loadButton;
     private JButton getStatsButton;
     private JButton getGraphsButton;
+    private JButton deleteButton;
     
     private JRadioButton[] betTypesButtons;
     private JRadioButton[] betCompaniesButtons;
@@ -123,7 +125,8 @@ public class MainPanel extends JPanel{
                         .addComponent(dwnButton)
                         .addComponent(loadButton)
                         .addComponent(getStatsButton)
-                        .addComponent(getGraphsButton))
+                        .addComponent(getGraphsButton)
+                        .addComponent(deleteButton))
                     .addGroup(gl.createParallelGroup()
                         .addComponent(scalesAndBetTypesPanel, 400, 400, 400)
                         .addComponent(betCompLab)
@@ -136,7 +139,8 @@ public class MainPanel extends JPanel{
                         .addComponent(dwnButton)
                         .addComponent(loadButton)
                         .addComponent(getStatsButton)
-                        .addComponent(getGraphsButton))
+                        .addComponent(getGraphsButton)
+                        .addComponent(deleteButton))
                     .addGroup(gl.createSequentialGroup()
                         .addComponent(scalesAndBetTypesPanel, 150, 150, 150)
                         .addComponent(betCompLab)
@@ -144,7 +148,7 @@ public class MainPanel extends JPanel{
                         .addComponent(statsLab)
                         .addComponent(paneResults, 150, 150, 150))
                     .addComponent(paneNotes, 435, 435, 435));
-        gl.linkSize(dwnButton, loadButton, getGraphsButton, getStatsButton);
+        gl.linkSize(dwnButton, loadButton, getGraphsButton, getStatsButton, deleteButton);
         gl.linkSize(betCompLab, statsLab);
         gl.linkSize(SwingConstants.HORIZONTAL, paneBetCompanies, paneResults);
         gl.linkSize(SwingConstants.HORIZONTAL, scalesAndBetTypesPanel, paneBetCompanies);
@@ -160,10 +164,12 @@ public class MainPanel extends JPanel{
         loadButton = new JButton(bundle.getString("load"));
         getStatsButton = new JButton(bundle.getString("getStats"));
         getGraphsButton = new JButton(bundle.getString("getGraphs"));
+        deleteButton = new JButton(bundle.getString("delete"));
         dwnButton.addActionListener(new ShowDownloadWindow());
         loadButton.addActionListener(new ShowLoadWindow());
         getStatsButton.addActionListener(new GetStatsActionListener());
         getGraphsButton.addActionListener(new ShowGraphsWindow());
+        deleteButton.addActionListener(new ShowDeleteWindow());
     }
     
     /**
@@ -441,12 +447,14 @@ public class MainPanel extends JPanel{
         public void run(){
             if(loadPanel == null){
                 try{
+                    GuiUtils.showWaitingDialog(bundle.getString("initLoad"));
                     loadPanel = new LoadingPanel(season);
                 } catch (BetIOException ex){
                     loadPanel = null;
-                    GuiUtils.hideWaitingDialog();
                     JOptionPane.showMessageDialog(null, bundle.getString("errLoadWindCreation")
                             + System.lineSeparator() + ex.getCause());
+                } finally {
+                    GuiUtils.hideWaitingDialog();
                 }
             }
             if(loadPanel != null){
@@ -478,11 +486,44 @@ public class MainPanel extends JPanel{
 
         @Override
         public void run() {
+            GuiUtils.showWaitingDialog(bundle.getString("initGraphs"));
             prepareSeasonForGettingStats();
             JScrollPane pane = new JScrollPane(new GraphsCollectingPanel(season));
             pane.setPreferredSize(new Dimension(450, 300));
             GuiUtils.getDefaultFrame(bundle.getString("graphs"), JFrame.DISPOSE_ON_CLOSE,
                     true, null, pane).setVisible(true);
+            GuiUtils.hideWaitingDialog();
+        }
+        
+    }
+    
+    private class ShowDeleteWindow implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            new Thread(new ShowDeleteWindowThread()).start();
+        }
+        
+    }
+    
+    private class ShowDeleteWindowThread implements Runnable{
+
+        @Override
+        public void run() {
+            try{
+                GuiUtils.showWaitingDialog(bundle.getString("initDelete"));
+                deletePanel = new DeletePanel(season);
+            } catch (BetIOException ex){
+                deletePanel = null;
+                JOptionPane.showMessageDialog(null, bundle.getString("errDeleteWindCreation")
+                        + System.lineSeparator() + ex.getCause());
+            } finally {
+                GuiUtils.hideWaitingDialog();
+            }
+            if(deletePanel != null){
+                GuiUtils.getDefaultFrame(bundle.getString("delete"), JFrame.DISPOSE_ON_CLOSE,
+                        false, null, deletePanel).setVisible(true);
+            }
         }
         
     }

@@ -108,6 +108,15 @@ public interface BetIOManager{
     void deleteLeague(String country, String league) throws BetIOException;
     
     /**
+     * Vymaže všetky ligy pre danú krajinu {@code country}.
+     * 
+     * @param country krajina, ktorá mý byť vymazaná
+     * @throws BetIOException ak nastane nejaká chyba pri mazaní, aebo je 
+     *      {@code country null} alebo prázdna
+     */
+    void deleteCountry(String country) throws BetIOException;
+    
+    /**
      * Vymaže z DB všetky zápasy z daného športu.
      * 
      * @param sport šport
@@ -115,4 +124,10 @@ public interface BetIOManager{
      *          je {@code sport == null}.
      */
     void deleteSport(Sport sport) throws BetIOException;
+    
+    /**
+     * Vymaže všetky zápasy z DB vrátane ich stávok.
+     * @throws BetIOException ak nastane nejaká chyba pri mazaní
+     */
+    void deleteAll() throws BetIOException;
 }

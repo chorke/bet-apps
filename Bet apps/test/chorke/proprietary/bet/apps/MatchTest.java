@@ -1,7 +1,7 @@
 
 package chorke.proprietary.bet.apps;
 
-import chorke.proprietary.bet.apps.StaticConstants.Winner;
+import chorke.proprietary.bet.apps.core.CoreUtils.Winner;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

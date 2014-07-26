@@ -5,7 +5,7 @@
 package chorke.proprietary.bet.apps.core.match;
 
 import chorke.proprietary.bet.apps.core.bets.Bet;
-import chorke.proprietary.bet.apps.StaticConstants.Winner;
+import chorke.proprietary.bet.apps.core.CoreUtils.Winner;
 import chorke.proprietary.bet.apps.core.match.score.PartialScore;
 import chorke.proprietary.bet.apps.core.match.score.Score;
 import chorke.proprietary.bet.apps.core.match.sports.Sport;

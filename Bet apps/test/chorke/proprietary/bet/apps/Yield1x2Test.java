@@ -1,7 +1,7 @@
 
 package chorke.proprietary.bet.apps;
 
-import chorke.proprietary.bet.apps.StaticConstants.BetPossibility;
+import chorke.proprietary.bet.apps.core.CoreUtils.BetPossibility;
 import chorke.proprietary.bet.apps.core.Tuple;
 import chorke.proprietary.bet.apps.core.calculators.Yield1x2;
 import chorke.proprietary.bet.apps.core.calculators.YieldProperties;

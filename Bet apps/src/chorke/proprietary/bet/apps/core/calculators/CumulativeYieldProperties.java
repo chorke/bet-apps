@@ -19,8 +19,8 @@ public class CumulativeYieldProperties extends YieldProperties{
         super(scale, betCompany);
     }
 
-    public CumulativeYieldProperties(List<BigDecimal> scale, String betCompany, Map<String, Object> propeerties) {
-        super(scale, betCompany, propeerties);
+    public CumulativeYieldProperties(List<BigDecimal> scale, String betCompany, Map<String, Object> properties) {
+        super(scale, betCompany, properties);
     }
 
 }

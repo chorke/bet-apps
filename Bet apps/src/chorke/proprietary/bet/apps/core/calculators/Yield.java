@@ -1,7 +1,7 @@
 
 package chorke.proprietary.bet.apps.core.calculators;
 
-import chorke.proprietary.bet.apps.StaticConstants.BetPossibility;
+import chorke.proprietary.bet.apps.core.CoreUtils.BetPossibility;
 import chorke.proprietary.bet.apps.core.Tuple;
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -10,7 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
+ * Trieda reprezentujúca zisk.
+ * 
  * @author Chorke
  */
 public abstract class Yield {
@@ -25,22 +26,26 @@ public abstract class Yield {
      */
     private Map<Integer, Integer> matches;
     
+    /**
+     * Vytvorí novú inštanciu.
+     */
     protected Yield() {
         properties = new YieldProperties();
         matches = new HashMap<>();
     }
 
     /**
-     * Vráti aktuálne nastavené nastavenie.
+     * Vráti aktuálne nastavené properties.
      */
     public YieldProperties getProperties() {
         return properties;
     }
 
     /**
+     * Nastaví properties.
      * Ak {@code properties == null}, tak vytvorí nové, prázdne properties.
      * 
-     * @param properties 
+     * @param properties properties pre nastavenie
      */
     public void setProperties(YieldProperties properties) {
         if(properties == null){

@@ -1,15 +1,16 @@
 
 package chorke.proprietary.bet.apps.core.calculators;
 
-import chorke.proprietary.bet.apps.StaticConstants.BetPossibility;
-import chorke.proprietary.bet.apps.StaticConstants.Periode;
+import chorke.proprietary.bet.apps.core.CoreUtils.BetPossibility;
+import chorke.proprietary.bet.apps.core.CoreUtils.Periode;
 import chorke.proprietary.bet.apps.core.match.Match;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Map;
 
 /**
- *
+ * Interface pre počítanie zisku zo stávok.
+ * 
  * @author Chorke
  */
 public interface YieldCalculator<T extends Yield> {

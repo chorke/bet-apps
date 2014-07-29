@@ -1,7 +1,8 @@
 
-package chorke.proprietary.bet.apps;
+package chorke.proprietary.bet.apps.calculators;
 
 import static chorke.proprietary.bet.apps.BasicTests.assertEqualsBigDecimal;
+import chorke.proprietary.bet.apps.MatchInitializer;
 import chorke.proprietary.bet.apps.core.CoreUtils.BetPossibility;
 import chorke.proprietary.bet.apps.core.CoreUtils.Periode;
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;

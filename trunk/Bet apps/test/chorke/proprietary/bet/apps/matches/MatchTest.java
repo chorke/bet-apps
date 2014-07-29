@@ -1,6 +1,7 @@
 
-package chorke.proprietary.bet.apps;
+package chorke.proprietary.bet.apps.matches;
 
+import chorke.proprietary.bet.apps.MatchInitializer;
 import chorke.proprietary.bet.apps.core.CoreUtils.Winner;
 import org.junit.Test;
 import static org.junit.Assert.*;

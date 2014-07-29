@@ -1,5 +1,5 @@
 
-package chorke.proprietary.bet.apps;
+package chorke.proprietary.bet.apps.calculators;
 
 import chorke.proprietary.bet.apps.core.CoreUtils.BetPossibility;
 import chorke.proprietary.bet.apps.core.Tuple;

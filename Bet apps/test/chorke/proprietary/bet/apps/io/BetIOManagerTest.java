@@ -1,5 +1,5 @@
 
-package chorke.proprietary.bet.apps;
+package chorke.proprietary.bet.apps.io;
 
 import static chorke.proprietary.bet.apps.BasicTests.collectionChecker;
 import static chorke.proprietary.bet.apps.BasicTests.assertAreBothNull;

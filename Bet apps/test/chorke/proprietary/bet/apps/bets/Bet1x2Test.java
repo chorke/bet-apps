@@ -1,4 +1,4 @@
-package chorke.proprietary.bet.apps;
+package chorke.proprietary.bet.apps.bets;
 
 import chorke.proprietary.bet.apps.core.bets.Bet1x2;
 import static chorke.proprietary.bet.apps.BasicTests.assertEqualsBigDecimal;

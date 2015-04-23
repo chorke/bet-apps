@@ -449,10 +449,10 @@ public class MainPanel extends JPanel{
     /**
      * Vlákno, ktoré spustí load okno. Nebude tak blokobané EDT.
      */
-    private class ShowLoadWindowWorker extends SwingWorkerWithWaitingDialog<Void, Void>{
+    private class ShowLoadWindowWorker extends SwingWorkerWithWaitingDialog<JFrame, Void>{
         
         @Override
-        public Void doYourJob() throws Exception {
+        public JFrame doYourJob() throws Exception {
             if(loadPanel == null){
                 try{
                     loadPanel = new LoadingPanel(season);
@@ -462,17 +462,19 @@ public class MainPanel extends JPanel{
                             + System.lineSeparator() + ex.getCause());
                 }
             }
-            if(loadPanel != null){
-                GuiUtils.getDefaultFrame(bundle.getString("load"), JFrame.DISPOSE_ON_CLOSE,
-                        false, null, loadPanel).setVisible(true);
-            }
-            return null;
+            return loadPanel != null 
+                    ? GuiUtils.getDefaultFrame(bundle.getString("load"), JFrame.DISPOSE_ON_CLOSE,
+                        false, null, loadPanel)
+                    : null;
         }
 
         @Override
         public void jobIsDone() {
             try{
-                get();
+                JFrame f  = get();
+                if(f != null){
+                    f.setVisible(true);
+                }
             } catch (ExecutionException | InterruptedException ex){
                 LOGGER.error("Error while showing load window.", ex);
             }
@@ -501,22 +503,21 @@ public class MainPanel extends JPanel{
     /**
      * Vlákno, ktoré vytvorí nové okno s grafmi. Nebude tak blokované EDT.
      */
-    private class ShowGraphsWindowWorker extends SwingWorkerWithWaitingDialog<Void, Void>{
+    private class ShowGraphsWindowWorker extends SwingWorkerWithWaitingDialog<JFrame, Void>{
 
         @Override
-        public Void doYourJob() throws Exception {
+        public JFrame doYourJob() throws Exception {
             prepareSeasonForGettingStats();
             JScrollPane pane = new JScrollPane(new GraphsCollectingPanel(season));
             pane.setPreferredSize(new Dimension(450, 300));
-            GuiUtils.getDefaultFrame(bundle.getString("graphs"), JFrame.DISPOSE_ON_CLOSE,
-                    true, null, pane).setVisible(true);
-            return null;
+            return GuiUtils.getDefaultFrame(bundle.getString("graphs"), JFrame.DISPOSE_ON_CLOSE,
+                    true, null, pane);
         }
 
         @Override
         public void jobIsDone() {
             try{
-                get();
+                get().setVisible(true);
             } catch (ExecutionException | InterruptedException ex){
                 LOGGER.error("Error while showing graphs window.", ex);
             }
@@ -537,10 +538,10 @@ public class MainPanel extends JPanel{
         }
     }
     
-    private class ShowDeleteWindowWorker extends SwingWorkerWithWaitingDialog<Void, Void>{
+    private class ShowDeleteWindowWorker extends SwingWorkerWithWaitingDialog<JFrame, Void>{
 
         @Override
-        public Void doYourJob() throws Exception {
+        public JFrame doYourJob() throws Exception {
             try{
                 deletePanel = new DeletePanel(season);
             } catch (BetIOException ex){
@@ -548,17 +549,19 @@ public class MainPanel extends JPanel{
                 JOptionPane.showMessageDialog(null, bundle.getString("errDeleteWindCreation")
                         + System.lineSeparator() + ex.getCause());
             }
-            if(deletePanel != null){
-                GuiUtils.getDefaultFrame(bundle.getString("delete"), JFrame.DISPOSE_ON_CLOSE,
-                        false, null, deletePanel).setVisible(true);
-            }
-            return null;
+            return deletePanel != null
+                    ? GuiUtils.getDefaultFrame(bundle.getString("delete"), JFrame.DISPOSE_ON_CLOSE,
+                        false, null, deletePanel)
+                    : null;
         }
 
         @Override
         public void jobIsDone() {
             try{
-                get();
+                JFrame f  = get();
+                if(f != null){
+                    f.setVisible(true);
+                }
             } catch (ExecutionException | InterruptedException ex){
                 LOGGER.error("Error while showing delete window.", ex);
             }

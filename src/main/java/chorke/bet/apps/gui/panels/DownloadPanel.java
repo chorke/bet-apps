@@ -278,7 +278,6 @@ public class DownloadPanel extends JPanel {
             if(downloadInfoWin != null){
                 downloadInfoWin.dispose();
             }
-//            GuiUtils.hideWaitingDialog();
             int i = 0;
             for(Window w : windows){
                 w.setVisible(windowsVisibility[i++]);
@@ -455,21 +454,9 @@ public class DownloadPanel extends JPanel {
                 if(downloader.betParser instanceof MultithreadHTMLBetParser){
                     ((MultithreadHTMLBetParser)downloader.betParser).stopThreads();
                 }
-//                new Thread(new ShowWaitingDialog()).start();
             }
         }
     }
-    
-    /**
-     * Spustí waiting dialóg, aby sa nespúšťal v EDT.
-     */
-//    private class ShowWaitingDialog implements Runnable{
-//
-//        @Override
-//        public void run() {
-//            GuiUtils.showWaitingDialog(bundle.getString("stopping"));
-//        }
-//    }
     
     /**
      * OutputStream, ktorý svoj výstup zapisuje do JTextArea.

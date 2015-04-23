@@ -1,0 +1,17 @@
+sqlcmd -S .\sqlexpress -Q "CREATE DATABASE BetApp"
+rem matches
+sqlcmd -S .\sqlexpress -d BetApp -Q "CREATE TABLE matches(id integer IDENTITY NOT NULL,sport nvarchar(20),country nvarchar(50),league nvarchar(50),matchdate datetime,CONSTRAINT id PRIMARY KEY (id))"
+rem scores
+sqlcmd -S .\sqlexpress -d BetApp -Q "CREATE TABLE scores(matchid integer NOT NULL,team1 integer,team2 integer,part integer NOT NULL,CONSTRAINT scoreID PRIMARY KEY (matchid, part))"
+rem bet 1x2
+sqlcmd -S .\sqlexpress -d BetApp -Q "CREATE TABLE bet1x2(matchid integer NOT NULL,betcompany nvarchar(50) NOT NULL,bet1 nvarchar(8),betx nvarchar(8),bet2 nvarchar(8),CONSTRAINT bet1x2ID PRIMARY KEY (matchid, betcompany))"
+rem bet asian handicap
+sqlcmd -S .\sqlexpress -d BetApp -Q "CREATE TABLE betah(matchid integer NOT NULL,betcompany nvarchar(50) NOT NULL,bet1 nvarchar(8),bet2 nvarchar(8),handicap nvarchar(8) NOT NULL,description nvarchar(50) NOT NULL,CONSTRAINT betAHID PRIMARY KEY (matchid, betcompany, handicap, description))"
+rem bet both teams to score
+sqlcmd -S .\sqlexpress -d BetApp -Q "CREATE TABLE betbtts(matchid integer NOT NULL,betcompany nvarchar(50) NOT NULL,yesbet nvarchar(8),nobet nvarchar(8),CONSTRAINT betBTTSID PRIMARY KEY (matchid, betcompany))"
+rem bet double 
+sqlcmd -S .\sqlexpress -d BetApp -Q "CREATE TABLE betdc(matchid integer NOT NULL,betcompany nvarchar(50) NOT NULL,bet1x nvarchar(8),bet2x nvarchar(8),bet12 nvarchar(8),CONSTRAINT betDCID PRIMARY KEY (matchid, betcompany))"
+rem bet draw no bet
+sqlcmd -S .\sqlexpress -d BetApp -Q "CREATE TABLE betdnb(matchid integer NOT NULL,betcompany nvarchar(50) NOT NULL,bet1 nvarchar(8),bet2 nvarchar(8),CONSTRAINT betDNBID PRIMARY KEY (matchid, betcompany))"
+rem bet over under
+sqlcmd -S .\sqlexpress -d BetApp -Q "CREATE TABLE betou(matchid integer NOT NULL,betcompany nvarchar(50) NOT NULL,total nvarchar(8) NOT NULL,overbet nvarchar(8),underbet nvarchar(8),description nvarchar(50) NOT NULL,CONSTRAINT betOUID PRIMARY KEY (matchid, betcompany, total, description))"

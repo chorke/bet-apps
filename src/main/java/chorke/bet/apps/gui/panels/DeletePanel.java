@@ -17,7 +17,7 @@ import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.SwingWorker;
+import org.chorke.gui.utils.worker.SwingWorkerWithWaitingDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DeletePanel extends JPanel{
     
-    private static final Logger log = LoggerFactory.getLogger(DeletePanel.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DeletePanel.class);
     
     /**
      * Aktuálne sedenie
@@ -112,8 +112,11 @@ public class DeletePanel extends JPanel{
             int option = GuiUtils.showLocalizedConfirmDialog(bundle, "confirmDeleteBetCompanies",
                     "confirmDialogTitle", null);
             if(option == JOptionPane.YES_OPTION){
-                new DeleteBetCompaniesWorker().execute();
-                System.out.println("done listner");
+                DeleteBetCompaniesWorker worker = new DeleteBetCompaniesWorker();
+                worker.setCancelString(bundle.getString("cancel"));
+                worker.setDialogMessage(bundle.getString("deleting"));
+                worker.execute(true, SwingWorkerWithWaitingDialog.HIDE_AFTER_DONE);
+                LOGGER.info("done listner");
             }
         }
         
@@ -129,7 +132,11 @@ public class DeletePanel extends JPanel{
             int option = GuiUtils.showLocalizedConfirmDialog(bundle, "confirmDeleteLeagues",
                     "confirmDialogTitle", null);
             if(option == JOptionPane.YES_OPTION){
-                new DeleteLeaguesWorker().execute();
+                DeleteLeaguesWorker worker = new DeleteLeaguesWorker();
+                worker.setCancelString(bundle.getString("cancel"));
+                worker.setDialogMessage(
+                        "_______________" + bundle.getString("deleting") + "_______________");
+                worker.execute(true, SwingWorkerWithWaitingDialog.HIDE_AFTER_DONE);
             }
         }
     }
@@ -137,57 +144,58 @@ public class DeletePanel extends JPanel{
     /**
      * Worker pre vamazanie zvolených stávkových spoločností.
      */
-    private class DeleteBetCompaniesWorker extends SwingWorker<Void, String>{
+    private class DeleteBetCompaniesWorker extends SwingWorkerWithWaitingDialog<Void, String>{
 
         @Override
-        protected Void doInBackground() throws Exception {
-            showWaitingDialogWithCancelOption(bundle.getString("deleting"));
+        public void cancelInvoked() {}
+
+        @Override
+        public Void doYourJob() throws Exception {
             Set<String> betCompaniesToDelete = betCompaniesPanel.getActualChosenBetCompanies();
             for(String s : betCompaniesToDelete){
-                GuiUtils.updateWaitingDialogMessage(s);
-                System.out.println("now I delete bet company " + s);
+//                GuiUtils.updateWaitingDialogMessage(s);
+                LOGGER.info("Deleting bet company " + s);
                 manager.deleteBetCompany(s);
             }
             return null;
         }
 
         @Override
-        protected void done() {
+        public void jobIsDone() {
             try{
                 get();
             } catch (ExecutionException | InterruptedException | CancellationException ex){
-                log.error("Error while deleting bet companies.", ex);
+                LOGGER.error("Error while deleting bet companies.", ex);
                 JOptionPane.showMessageDialog(null, bundle.getString("deletingFail"));
             }
-            GuiUtils.hideWaitingDialog();
-        }
-        
+        }   
     }
     
     /**
      * Worker pre vymazanie zvolených líg.
      */
-    private class DeleteLeaguesWorker extends SwingWorker<Void, String>{
+    private class DeleteLeaguesWorker extends SwingWorkerWithWaitingDialog<Void, String>{
+        
         @Override
-        protected Void doInBackground() throws Exception {
-            showWaitingDialogWithCancelOption(
-                    "_______________" + bundle.getString("deleting") + "_______________");
+        public Void doYourJob() throws Exception {
+//            showWaitingDialogWithCancelOption(
+//                    "_______________" + bundle.getString("deleting") + "_______________");
             Map<String, Set<String>> leaguesToDelete = countriesAndLeaguesPanel.getChoosenLeagues();
             if(leaguesToDelete.containsKey("")){
-                GuiUtils.updateWaitingDialogMessage(bundle.getString("all"));
-                System.out.println("Now I delete all matches");
+//                GuiUtils.updateWaitingDialogMessage(bundle.getString("all"));
+                LOGGER.info("Deleting all matches");
                 manager.deleteAll();
             } else {
                 for(String country : leaguesToDelete.keySet()){
                     Set<String> leagues = leaguesToDelete.get(country);
                     if(leagues.contains("")){
-                        GuiUtils.updateWaitingDialogMessage(country);
-                        System.out.println("Now I deleting country " + country);
+//                        GuiUtils.updateWaitingDialogMessage(country);
+                        LOGGER.info("Now I deleting country " + country);
                         manager.deleteCountry(country);
                     } else {
                         for(String l : leagues){
-                            GuiUtils.updateWaitingDialogMessage(country + " : " + l);
-                            System.out.println("Now I deleting league " + country + " : " + l);
+//                            GuiUtils.updateWaitingDialogMessage(country + " : " + l);
+                            LOGGER.info("Now I deleting league " + country + " : " + l);
                             manager.deleteLeague(country, l);
                         }
                     }
@@ -197,37 +205,40 @@ public class DeletePanel extends JPanel{
         }
 
         @Override
-        protected void done() {
+        public void jobIsDone() {
             try{
                 get();
             } catch (ExecutionException | InterruptedException | CancellationException ex){
-                log.error("Error while deleting leagues.", ex);
+                LOGGER.error("Error while deleting leagues.", ex);
                 JOptionPane.showMessageDialog(null, bundle.getString("deletingFail"));
             }
-            GuiUtils.hideWaitingDialog();
+//            GuiUtils.hideWaitingDialog();
         }
+
+        @Override
+        public void cancelInvoked() {}
     }
     
-    /**
-     * Spustí čakací dialóg pomocou 
-     * {@link GuiUtils#showWaitingDialog(java.lang.String, javax.swing.JButton[])}
-     * a nastaví mu správu {@code message} a jedno tlačidlo {@code cancel}, 
-     * ktoré po stlačení preruší aktuálnu prácu manažéra {@link #manager}
-     * pomocou metódy {@link BetIOManager#cancelActualQuery()}.
-     * 
-     * @param message správa, ktorá sa zobrazí v čakacom dialógu.
-     */
-    private void showWaitingDialogWithCancelOption(String message){
-        JButton cancel = new JButton(bundle.getString("cancel"));
-        cancel.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                manager.cancelActualQuery();
-                ((JButton)e.getSource()).setEnabled(false);
-            }
-        });
-
-        GuiUtils.showWaitingDialog(message, cancel);
-    }
+//    /**
+//     * Spustí čakací dialóg pomocou 
+//     * {@link GuiUtils#showWaitingDialog(java.lang.String, javax.swing.JButton[])}
+//     * a nastaví mu správu {@code message} a jedno tlačidlo {@code cancel}, 
+//     * ktoré po stlačení preruší aktuálnu prácu manažéra {@link #manager}
+//     * pomocou metódy {@link BetIOManager#cancelActualQuery()}.
+//     * 
+//     * @param message správa, ktorá sa zobrazí v čakacom dialógu.
+//     */
+//    private void showWaitingDialogWithCancelOption(String message){
+//        JButton cancel = new JButton(bundle.getString("cancel"));
+//        cancel.addActionListener(new ActionListener() {
+//
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                manager.cancelActualQuery();
+//                ((JButton)e.getSource()).setEnabled(false);
+//            }
+//        });
+//
+//        GuiUtils.showWaitingDialog(message, cancel);
+//    }
 }

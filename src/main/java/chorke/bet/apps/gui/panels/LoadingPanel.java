@@ -33,6 +33,7 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import org.chorke.gui.utils.panels.DateChooser;
+import org.chorke.gui.utils.worker.SwingWorkerWithWaitingDialog;
 
 /**
  *
@@ -222,15 +223,20 @@ public class LoadingPanel extends JPanel{
         @Override
         public void actionPerformed(ActionEvent e) {
             LoadingWorker worker = new LoadingWorker();
-            worker.execute();
+            worker.setCancelString(bundle.getString("cancel"));
+            worker.setDialogMessage(bundle.getString("loading"));
+            worker.execute(true, SwingWorkerWithWaitingDialog.HIDE_AFTER_DONE);
         }
     }
     
     /**
      * Worker, ktorý načíta požadované západy. 
      */
-    private class LoadingWorker extends SwingWorker
+    private class LoadingWorker extends SwingWorkerWithWaitingDialog
             <Tuple<LoadProperties, Collection<Match>>, Void>{
+
+        @Override
+        public void cancelInvoked() {}
 
         /**
          * Chyby pri nastavovaní loading properties.
@@ -238,17 +244,17 @@ public class LoadingPanel extends JPanel{
         private Collection<String> errors = new LinkedList<>();
         
         @Override
-        protected Tuple<LoadProperties, Collection<Match>> doInBackground() throws Exception {
-            JButton cancel = new JButton(bundle.getString("cancel"));
-            cancel.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    manager.cancelActualQuery();
-                    ((JButton)e.getSource()).setEnabled(false);
-                }
-            });
-            GuiUtils.showWaitingDialog(bundle.getString("loading"), cancel);
+        public Tuple<LoadProperties, Collection<Match>> doYourJob() throws Exception {
+//            JButton cancel = new JButton(bundle.getString("cancel"));
+//            cancel.addActionListener(new ActionListener() {
+//
+//                @Override
+//                public void actionPerformed(ActionEvent e) {
+//                    manager.cancelActualQuery();
+//                    ((JButton)e.getSource()).setEnabled(false);
+//                }
+//            });
+//            GuiUtils.showWaitingDialog(bundle.getString("loading"), cancel);
             errors.clear();
             LoadProperties prop = getLoadProperties();
             if(checkLoadingProperties(prop)){
@@ -270,7 +276,7 @@ public class LoadingPanel extends JPanel{
         }
 
         @Override
-        protected void done() {
+        public void jobIsDone() {
             try{
                 Tuple<LoadProperties, Collection<Match>> m = get();
                 if(errors.isEmpty()){
@@ -285,7 +291,7 @@ public class LoadingPanel extends JPanel{
                 System.out.println(ex);
                 JOptionPane.showMessageDialog(null, bundle.getString("loadingFailed"));
             }
-            GuiUtils.hideWaitingDialog();
+//            GuiUtils.hideWaitingDialog();
         }
         
         /**

@@ -6,23 +6,14 @@ import chorke.bet.apps.core.bets.Bet1x2;
 import java.awt.Component;
 import java.awt.Image;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.lang.reflect.Array;
 import java.util.ResourceBundle;
 import javax.swing.ButtonGroup;
-import javax.swing.GroupLayout;
-import javax.swing.GroupLayout.Group;
-import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.ToolTipManager;
-import javax.swing.border.EtchedBorder;
 
 /**
  * Trieda s často používanými metódami v aplikácii v GUI časti.
@@ -41,149 +32,11 @@ public class GuiUtils {
     }
     
     private GuiUtils(){}
-    
-    /**
-     * Čakací dialóg.
-     */
-    private static JDialog waitingDialog;
-    /**
-     * Správa vo waitingDialog.
-     */
-    private static JLabel message;
-    
+        
     /**
      * Defaultná ikonka aplikácie pre okná.
      */
     private static Image defaultAppIcon = getIconImage();
-    
-    /**
-     * Objekt pre čakanie, kým sa zobrazí waiting dialog.
-     */
-    private static final Object WAITING_DIALOG_OBJECT = new Object();
-    
-    /**
-     * Udáva, či je potreba čakať, kým sa zobrazí čakacie okno. Resp. či okno
-     * už je zobrazené (aktívne), alebo nie.
-     */
-    private static volatile boolean waitUntilShowed;
-    
-    /**
-     * Zobrazí čakací dialóg so správou waitingMessage. Počas jeho viditeľnosti
-     * nie je možné pracovať s aplikáciou. Ak je už zobrazený, nestane sa nič.
-     * Dialóg spustí v novom vlákne. S ostatnými gui časťami teda nie je možné 
-     * pracovať, ale samotné volajúce vlákno môže pokračovať vo svojej práci.
-     * Volajúce vlákno je počas zviditeľnovania čakacieho dialógu uspané a čaká,
-     * pokým nie je dialóg úspešne aktivovaný. Potom je jeho činnosť obnovená.
-     * Metóda by nemala byť volaná z vlákna EDT (vlákno pre správu udalostí a.i.,
-     * teda z metód ActionListnerov, WindowListnerov atď.) inak hrozí zamrznutie.
-     * 
-     * @param waitingMessage 
-     */
-    public static void showWaitingDialog(String waitingMessage, JButton... buttons){
-//        if(waitingDialog == null){
-//            initWaitingDialog();
-//        } else if(waitingDialog.isVisible()){
-//            return;
-//        }
-        if(waitingDialog != null && waitingDialog.isActive()){
-            return;
-        }
-        initWaitingDialog(buttons);
-        message.setText(waitingMessage);
-//        waitingDialog.setResizable(true);
-        waitingDialog.pack();
-        waitingDialog.setLocationRelativeTo(null);
-        waitUntilShowed = true;
-        new Thread(new DialogThread()).start();
-        synchronized(WAITING_DIALOG_OBJECT){
-            try{
-                while(waitUntilShowed){
-                    WAITING_DIALOG_OBJECT.wait();
-                }
-            } catch (InterruptedException ex){
-                System.err.println(ex);
-            }
-        }
-    }
-    
-    /**
-     * Skryje aktuálne zobrazený čakací dialóg. Ak nie je dialóg
-     * viditeľný, nestane sa nič.
-     */
-    public static void hideWaitingDialog(){
-        if(waitingDialog != null && waitingDialog.isVisible()){
-            waitingDialog.dispose();
-            waitingDialog = null;
-        }
-    }
-    
-    /**
-     * Aktualizuje správu, ktorá je zobrazená na čakacom dialógu. 
-     * 
-     * @param newMessage nová správa pre čakací dialóg
-     */
-    public static void updateWaitingDialogMessage(String newMessage){
-        if(waitingDialog != null && waitingDialog.isVisible()){
-            message.setText(newMessage);
-            waitingDialog.repaint();
-        }
-    }
-    
-    /**
-     * Pripraví čakaci dialóg. Správu je potom možné jednoducho meniť nastavením
-     * textu pre {@link #message}.
-     */
-    private static void initWaitingDialog(JButton... buttons){
-        JPanel panel = new JPanel();
-        panel.setBorder(new EtchedBorder(EtchedBorder.LOWERED));
-        message = new JLabel();
-        GroupLayout gl = new GroupLayout(panel);
-        if(buttons == null || buttons.length == 0){
-        gl.setVerticalGroup(gl.createParallelGroup(GroupLayout.Alignment.CENTER)
-                .addGap(10, 40, 100)
-                .addComponent(message)
-                .addGap(10, 40, 100));
-        gl.setHorizontalGroup(gl.createParallelGroup(GroupLayout.Alignment.CENTER)
-                .addGap(10, 100, 200)
-                .addComponent(message)
-                .addGap(10, 100, 200));
-        } else {
-            Group buttVer = gl.createParallelGroup(GroupLayout.Alignment.CENTER);
-            Group buttHor = gl.createSequentialGroup();
-            for(JButton b : buttons){
-                buttVer.addComponent(b);
-                buttHor.addComponent(b);
-            }
-            gl.setVerticalGroup(gl.createSequentialGroup()
-                    .addComponent(message)
-                    .addGap(20)
-                    .addGroup(buttVer));
-            gl.setHorizontalGroup(gl.createSequentialGroup()
-                    .addGap(40)
-                    .addGroup(gl.createParallelGroup(GroupLayout.Alignment.CENTER)
-                        .addComponent(message)
-                        .addGroup(buttHor))
-                    .addGap(40));
-        }
-        gl.setAutoCreateContainerGaps(true);
-        gl.setAutoCreateGaps(true);
-        panel.setLayout(gl);
-
-        waitingDialog = new JDialog();
-        waitingDialog.addWindowListener(new WindowAdapter() {
-
-            @Override
-            public void windowActivated(WindowEvent e) {
-                synchronized(WAITING_DIALOG_OBJECT){
-                    waitUntilShowed = false;
-                    WAITING_DIALOG_OBJECT.notifyAll();
-                }
-            }
-        });
-        waitingDialog.setModal(true);
-        waitingDialog.setUndecorated(true);
-        waitingDialog.add(panel);
-    }
     
     /**
      * Vráti defaultnú ikonku pre aplikáciu.
@@ -346,17 +199,5 @@ public class GuiUtils {
             return JOptionPane.CANCEL_OPTION;
         }
         return option;
-    }
-    
-    /**
-     * Samostané vlákno pre spustenie čakacieho dialógu, aby nezamrzlo
-     * vlákno vlajúce {@link #showWaitingDialog(java.lang.String)}.
-     */
-    private static class DialogThread implements Runnable {
-
-        @Override
-        public void run() {
-            waitingDialog.setVisible(true);
-        }
     }
 }

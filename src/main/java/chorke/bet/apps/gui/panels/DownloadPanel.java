@@ -42,6 +42,8 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import org.chorke.gui.utils.panels.DateChooser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Panel pre sťahovanie stávok do DB
@@ -49,6 +51,8 @@ import org.chorke.gui.utils.panels.DateChooser;
  */
 public class DownloadPanel extends JPanel {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DownloadPanel.class);
+    
     private JComboBox<String> sportToDownload;
     private DateChooser from;
     private DateChooser by;
@@ -274,18 +278,18 @@ public class DownloadPanel extends JPanel {
             if(downloadInfoWin != null){
                 downloadInfoWin.dispose();
             }
-            GuiUtils.hideWaitingDialog();
+//            GuiUtils.hideWaitingDialog();
             int i = 0;
             for(Window w : windows){
                 w.setVisible(windowsVisibility[i++]);
             }
             System.setOut(defaultPrintStream);
             getDownloadResultsInfoWin().setVisible(true);
-            System.err.println("unsaved {" + betParser.getUnsavedMatches().size()
+            LOGGER.warn("unsaved {" + betParser.getUnsavedMatches().size()
                 + "}: " + betParser.getUnsavedMatches());
-            System.err.println("matches {" + betParser.getUndownloadedMatches().size()
+            LOGGER.warn("matches {" + betParser.getUndownloadedMatches().size()
                 + "}: " + betParser.getUndownloadedMatches());
-            System.err.println("sports {" + betParser.getUndownloadedSports().size()
+            LOGGER.warn("sports {" + betParser.getUndownloadedSports().size()
                 + "}: " + betParser.getUndownloadedSports());
             
         }
@@ -451,7 +455,7 @@ public class DownloadPanel extends JPanel {
                 if(downloader.betParser instanceof MultithreadHTMLBetParser){
                     ((MultithreadHTMLBetParser)downloader.betParser).stopThreads();
                 }
-                new Thread(new ShowWaitingDialog()).start();
+//                new Thread(new ShowWaitingDialog()).start();
             }
         }
     }
@@ -459,13 +463,13 @@ public class DownloadPanel extends JPanel {
     /**
      * Spustí waiting dialóg, aby sa nespúšťal v EDT.
      */
-    private class ShowWaitingDialog implements Runnable{
-
-        @Override
-        public void run() {
-            GuiUtils.showWaitingDialog(bundle.getString("stopping"));
-        }
-    }
+//    private class ShowWaitingDialog implements Runnable{
+//
+//        @Override
+//        public void run() {
+//            GuiUtils.showWaitingDialog(bundle.getString("stopping"));
+//        }
+//    }
     
     /**
      * OutputStream, ktorý svoj výstup zapisuje do JTextArea.

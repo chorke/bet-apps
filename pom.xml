@@ -80,7 +80,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>chorke.proprietary.bet.apps.MainClass</mainClass>
+                            <mainClass>chorke.bet.apps.MainClass</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

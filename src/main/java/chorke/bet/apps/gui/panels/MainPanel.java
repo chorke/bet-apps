@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Group;
 import javax.swing.JButton;
@@ -48,6 +49,9 @@ import javax.swing.SwingConstants;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
 import org.chorke.gui.utils.panels.NotesPanel;
+import org.chorke.gui.utils.worker.SwingWorkerWithWaitingDialog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -57,6 +61,8 @@ import org.chorke.gui.utils.panels.NotesPanel;
  */
 public class MainPanel extends JPanel{
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MainPanel.class);
+    
     private static final Yield1x2Calculator YC_1x2 = new Yield1x2Calculator();
     private static final GraphBuilderYield1x2 GB_1x2 = new GraphBuilderYield1x2();
     
@@ -212,7 +218,6 @@ public class MainPanel extends JPanel{
      * celkový zisk.
      */
     private void putYieldToStatsResulstPanel(){
-        GuiUtils.showWaitingDialog(bundle.getString("gettingYields"));
         prepareSeasonForGettingStats();
         Yield yield = getYield();
         if(yield != null){
@@ -237,7 +242,6 @@ public class MainPanel extends JPanel{
             gl.setVerticalGroup(vertical);
             statsResultsPanel.setLayout(gl);
         }
-        GuiUtils.hideWaitingDialog();
     }
     
     /**
@@ -435,35 +439,47 @@ public class MainPanel extends JPanel{
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            new Thread(new ShowLoadWindowThread()).start();
+            ShowLoadWindowWorker worker = new ShowLoadWindowWorker();
+            worker.setCancelString(bundle.getString("cancel"));
+            worker.setDialogMessage(bundle.getString("initLoad"));
+            worker.execute(true, SwingWorkerWithWaitingDialog.HIDE_AFTER_JOB);
         }
     }
     
     /**
      * Vlákno, ktoré spustí load okno. Nebude tak blokobané EDT.
      */
-    private class ShowLoadWindowThread implements Runnable{
+    private class ShowLoadWindowWorker extends SwingWorkerWithWaitingDialog<Void, Void>{
         
         @Override
-        public void run(){
+        public Void doYourJob() throws Exception {
             if(loadPanel == null){
                 try{
-                    GuiUtils.showWaitingDialog(bundle.getString("initLoad"));
                     loadPanel = new LoadingPanel(season);
                 } catch (BetIOException ex){
                     loadPanel = null;
                     JOptionPane.showMessageDialog(null, bundle.getString("errLoadWindCreation")
                             + System.lineSeparator() + ex.getCause());
-                } finally {
-                    GuiUtils.hideWaitingDialog();
                 }
             }
             if(loadPanel != null){
                 GuiUtils.getDefaultFrame(bundle.getString("load"), JFrame.DISPOSE_ON_CLOSE,
                         false, null, loadPanel).setVisible(true);
             }
+            return null;
         }
-        
+
+        @Override
+        public void jobIsDone() {
+            try{
+                get();
+            } catch (ExecutionException | InterruptedException ex){
+                LOGGER.error("Error while showing load window.", ex);
+            }
+        }
+
+        @Override
+        public void cancelInvoked() {}
     }
     
     /**
@@ -475,58 +491,81 @@ public class MainPanel extends JPanel{
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            new Thread(new ShowGraphsWindowThread()).start();
+            ShowGraphsWindowWorker worker = new ShowGraphsWindowWorker();
+            worker.setCancelString(bundle.getString("cancel"));
+            worker.setDialogMessage(bundle.getString("initGraphs"));
+            worker.execute(true, SwingWorkerWithWaitingDialog.HIDE_AFTER_JOB);
         }
-        
     }
     
     /**
      * Vlákno, ktoré vytvorí nové okno s grafmi. Nebude tak blokované EDT.
      */
-    private class ShowGraphsWindowThread implements Runnable {
+    private class ShowGraphsWindowWorker extends SwingWorkerWithWaitingDialog<Void, Void>{
 
         @Override
-        public void run() {
-            GuiUtils.showWaitingDialog(bundle.getString("initGraphs"));
+        public Void doYourJob() throws Exception {
             prepareSeasonForGettingStats();
             JScrollPane pane = new JScrollPane(new GraphsCollectingPanel(season));
             pane.setPreferredSize(new Dimension(450, 300));
             GuiUtils.getDefaultFrame(bundle.getString("graphs"), JFrame.DISPOSE_ON_CLOSE,
                     true, null, pane).setVisible(true);
-            GuiUtils.hideWaitingDialog();
+            return null;
         }
-        
+
+        @Override
+        public void jobIsDone() {
+            try{
+                get();
+            } catch (ExecutionException | InterruptedException ex){
+                LOGGER.error("Error while showing graphs window.", ex);
+            }
+        }
+
+        @Override
+        public void cancelInvoked() {}
     }
     
     private class ShowDeleteWindow implements ActionListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            new Thread(new ShowDeleteWindowThread()).start();
+            ShowDeleteWindowWorker worker = new ShowDeleteWindowWorker();
+            worker.setCancelString(bundle.getString("cancel"));
+            worker.setDialogMessage(bundle.getString("initDelete"));
+            worker.execute(true, SwingWorkerWithWaitingDialog.HIDE_AFTER_JOB);
         }
-        
     }
     
-    private class ShowDeleteWindowThread implements Runnable{
+    private class ShowDeleteWindowWorker extends SwingWorkerWithWaitingDialog<Void, Void>{
 
         @Override
-        public void run() {
+        public Void doYourJob() throws Exception {
             try{
-                GuiUtils.showWaitingDialog(bundle.getString("initDelete"));
                 deletePanel = new DeletePanel(season);
             } catch (BetIOException ex){
                 deletePanel = null;
                 JOptionPane.showMessageDialog(null, bundle.getString("errDeleteWindCreation")
                         + System.lineSeparator() + ex.getCause());
-            } finally {
-                GuiUtils.hideWaitingDialog();
             }
             if(deletePanel != null){
                 GuiUtils.getDefaultFrame(bundle.getString("delete"), JFrame.DISPOSE_ON_CLOSE,
                         false, null, deletePanel).setVisible(true);
             }
+            return null;
         }
-        
+
+        @Override
+        public void jobIsDone() {
+            try{
+                get();
+            } catch (ExecutionException | InterruptedException ex){
+                LOGGER.error("Error while showing delete window.", ex);
+            }
+        }
+
+        @Override
+        public void cancelInvoked() {}
     }
     
     /**
@@ -538,19 +577,35 @@ public class MainPanel extends JPanel{
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            new Thread(new GetStatsThread()).start();
+            GetStatsWorker worker = new GetStatsWorker();
+            worker.setCancelString(bundle.getString("cancel"));
+            worker.setDialogMessage(bundle.getString("gettingYields"));
+            worker.execute(true, SwingWorkerWithWaitingDialog.HIDE_AFTER_JOB);
         }
     }
     
     /**
      * Vlákno pre počítanie štatistík. Nebude tak blokované EDT.
      */
-    private class GetStatsThread implements Runnable{
-        
+    private class GetStatsWorker extends SwingWorkerWithWaitingDialog<Void, Void>{
+
         @Override
-        public void run(){
+        public Void doYourJob() throws Exception {
             putYieldToStatsResulstPanel();
+            return null;
         }
+
+        @Override
+        public void jobIsDone() {
+            try{
+                get();
+            } catch (ExecutionException | InterruptedException ex){
+                LOGGER.error("Error while getting stats.", ex);
+            }
+        }
+
+        @Override
+        public void cancelInvoked() {}
     }
     
     /**

@@ -2,7 +2,7 @@
 package chorke.bet.apps.gui.panels;
 
 import chorke.bet.apps.core.Tuple;
-import chorke.bet.apps.gui.Season;
+import chorke.bet.apps.gui.Session;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -83,16 +83,16 @@ public class CountriesAndLeaguesPanel extends JPanel{
      * 
      * @param availableLeagues všetky dostupné krajiny a k nim dostupné ligy
      * @param initialChoosenLeagues ligy, ktoré majú byť iniciálne zvolené
-     * @param season aktuálne sedenie (pre získanie {@link ResourceBundle})
+     * @param session aktuálne sedenie (pre získanie {@link ResourceBundle})
      */
     public CountriesAndLeaguesPanel(Map<String, Collection<String>> availableLeagues,
             Set<Tuple<String, String>> initialChoosenLeagues,
-            Season season){
+            Session session){
         if(availableLeagues == null){
             throw new IllegalArgumentException("Available leagues are null");
         }
         this.availableLeagues = availableLeagues;
-        bundle = season.getDefaultBundle();
+        bundle = session.getDefaultBundle();
         allOption = bundle.getString("all");
         init(initialChoosenLeagues);
     }

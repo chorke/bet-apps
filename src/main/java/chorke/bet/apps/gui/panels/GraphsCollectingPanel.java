@@ -6,7 +6,7 @@ import chorke.bet.apps.core.CoreUtils.Periode;
 import chorke.bet.apps.core.calculators.Yield;
 import chorke.bet.apps.core.graphs.Graph;
 import chorke.bet.apps.gui.GuiUtils;
-import chorke.bet.apps.gui.Season;
+import chorke.bet.apps.gui.Session;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -54,19 +54,19 @@ public class GraphsCollectingPanel extends JPanel{
     
     private ResourceBundle bundle;
     
-    private Season season;
+    private Session session;
 
     /**
      * Vytvorí nový panel, ktorý zobrazuje grafy.
      * 
-     * @param season 
+     * @param session 
      */
-    public GraphsCollectingPanel(Season season) {
-        if(season == null){
+    public GraphsCollectingPanel(Session session) {
+        if(session == null){
             throw new IllegalArgumentException("Season cannot be null.");
         }
-        this.season = season;
-        bundle = season.getDefaultBundle();
+        this.session = session;
+        bundle = session.getDefaultBundle();
         graphs = new HashMap<>();
         periodeButtons = new JRadioButton[Periode.values().length];
         int i = 0;
@@ -74,9 +74,9 @@ public class GraphsCollectingPanel extends JPanel{
             periodeButtons[i++] = GuiUtils.getRadioButton(bundle.getString(p.toString()),
                     new SetRequireGraphAction());
         }
-        betPossButtons = new JRadioButton[season.getCalculator().getBetPossibilities().length];
+        betPossButtons = new JRadioButton[session.getCalculator().getBetPossibilities().length];
         i = 0;
-        for(BetPossibility bp : season.getCalculator().getBetPossibilities()){
+        for(BetPossibility bp : session.getCalculator().getBetPossibilities()){
             betPossButtons[i++] = GuiUtils.getRadioButton(bundle.getString(bp.toString()),
                     new SetRequireGraphAction());
         }
@@ -214,10 +214,10 @@ public class GraphsCollectingPanel extends JPanel{
      * Pripraví rozsahy podľa YieldProperties. Zároveň nastavý scales.
      */
     private void prepareScale(){
-        if(season.getYieldProperties() == null){
+        if(session.getYieldProperties() == null){
             return;
         }
-        List<BigDecimal> scList = season.getYieldProperties().getScale();
+        List<BigDecimal> scList = session.getYieldProperties().getScale();
         if(scList == null){
             scList = new LinkedList<>();
         }
@@ -250,21 +250,21 @@ public class GraphsCollectingPanel extends JPanel{
      */
     @SuppressWarnings("unchecked")
     private GraphPanel[][] prepareGraphsPanel(Periode periode){
-        if(season.getCalculator() == null
-                || season.getMatches() == null
-                || season.getYieldProperties() == null){
+        if(session.getCalculator() == null
+                || session.getMatches() == null
+                || session.getYieldProperties() == null){
             return new GraphPanel[0][0];
         }
-        Map<Calendar, Yield> yields = season.getCalculator().getPeriodicYield(
-                season.getMatches(), season.getYieldProperties(), periode);
-        BetPossibility[] poss = season.getCalculator().getBetPossibilities();
+        Map<Calendar, Yield> yields = session.getCalculator().getPeriodicYield(
+                session.getMatches(), session.getYieldProperties(), periode);
+        BetPossibility[] poss = session.getCalculator().getBetPossibilities();
         
-        List<BigDecimal> scales = season.getYieldProperties().getScale();
+        List<BigDecimal> scales = session.getYieldProperties().getScale();
         GraphPanel[][] graphsForPeriode = new GraphPanel[poss.length][scales.size() + 1];
         for(int i = 0; i < poss.length; i++){
             for(int j = 0; j <= scales.size(); j++){
-                graphsForPeriode[i][j] = new GraphPanel(season.getGraphBuilder()
-                        .getGraph(yields, poss[i], j));
+                graphsForPeriode[i][j] = new GraphPanel(session.getGraphBuilder()
+                        .getGraph(yields, poss[i], j, scales));
                 graphsForPeriode[i][j].setPreferredSize(graphDim);
             }
         }

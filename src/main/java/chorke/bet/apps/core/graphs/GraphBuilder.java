@@ -2,11 +2,13 @@
 package chorke.bet.apps.core.graphs;
 
 import chorke.bet.apps.core.CoreUtils.BetPossibility;
-import chorke.bet.apps.core.Tuple;
 import chorke.bet.apps.core.calculators.Yield;
 import java.math.BigDecimal;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -14,26 +16,29 @@ import java.util.Map;
  */
 public abstract class GraphBuilder <T extends Yield> {
     
-    /**
-     * Vytvorí graf pre zvolenú možnosť stávky a rozsah podľa indexu.
-     * 
-     * @param yields
-     * @param betPossibility
-     * @param index
-     * @return 
-     */
-    public abstract Graph getGraph(Map<Calendar, T> yields, BetPossibility betPossibility, int index);
+    protected static final Logger LOG = LoggerFactory.getLogger(GraphBuilder.class);
+    
+//    /**
+//     * Vytvorí graf pre zvolenú možnosť stávky a rozsah podľa indexu.
+//     * 
+//     * @param yields
+//     * @param betPossibility
+//     * @param index
+//     * @return 
+//     */
+//    public abstract Graph getGraph(Map<Calendar, T> yields, BetPossibility betPossibility, int index);
     
     /**
-     * Vytvorí graf pre zvolenú možnosť stávky a podľa rozsahu range.
+     * Vytvorí graf pre zvolenú možnosť stávky a kľúča.
      * 
      * @param yields
      * @param betPossibility
-     * @param range
+     * @param idxOnScale 
+     * @param scales  
      * @return 
      */
     public abstract Graph getGraph(Map<Calendar, T> yields, BetPossibility betPossibility,
-            Tuple<BigDecimal, BigDecimal> range);
+            int idxOnScale, List<BigDecimal> scales);
     
     /**
      * Vytvorí graf z predaných argumentov. Poradie hodnôt v grafe je rovnaké

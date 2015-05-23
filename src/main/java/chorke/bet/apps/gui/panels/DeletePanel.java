@@ -3,7 +3,7 @@ package chorke.bet.apps.gui.panels;
 
 import chorke.bet.apps.core.CoreUtils;
 import chorke.bet.apps.gui.GuiUtils;
-import chorke.bet.apps.gui.Season;
+import chorke.bet.apps.gui.Session;
 import chorke.bet.apps.io.BetIOManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,7 +33,7 @@ public class DeletePanel extends JPanel{
     /**
      * Aktuálne sedenie
      */
-    private Season season;
+    private Session session;
     /**
      * Lokalizované názvy a hlášky
      */
@@ -63,12 +63,12 @@ public class DeletePanel extends JPanel{
      * Vytvorí nový panel, ktorý ponúka možnsoť zmazať stávkové spoločnosti
      * a ligy.
      * 
-     * @param season aktuálne sedeni
+     * @param session aktuálne sedeni
      */
-    public DeletePanel(Season season){
-        this.season = season;
-        this.bundle = season.getDefaultBundle();
-        this.manager = season.getManager();
+    public DeletePanel(Session session){
+        this.session = session;
+        this.bundle = session.getDefaultBundle();
+        this.manager = session.getManager();
         init();
     }
     
@@ -78,9 +78,9 @@ public class DeletePanel extends JPanel{
     private void init(){
         betCompaniesPanel = new BetCompaniesListPanel(
                 CoreUtils.getAllAvailableBetCompanies(manager, GuiUtils.SUPPORTED_BET_TYPES),
-                null, null, season);
+                null, null, session);
         countriesAndLeaguesPanel = new CountriesAndLeaguesPanel(
-                manager.getAvailableCountriesAndLeagues(), null, season);
+                manager.getAvailableCountriesAndLeagues(), null, session);
         deleteBetCompaniesButton = new JButton(bundle.getString("deleteBetCompanies"));
         deleteLeaguesButton = new JButton(bundle.getString("deleteLeagues"));
         deleteBetCompaniesButton.addActionListener(new DeleteBetCompaniesListener());

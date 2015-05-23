@@ -4,7 +4,7 @@ package chorke.bet.apps;
 import chorke.bet.apps.core.CoreUtils;
 import chorke.bet.apps.core.httpparsing.BetexplorerComMultithreadParser;
 import chorke.bet.apps.gui.GuiUtils;
-import chorke.bet.apps.gui.Season;
+import chorke.bet.apps.gui.Session;
 import chorke.bet.apps.gui.panels.LoadingPanel;
 import chorke.bet.apps.gui.panels.MainPanel;
 import chorke.bet.apps.io.DBBetIOManager;
@@ -28,14 +28,14 @@ public class MainClass implements Runnable{
     /**
      * Logger pre main triedu. Zaznamenáva aj nezachytené výnimky.
      */
-    private static final Logger log = LoggerFactory.getLogger(MainClass.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MainClass.class);
     
     public static void main(String... args){
-        log.debug("Setting default uncought exception handler.");
+        LOG.debug("Setting default uncought exception handler.");
         Thread.setDefaultUncaughtExceptionHandler(new DefaultUncoughtExceptionHandler());
-        log.debug("Starting application.");
+        LOG.debug("Starting application.");
         SwingUtilities.invokeLater(new MainClass());
-        log.debug("Application has been started.");
+        LOG.debug("Application has been started.");
     }
     
     /**
@@ -46,7 +46,7 @@ public class MainClass implements Runnable{
 
         @Override
         public void uncaughtException(Thread t, Throwable e) {
-            log.error("Error in thread " + t + ": uncought exception.", e);
+            LOG.error("Error in thread " + t + ": uncought exception.", e);
             e.printStackTrace(System.err);
         }
     }
@@ -54,12 +54,12 @@ public class MainClass implements Runnable{
     @Override
     public void run(){
         DBBetIOManager man = new DBBetIOManager(CoreUtils.DATA_SOURCE);
-        Season season = new Season();
-        season.setManager(man);
-        season.setParser(new BetexplorerComMultithreadParser(man));
-        season.setUser(new User("default_user"));
+        Session session = new Session();
+        session.setManager(man);
+        session.setParser(new BetexplorerComMultithreadParser(man));
+        session.setUser(new User("default_user"));
         
-        final MainPanel panel = new MainPanel(season);
+        final MainPanel panel = new MainPanel(session);
         
         JScrollPane pane = new JScrollPane(panel);
         JFrame f = GuiUtils.getDefaultFrame(null, JFrame.DO_NOTHING_ON_CLOSE,
@@ -76,9 +76,9 @@ public class MainClass implements Runnable{
 //        testMethod(season);
     }
     
-    private void testMethod(Season season){
-//        DeletePanel panel = new DeletePanel(season);
-        LoadingPanel panel = new LoadingPanel(season);
+    private void testMethod(Session session){
+//        DeletePanel panel = new DeletePanel(session);
+        LoadingPanel panel = new LoadingPanel(session);
         JFrame f = GuiUtils.getDefaultFrame("Test", JFrame.DISPOSE_ON_CLOSE, false, null,
                 panel);
         f.setVisible(true);

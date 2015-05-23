@@ -11,9 +11,7 @@ import chorke.bet.apps.core.bets.BetOverUnder;
 import chorke.bet.apps.core.match.Match;
 import chorke.bet.apps.core.match.MatchProperties;
 import chorke.bet.apps.core.match.score.PartialScore;
-import chorke.bet.apps.core.match.score.Score;
 import chorke.bet.apps.core.match.sports.Sport;
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -28,10 +26,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.sql.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -43,6 +42,9 @@ import javax.sql.DataSource;
  */
 public class DBBetIOManager implements CloneableBetIOManager{
 
+    private static final Logger LOG = LoggerFactory.getLogger(DBBetIOManager.class);
+    private static final int OVERALL_SCORE_KEY = -1;
+    
     private DataSource dataSource;
     
     private volatile boolean isCanceled;
@@ -68,7 +70,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
     public void saveMatch(Match match) throws BetIOException {
         isCanceled = false;
         if(match == null){
-            throw new IllegalArgumentException("Match can no be null.");
+            throw new IllegalArgumentException("Match cannot be null.");
         }
         if(match.getId() != null){
             throw new IllegalArgumentException("Matchs ID already set");
@@ -83,7 +85,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
             throw new IllegalArgumentException("Invalid match properties.");
         }
         if(match.getSport() == null){
-            throw new IllegalArgumentException("Sport can not be null");
+            throw new IllegalArgumentException("Sport cannot be null");
         }
         try(Connection con = dataSource.getConnection()){
             PreparedStatement ps = con.prepareStatement(
@@ -102,35 +104,33 @@ public class DBBetIOManager implements CloneableBetIOManager{
             rs.next();
             match.setId(rs.getLong(1));
       
-            removeFromActualPS(ps);
+            removeFromActualPS(true, ps);
             ps = con.prepareStatement("INSERT INTO scores (matchid,team1,team2,part) VALUES(?,?,?,?)");
             addToActualPS(ps);
             ps.setLong(1, match.getId());
             ps.setInt(2, match.getScore().getScoreFirstParty());
             ps.setInt(3, match.getScore().getScoreSecondParty());
-            ps.setInt(4, -1);
+            ps.setInt(4, OVERALL_SCORE_KEY);
             checkCancelation();
             ps.executeUpdate();
-            List<PartialScore> listPs = match.getScore().getPartialScore();
-            int i = 0;
-            while(i < listPs.size()){
+            int i = 1;
+            for(PartialScore partScore : match.getScore().getPartialScore()){
                 checkCancelation();
-                removeFromActualPS(ps);
+                removeFromActualPS(true, ps);
                 ps = con.prepareStatement(
                         "INSERT INTO scores (matchid,team1,team2,part) VALUES(?,?,?,?)");
                 addToActualPS(ps);
                 ps.setLong(1, match.getId());
-                ps.setInt(2, listPs.get(i).firstParty);
-                ps.setInt(3, listPs.get(i).secondParty);
-                i++;
-                ps.setInt(4, i);
+                ps.setInt(2, partScore.firstParty);
+                ps.setInt(3, partScore.secondParty);
+                ps.setInt(4, i++);
                 ps.executeUpdate();
             }
             Map<String, Collection<Bet>> bets = match.getBets();
             for(String s : bets.keySet()){
                 for(Bet b : bets.get(s)){
                     checkCancelation();
-                    removeFromActualPS(ps);
+                    removeFromActualPS(true, ps);
                     if(b instanceof Bet1x2){
                         ps = prepareStatementBet1x2(
                                 con, (Bet1x2)b, match.getId());
@@ -156,6 +156,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
                     ps.executeUpdate();
                 }
             }
+            removeFromActualPS(true, ps);
         } catch (SQLException ex){
             if(match.getId() != null){
                 boolean cancel = isCanceled;
@@ -170,8 +171,13 @@ public class DBBetIOManager implements CloneableBetIOManager{
      * Odtráni {@link PreparedStatement} z aktuálne spracovývanách.
      * @param ps 
      */
-    private void removeFromActualPS(PreparedStatement... ps){
+    private void removeFromActualPS(boolean close, PreparedStatement... ps){
         for(PreparedStatement p : ps){
+            if(close && p != null){
+                try{
+                    p.close();
+                } catch (SQLException ex){}
+            }
             actualPreparedStatements.remove(p);
         }
     }
@@ -213,9 +219,9 @@ public class DBBetIOManager implements CloneableBetIOManager{
                 + "VALUES (?,?,?,?,?)");
         ps.setLong(1, matchID);
         ps.setString(2, bet.betCompany);
-        ps.setString(3, bet.bet1.toPlainString());
-        ps.setString(4, bet.betX.toPlainString());
-        ps.setString(5, bet.bet2.toPlainString());
+        ps.setBigDecimal(3, bet.bet1);
+        ps.setBigDecimal(4, bet.betX);
+        ps.setBigDecimal(5, bet.bet2);
         return ps;
     }
     
@@ -235,9 +241,9 @@ public class DBBetIOManager implements CloneableBetIOManager{
                 + "VALUES (?,?,?,?,?,?)");
         ps.setLong(1, matchID);
         ps.setString(2, bet.betCompany);
-        ps.setString(3, bet.bet1.toPlainString());
-        ps.setString(4, bet.bet2.toPlainString());
-        ps.setString(5, bet.handicap.toPlainString());
+        ps.setBigDecimal(3, bet.bet1);
+        ps.setBigDecimal(4, bet.bet2);
+        ps.setBigDecimal(5, bet.handicap);
         ps.setString(6, bet.description);
         return ps; 
     }
@@ -258,8 +264,8 @@ public class DBBetIOManager implements CloneableBetIOManager{
                 + "VALUES (?,?,?,?)");
         ps.setLong(1, matchID);
         ps.setString(2, bet.betCompany);
-        ps.setString(3, bet.yes.toPlainString());
-        ps.setString(4, bet.no.toPlainString());
+        ps.setBigDecimal(3, bet.yes);
+        ps.setBigDecimal(4, bet.no);
         return ps;
     }
     
@@ -279,9 +285,9 @@ public class DBBetIOManager implements CloneableBetIOManager{
                 + "VALUES (?,?,?,?,?)");
         ps.setLong(1, matchID);
         ps.setString(2, bet.betCompany);
-        ps.setString(3, bet.bet1X.toPlainString());
-        ps.setString(4, bet.betX2.toPlainString());
-        ps.setString(5, bet.bet12.toPlainString());
+        ps.setBigDecimal(3, bet.bet1X);
+        ps.setBigDecimal(4, bet.betX2);
+        ps.setBigDecimal(5, bet.bet12);
         return ps;
     }
     
@@ -301,8 +307,8 @@ public class DBBetIOManager implements CloneableBetIOManager{
                 + "VALUES (?,?,?,?)");
         ps.setLong(1, matchID);
         ps.setString(2, bet.betCompany);
-        ps.setString(3, bet.bet1.toPlainString());
-        ps.setString(4, bet.bet2.toPlainString());
+        ps.setBigDecimal(3, bet.bet1);
+        ps.setBigDecimal(4, bet.bet2);
         return ps;
     }
     
@@ -322,9 +328,9 @@ public class DBBetIOManager implements CloneableBetIOManager{
                 + "VALUES (?,?,?,?,?,?)");
         ps.setLong(1, matchID);
         ps.setString(2, bet.betCompany);
-        ps.setString(3, bet.total.toPlainString());
-        ps.setString(4, bet.over.toPlainString());
-        ps.setString(5, bet.under.toPlainString());
+        ps.setBigDecimal(3, bet.total);
+        ps.setBigDecimal(4, bet.over);
+        ps.setBigDecimal(5, bet.under);
         ps.setString(6, bet.description);
         return ps;
     }
@@ -374,51 +380,43 @@ public class DBBetIOManager implements CloneableBetIOManager{
             PreparedStatement betdnbPS,
             PreparedStatement betouPS) throws SQLException {
         addToActualPS(matchesPS, scoresPS, bet1x2PS, betahPS, betbttsPS, betdcPS, betdnbPS, betouPS);
-        System.out.println("getting matches");
+        LOG.info("getting matches");
         Map<Long, Match> matches = getMatches(matchesPS.executeQuery());
-        matchesPS.close();
         checkCancelation();
-        System.out.println("getting scores");
+        LOG.info("getting scores");
         getScores(scoresPS.executeQuery(), matches);
-        scoresPS.close();
         checkCancelation();
         if(bet1x2PS != null){
-            System.out.println("getting 1x2");
+            LOG.info("getting 1x2");
             getBet1x2(bet1x2PS.executeQuery(), matches);
-            bet1x2PS.close();
             checkCancelation();
         }
         if(betahPS != null){
-            System.out.println("getting ah");
+            LOG.info("getting ah");
             getBetAsianHandicap(betahPS.executeQuery(), matches);
-            betahPS.close();
             checkCancelation();
         }
         if(betbttsPS != null){
-            System.out.println("getting btts");
+            LOG.info("getting btts");
             getBetBothTeamsToScore(betbttsPS.executeQuery(), matches);
-            betbttsPS.close();
             checkCancelation();
         }
         if(betdcPS != null){
-            System.out.println("getting dc");
+            LOG.info("getting dc");
             getBetDoubleChance(betdcPS.executeQuery(), matches);
-            betdcPS.close();
             checkCancelation();
         }
         if(betdnbPS != null){
-            System.out.println("getting dnb");
+            LOG.info("getting dnb");
             getBetDrawNoBet(betdnbPS.executeQuery(), matches);
-            betdnbPS.close();
             checkCancelation();
         }
         if(betouPS != null){
-            System.out.println("getting ou");
+            LOG.info("getting ou");
             getBetOverUnder(betouPS.executeQuery(), matches);
-            betouPS.close();
             checkCancelation();
         }
-        removeFromActualPS(matchesPS, scoresPS, bet1x2PS, betahPS, betbttsPS, betdcPS, betdnbPS, betouPS);
+        removeFromActualPS(true, matchesPS, scoresPS, bet1x2PS, betahPS, betbttsPS, betdcPS, betdnbPS, betouPS);
         Collection<Match> outputMatches = new LinkedList<>();
         Iterator<Long> iter = matches.keySet().iterator();
         Match match;
@@ -448,9 +446,9 @@ public class DBBetIOManager implements CloneableBetIOManager{
             if(match == null){ continue; }
             match.addBet(
                 new Bet1x2(bet.getString("betcompany"),
-                    new BigDecimal(bet.getString("bet1")), 
-                    new BigDecimal(bet.getString("betx")),
-                    new BigDecimal(bet.getString("bet2"))));
+                    bet.getBigDecimal("bet1"), 
+                    bet.getBigDecimal("betx"),
+                    bet.getBigDecimal("bet2")));
         }
         bet.close();
     }
@@ -470,9 +468,9 @@ public class DBBetIOManager implements CloneableBetIOManager{
             if(match == null){ continue; }
             match.addBet(
                     new BetAsianHandicap(bet.getString("betcompany"),
-                        new BigDecimal(bet.getString("bet1")), 
-                        new BigDecimal(bet.getString("bet2")),
-                        new BigDecimal(bet.getString("handicap")),
+                        bet.getBigDecimal("bet1"), 
+                        bet.getBigDecimal("bet2"),
+                        bet.getBigDecimal("handicap"),
                         bet.getString("description")));
         }
         bet.close();
@@ -493,8 +491,8 @@ public class DBBetIOManager implements CloneableBetIOManager{
             if(match == null){ continue; }
             match.addBet(
                     new BetBothTeamsToScore(bet.getString("betcompany"),
-                        new BigDecimal(bet.getString("yesbet")), 
-                        new BigDecimal(bet.getString("nobet"))));
+                        bet.getBigDecimal("yesbet"), 
+                        bet.getBigDecimal("nobet")));
         }
         bet.close();
     }
@@ -514,9 +512,9 @@ public class DBBetIOManager implements CloneableBetIOManager{
             if(match == null){ continue; }
             match.addBet(
                     new BetDoubleChance(bet.getString("betcompany"),
-                        new BigDecimal(bet.getString("bet1x")), 
-                        new BigDecimal(bet.getString("bet12")),
-                        new BigDecimal(bet.getString("bet2x"))));
+                        bet.getBigDecimal("bet1x"), 
+                        bet.getBigDecimal("bet12"),
+                        bet.getBigDecimal("bet2x")));
         }
         bet.close();
     }
@@ -536,8 +534,8 @@ public class DBBetIOManager implements CloneableBetIOManager{
             if(match == null){ continue; }
             match.addBet(
                     new BetDrawNoBet(bet.getString("betcompany"),
-                        new BigDecimal(bet.getString("bet1")), 
-                        new BigDecimal(bet.getString("bet2"))));
+                        bet.getBigDecimal("bet1"), 
+                        bet.getBigDecimal("bet2")));
         }
         bet.close();
     }
@@ -557,9 +555,9 @@ public class DBBetIOManager implements CloneableBetIOManager{
             if(match == null){ continue; }
             match.addBet(
                     new BetOverUnder(bet.getString("betcompany"),
-                        new BigDecimal(bet.getString("total")), 
-                        new BigDecimal(bet.getString("overbet")),
-                        new BigDecimal(bet.getString("underbet")),
+                        bet.getBigDecimal("total"), 
+                        bet.getBigDecimal("overbet"),
+                        bet.getBigDecimal("underbet"),
                         bet.getString("description")));
         }
         bet.close();
@@ -576,12 +574,12 @@ public class DBBetIOManager implements CloneableBetIOManager{
             throws SQLException{
         int maxPart = 1;
         int exploredPart = 1;
-        int acualPart;
+        int actualPart;
         Match match;
         while(exploredPart <= maxPart){
             while(scores.next()){
-                acualPart = scores.getInt("part");
-                if(acualPart == exploredPart){
+                actualPart = scores.getInt("part");
+                if(actualPart == exploredPart){
                     match = matches.get(scores.getLong("matchid"));
                     if(match == null){
                         continue; 
@@ -589,8 +587,8 @@ public class DBBetIOManager implements CloneableBetIOManager{
                     match.addPartialScore(
                             new PartialScore(scores.getInt("team1"), scores.getInt("team2")));
                 }
-                if(acualPart > maxPart){ 
-                    maxPart = acualPart; 
+                if(actualPart > maxPart){ 
+                    maxPart = actualPart; 
                 }
             }
             exploredPart++;
@@ -631,7 +629,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
     public Collection<Match> loadMatches(LoadProperties properties) throws BetIOException {
         isCanceled = false;
         if(properties == null){
-            throw new IllegalArgumentException("Load properties can not be null");
+            throw new IllegalArgumentException("Load properties cannot be null");
         }
         if(properties.isEmpty()){
             return loadAllMatches();
@@ -707,7 +705,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
             checkCancelationAndExecuteUpdate(betdcPS);
             checkCancelationAndExecuteUpdate(betdnbPS);
             checkCancelationAndExecuteUpdate(betouPS);
-            removeFromActualPS(matchesPS, scoresPS, bet1x2PS, betahPS, betbttsPS, betdcPS, betdnbPS, betouPS);
+            removeFromActualPS(false, matchesPS, scoresPS, bet1x2PS, betahPS, betbttsPS, betdcPS, betdnbPS, betouPS);
         } catch (SQLException ex){
             throw new BetIOException("Error while deleting match.", ex);
         }
@@ -755,7 +753,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
                             "SELECT DISTINCT betcompany FROM " + betTable)){
                 addToActualPS(ps);
                 ResultSet rs = ps.executeQuery();
-                removeFromActualPS(ps);
+                removeFromActualPS(false, ps);
                 while(rs.next()){
                     checkCancelation();
                     companies.add(rs.getString("betcompany"));
@@ -778,7 +776,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
                         "SELECT DISTINCT country, league FROM matches ORDER BY country")){
             addToActualPS(ps);
             ResultSet rs = ps.executeQuery();
-            removeFromActualPS(ps);
+            removeFromActualPS(false, ps);
             Map<String, Collection<String>> ctryAndlgs = new HashMap<>();
             String previousCtr = "";
             Collection<String> leagues = null;
@@ -830,7 +828,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
             checkCancelation();
             addToActualPS(ps);
             ResultSet rs = ps.executeQuery();
-            removeFromActualPS(ps);
+            removeFromActualPS(false, ps);
             Calendar c = new GregorianCalendar();
             if(!rs.next()){
                 return c;
@@ -884,7 +882,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
             //matches najskôr -- scores berie NOT IN matches.id
             checkCancelationAndExecuteUpdate(matches);
             checkCancelationAndExecuteUpdate(scoresPs);
-            removeFromActualPS(bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matches, scoresPs);
+            removeFromActualPS(false, bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matches, scoresPs);
         } catch (SQLException ex){
             throw new BetIOException("Exception while deleting bet company.", ex);
         }
@@ -933,7 +931,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
             checkCancelationAndExecuteUpdate(betdnbPs);
             checkCancelationAndExecuteUpdate(betouPs);
             checkCancelationAndExecuteUpdate(matchesPs);
-            removeFromActualPS(bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matchesPs, scoresPs);
+            removeFromActualPS(false, bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matchesPs, scoresPs);
         } catch (SQLException ex){
             throw new BetIOException("Exception while deleting league.", ex);
         }
@@ -979,7 +977,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
             checkCancelationAndExecuteUpdate(betdnbPs);
             checkCancelationAndExecuteUpdate(betouPs);
             checkCancelationAndExecuteUpdate(matchesPs);
-            removeFromActualPS(bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matchesPs, scoresPs);
+            removeFromActualPS(false, bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matchesPs, scoresPs);
         } catch (SQLException ex){
             throw new BetIOException("Exception while deleting league.", ex);
         }
@@ -1033,7 +1031,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
             checkCancelationAndExecuteUpdate(betdnbPs);
             checkCancelationAndExecuteUpdate(betouPs);
             checkCancelationAndExecuteUpdate(matchesPs);
-            removeFromActualPS(bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matchesPs, scoresPs);
+            removeFromActualPS(false, bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matchesPs, scoresPs);
         } catch (SQLException ex){
             throw new BetIOException("Exception while deleting sport.", ex);
         }
@@ -1060,7 +1058,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
             checkCancelationAndExecuteUpdate(betdnbPs);
             checkCancelationAndExecuteUpdate(betouPs);
             checkCancelationAndExecuteUpdate(matchesPs);
-            removeFromActualPS(bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matchesPs, scoresPs);
+            removeFromActualPS(false, bet1x2Ps, betahPs, betbttsPs, betdcPs, betdnbPs, betouPs, matchesPs, scoresPs);
         } catch (SQLException ex){
             throw new BetIOException("Exception while deleting sport.", ex);
         }
@@ -1076,7 +1074,7 @@ public class DBBetIOManager implements CloneableBetIOManager{
                     ps.close();
                 }
             } catch (SQLException ex){
-                System.out.println(ex);
+                LOG.warn("Exception while canceling query.", ex);
             }
         }
     }

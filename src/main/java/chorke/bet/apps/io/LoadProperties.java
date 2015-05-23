@@ -199,7 +199,7 @@ public class LoadProperties extends Properties{
         boolean needAnd = false;
         if(betCompanies != null && !betCompanies.isEmpty()){
             needAnd = true;
-            for(String betCompany : betCompanies){
+            for(int i = 0; i < betCompanies.size(); i++){
                 out.append("betcompany LIKE ? OR ");
             }
             out.delete(out.length() - 4, out.length());
@@ -214,8 +214,7 @@ public class LoadProperties extends Properties{
         int i = 1;
         if(betCompanies != null && !betCompanies.isEmpty()){
             for(String betCompany : betCompanies){
-                ps.setString(i, betCompany);
-                i++;
+                ps.setString(i++, betCompany);
             }
         }
         fillPreparedStatementForMatchesWhereClause(ps, i);

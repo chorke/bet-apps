@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" packages="org.chorke.gui.utils.logging">
+    <Appenders>
+        <Console name="CONSOLE" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+        <GUI name="DOWNLOAD_GUI">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} - %msg%n" />
+        </GUI>
+    </Appenders>
+    <Loggers>
+        <Logger name="chorke.bet.apps.core.httpparsing" level="INFO" additivity="true">
+            <AppenderRef ref="DOWNLOAD_GUI" />
+        </Logger>
+        <Root level="DEBUG">
+            <AppenderRef ref="CONSOLE"/>
+        </Root>
+    </Loggers>
+</Configuration>

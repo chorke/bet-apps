@@ -6,7 +6,7 @@ import chorke.bet.apps.core.Tuple;
 import chorke.bet.apps.core.bets.Bet;
 import chorke.bet.apps.core.match.Match;
 import chorke.bet.apps.gui.GuiUtils;
-import chorke.bet.apps.gui.Season;
+import chorke.bet.apps.gui.Session;
 import chorke.bet.apps.io.BetIOException;
 import chorke.bet.apps.io.BetIOManager;
 import chorke.bet.apps.io.LoadProperties;
@@ -34,6 +34,8 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import org.chorke.gui.utils.panels.DateChooser;
 import org.chorke.gui.utils.worker.SwingWorkerWithWaitingDialog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -41,12 +43,14 @@ import org.chorke.gui.utils.worker.SwingWorkerWithWaitingDialog;
  */
 public class LoadingPanel extends JPanel{
     
+    private static final Logger LOG = LoggerFactory.getLogger(LoadingPanel.class);
+    
     /**
      * Sedenie, kde sa uložia zápasy a LoadProperties po načítaní.
      * Ak season už obsahuje už nastavené LoadProperties, tak okno je
      * nastavené podľa nich.
      */
-    private Season season;
+    private Session session;
     
     /**
      * Počiatočný dátum.
@@ -88,18 +92,18 @@ public class LoadingPanel extends JPanel{
     /**
      * Vytvorí novú inštanciu.
      * 
-     * @param season 
+     * @param session 
      * @throws IllegalArgumentException ak je season == null
      * @throws BetIOException ak nastane nejaká chyba pri inicializácii okna
      * a čítaní niektorých hodnôt z DB
      */
-    public LoadingPanel(Season season) throws IllegalArgumentException, BetIOException{
-        if(season == null){
+    public LoadingPanel(Session session) throws IllegalArgumentException, BetIOException{
+        if(session == null){
             throw new IllegalArgumentException("Season cannot be null.");
         }
-        this.bundle = season.getDefaultBundle();
-        this.manager = season.getManager();
-        this.season = season;
+        this.bundle = session.getDefaultBundle();
+        this.manager = session.getManager();
+        this.session = session;
         init();
     }
     
@@ -144,7 +148,7 @@ public class LoadingPanel extends JPanel{
                 CoreUtils.getAllAvailableBetCompanies(manager, GuiUtils.SUPPORTED_BET_TYPES);
         Class<? extends Bet> initBetClass = null;
         Collection<String> initBetComps = null;
-        LoadProperties prop = season.getLoadProperties();
+        LoadProperties prop = session.getLoadProperties();
         if(prop != null){
             Set<Class<Bet>> classes = prop.getBetClasses();
             int initIdx = 0;
@@ -160,24 +164,24 @@ public class LoadingPanel extends JPanel{
             }
         }
         betCompaniesPanel = new BetCompaniesListPanel(betCompanies,
-                initBetClass, initBetComps, season);
+                initBetClass, initBetComps, session);
     }
     
     /**
      * Inicializuje panel pre dátumy {@link #datesPanel}.
      */
     private void initDatesPanel(){
-        from = new DateChooser(season.getDefaultLocale());
-        by = new DateChooser(season.getDefaultLocale());
+        from = new DateChooser(session.getDefaultLocale());
+        by = new DateChooser(session.getDefaultLocale());
         from.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED),
                 bundle.getString("from")));
         by.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED),
                 bundle.getString("by")));
-        Calendar c = season.getLoadProperties() == null ? null 
-                : season.getLoadProperties().getStartDate();
+        Calendar c = session.getLoadProperties() == null ? null 
+                : session.getLoadProperties().getStartDate();
         from.setActualDate(c == null ? manager.getFirstDate() : c);
-        c = season.getLoadProperties() == null ? null 
-                : season.getLoadProperties().getEndDate();
+        c = session.getLoadProperties() == null ? null 
+                : session.getLoadProperties().getEndDate();
         by.setActualDate(c == null ? manager.getLastDate() : c);
         Dimension dim = new Dimension(150, 50);
         from.setPreferredSize(dim);
@@ -208,11 +212,11 @@ public class LoadingPanel extends JPanel{
      */
     private void initCountriesAndLeaguesPanel(){
         Set<Tuple<String, String>> lgs = null;
-        if(season.getLoadProperties() != null){
-            lgs = season.getLoadProperties().getLeagues();
+        if(session.getLoadProperties() != null){
+            lgs = session.getLoadProperties().getLeagues();
         }
         countriesAndLeaguesPanel = new CountriesAndLeaguesPanel(
-                manager.getAvailableCountriesAndLeagues(), lgs, season);
+                manager.getAvailableCountriesAndLeagues(), lgs, session);
     }
     
     /**
@@ -258,8 +262,8 @@ public class LoadingPanel extends JPanel{
             errors.clear();
             LoadProperties prop = getLoadProperties();
             if(checkLoadingProperties(prop)){
-                if(season.getMatches() != null){
-                    season.getMatches().clear();
+                if(session.getMatches() != null){
+                    session.getMatches().clear();
                 }
                 return new Tuple<>(prop, manager.loadMatches(prop));
             } else {
@@ -280,15 +284,12 @@ public class LoadingPanel extends JPanel{
             try{
                 Tuple<LoadProperties, Collection<Match>> m = get();
                 if(errors.isEmpty()){
-                    season.setLoadProperties(m.first);
-                    season.setMatches(m.second);
+                    session.setLoadProperties(m.first);
+                    session.setMatches(m.second);
                     JOptionPane.showMessageDialog(null, bundle.getString("loadingSuccessful"));
                 }
             } catch (ExecutionException | InterruptedException | CancellationException ex){
-                if(ex.getCause() instanceof Error){
-                    System.gc();
-                }
-                System.out.println(ex);
+                LOG.error("Loading failed.", ex);
                 JOptionPane.showMessageDialog(null, bundle.getString("loadingFailed"));
             }
 //            GuiUtils.hideWaitingDialog();

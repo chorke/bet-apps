@@ -3,7 +3,7 @@ package chorke.bet.apps.gui.panels;
 
 import chorke.bet.apps.core.bets.Bet;
 import chorke.bet.apps.gui.GuiUtils;
-import chorke.bet.apps.gui.Season;
+import chorke.bet.apps.gui.Session;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
@@ -65,16 +65,16 @@ public class BetCompaniesListPanel extends JPanel{
      * @param betCompanies mapa typov stávok a k nim priradených stávkových spoločností
      * @param initialChoosenBetClass typ stávky, ktorý má byť iniciálne vybraný
      * @param initialChoosenBetCompanies stávkové spoločnosti, ktoré majú byť inicálne vybraní
-     * @param season aktuálne sedenie (pre {@link ResourceBundle} pre lokalizované názvy)
+     * @param session aktuálne sedenie (pre {@link ResourceBundle} pre lokalizované názvy)
      */
     public BetCompaniesListPanel(Map<Class<? extends Bet>, Collection<String>> betCompanies,
             Class<? extends Bet> initialChoosenBetClass, Collection<String> initialChoosenBetCompanies,
-            Season season){
+            Session session){
         if(betCompanies == null){
             throw new IllegalArgumentException("Bet companies are null.");
         }
         this.betCompanies = betCompanies;
-        bundle = season.getDefaultBundle();
+        bundle = session.getDefaultBundle();
         init(initialChoosenBetClass, initialChoosenBetCompanies);
     }
     

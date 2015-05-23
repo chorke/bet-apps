@@ -26,23 +26,18 @@ public final class Tuple<X, Y> {
 
     @Override
     public boolean equals(Object obj) {
+        if(this == obj){
+            return true;
+        }
         if(obj == null
                 || !(obj instanceof Tuple)){
             return false;
         }
         Tuple t = (Tuple) obj;
         
-        if(t.first == null && this.first != null){ return false; }
-        if(t.first != null && this.first == null){ return false; }
-        if(t.second == null && this.second != null){ return false; }
-        if(t.second != null && this.second == null){ return false; }
-        if(t.first != null 
-            && (t.first.getClass() != this.first.getClass() || !t.first.equals(this.first))
-                ){ return false; }
-        if(t.second != null 
-            && (t.second.getClass() != this.second.getClass() || !t.second.equals(this.second))
-                ){ return false; }
-        return true;
+        boolean firstEq = this.first == null ? t.first == null : this.first.equals(t.first);
+        boolean secondEq = this.second == null ? t.second == null : this.second.equals(t.second);
+        return firstEq && secondEq;
     }
 
     @Override
@@ -50,5 +45,4 @@ public final class Tuple<X, Y> {
         return (first == null ? 0 : first.hashCode()) 
                 + (second == null ? 0 : second.hashCode());
     }
-    
 }

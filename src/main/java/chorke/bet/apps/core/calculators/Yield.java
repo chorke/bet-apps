@@ -2,12 +2,12 @@
 package chorke.bet.apps.core.calculators;
 
 import chorke.bet.apps.core.CoreUtils.BetPossibility;
-import chorke.bet.apps.core.Tuple;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Trieda reprezentujúca zisk.
@@ -24,7 +24,7 @@ public abstract class Yield {
     /**
      * Počet zápasov. Index rozsahu a počet.
      */
-    private Map<Integer, Integer> matches;
+    private Map<Object, Integer> matches;
     
     /**
      * Vytvorí novú inštanciu.
@@ -48,12 +48,20 @@ public abstract class Yield {
      * @param properties properties pre nastavenie
      */
     public void setProperties(YieldProperties properties) {
-        if(properties == null){
-            this.properties = new YieldProperties();
-        } else {
-            this.properties = properties;
+        if(!this.properties.equals(properties)){
+            if(properties == null){
+                this.properties = new YieldProperties();
+            } else {
+                this.properties = properties;
+            }
+            clear();
         }
     }
+    
+    /**
+     * Vyčistí aktuálne hodnoty ziskov
+     */
+    public abstract void clear();
     
     /**
      * Vráti zisky podľa stávkových možností {@code betPossibility}. 
@@ -63,7 +71,7 @@ public abstract class Yield {
      * @throws IllegalArgumentException ak {@code betPossibility} nie je podporovaná
      * @see #getSupportedBetPossibilities() 
      */
-    public Map<Integer, BigDecimal> getYields(BetPossibility betPossibility)
+    public Map<Object, BigDecimal> getYields(BetPossibility betPossibility)
             throws IllegalArgumentException{
         return Collections.unmodifiableMap(getRequiredMap(betPossibility));
     }
@@ -81,43 +89,23 @@ public abstract class Yield {
      * @see #Yield#getProperties()
      * @see #Yield#setProperties(YieldProperties)
      */
-    public void addYieldForScaleIndex(BetPossibility betPossibility, int index, BigDecimal yield)
-            throws IndexOutOfBoundsException, IllegalArgumentException {
-        addYieldForScaleIndexInner(getRequiredMap(betPossibility), index, yield);
+    public void addYieldForKey(BetPossibility betPossibility, Object key, BigDecimal yield)
+            throws IllegalArgumentException {
+        getRequiredMap(betPossibility).put(key, yield);
     }
     
     /**
      * Pridá počet zápasov pre stanovený rozsah stávok (podľa index).
-     * @param index
-     * @param count 
-     * @throws IllegalArgumentException Ak je {@code count} menšie ako 0.
+     * @param key
+     * @param count
      * @throws IndexOutOfBoundsException ak je index menší ako 0 alebo väčší
      * ako počet rozsahov.
      */
-    public void addMatchesCountForScaleIndex(int index, int count){
-        if(index > properties.getScale().size() || index < 0){
-            throw new IndexOutOfBoundsException("Index out of bounds [" + index + "]");
-        } if(count < 0){
+    public void addMatchesCountForKey(Object key, int count){
+        if(count < 0){
             throw new IllegalArgumentException("Count cannot be negative [" + count + "]");
         }
-        matches.put(index, count);
-    }
-    
-    /**
-     * Pridá počet zápasov pres stanovaný rozsah stávok (podľa range).
-     * @param range
-     * @param count 
-     * @throws IllegalArgumentException ak range nie je platný rozsah pre aktuálne
-     * nastavené YieldProperties.
-     */
-    public void addMatchesCountForScaleRange(Tuple<BigDecimal, BigDecimal> range, int count)
-        throws IllegalArgumentException{
-        try{
-            addMatchesCountForScaleIndex(properties.getIndexForRange(range), count);
-        } catch (IndexOutOfBoundsException ex){
-            //should not happend
-            throw new Error("Possible error in method YieldProperties.getIndexForRange(...).", ex);
-        }
+        matches.put(key, count);
     }
     
     /**
@@ -131,54 +119,9 @@ public abstract class Yield {
      * @param index
      * @return 
      */
-    public int getMatchesCountForScaleIndex(int index){
-        Integer i = matches.get(index);
+    public int getMatchesCountForKey(Object key){
+        Integer i = matches.get(key);
         return i == null ? 0 : i.intValue();
-    }
-    
-    /**
-     * Vráti počet zápasov, ktoré sú zahrnuté pri počítaní zisku. Je na 
-     * programátorovi, aby zaručil konzistenciu. Počet nie je nijako 
-     * kontrolovaný.
-     * 
-     * Ak range nie je platný rozsah, je vrátená 0.
-     * 
-     * @param range 
-     * @return 
-     */
-    public int getMatchesCountForScaleRange(Tuple<BigDecimal, BigDecimal> range){
-        try{
-            return getMatchesCountForScaleIndex(properties.getIndexForRange(range));
-        } catch (IllegalArgumentException ex){
-            return 0;
-        }
-    }
-    
-    /**
-     * Pridá {@code yield} pre zvolenú možnosť stávky {@code betPossibility}.
-     * 
-     * @param betPossibility
-     * @param range 
-     * @param yield
-     * 
-     * @throws IllegalArgumentException ak {@code betPossibility} nie je podporovaná,
-     *      alebo {@code range} nie je v danom rozsahu pre aktuálne 
-     *      {@code properties}.
-     * @see #getSupportedBetPossibilities()
-     * @see #Yield#getProperties()
-     * @see #Yield#setProperties(YieldProperties)
-     */
-    public void addYieldForScaleRange(BetPossibility betPossibility,
-            Tuple<BigDecimal, BigDecimal> range, BigDecimal yield)
-            throws IllegalStateException{
-        try{
-            addYieldForScaleIndex(betPossibility, properties.getIndexForRange(range), yield);
-        } catch (IllegalArgumentException ex){
-            throw new IllegalArgumentException("Exception while adding", ex);
-        } catch (IndexOutOfBoundsException ex){
-            //should not happend
-            throw new Error("Possible error in method YieldProperties.getIndexForRange(...).", ex);
-        }
     }
     
     /**
@@ -186,16 +129,11 @@ public abstract class Yield {
      * 
      * @param list
      * @param index
-     * @throws IndexOutOfBoundsException ak index nie je v povolenom rozsahu.
      */
-    private void addYieldForScaleIndexInner(Map<Integer, BigDecimal> list, 
-            int index, BigDecimal yield)
-            throws IndexOutOfBoundsException {
-        if(index > properties.getScale().size() || index < 0){
-            throw new IndexOutOfBoundsException("Index out of bounds [" + index + "]");
-        }
-        list.put(index, yield);
-    }
+//    private void addYieldForKeyInner(Map<Object, BigDecimal> list, 
+//            Object key, BigDecimal yield) {
+//        list.put(key, yield);
+//    }
     
     
     /**
@@ -207,57 +145,27 @@ public abstract class Yield {
      * @throws IllegalArgumentException ak {@code betPossibility} nie je 
      *      podporovaná
      */
-    public BigDecimal getYieldForScaleIndex(BetPossibility betPossibility,
-            int index, boolean percentage)
+    public BigDecimal getYieldForKey(BetPossibility betPossibility,
+            Object key, boolean percentage)
             throws IllegalArgumentException {
-        return getYieldForScaleIndexInner(getRequiredMap(betPossibility), index, percentage);
-    }
-    
-    /**
-     * Vráti zisk pre zvolenú možnosť stávky {@code betPossibility}.
-     * 
-     * @param betPossibility
-     * @param range 
-     * 
-     * @throws IllegalArgumentException ak {@code betPossibility} nie je podporovaná
-     * alebo range nie je platný rozsah pre aktuálne nastavené properties.
-     * @see #Yield#getProperties()
-     * @see #Yield#setProperties(YieldProperties)
-     */
-    public BigDecimal getYieldForScaleRange(BetPossibility possibleWinner, 
-            Tuple<BigDecimal, BigDecimal> range, boolean percentage)
-            throws IllegalArgumentException {
-        try{
-            return getYieldForScaleIndex(
-                    possibleWinner, properties.getIndexForRange(range), percentage);
-        } catch (IllegalArgumentException ex){
-            throw new IllegalArgumentException("No yield for range [" + range + "]", ex);
-        }
-    }
-    
-    /**
-     * Vráti zisk pre zvolenú stávkovú kolekciu.
-     * 
-     * @param list 
-     * @param index 
-     */
-    private BigDecimal getYieldForScaleIndexInner(
-            Map<Integer, BigDecimal> list, int index, boolean percentage){
-        BigDecimal yield = list.get(index);
+        BigDecimal yield = getRequiredMap(betPossibility).get(key);
         if(yield == null){
             return BigDecimal.ZERO;
         }
         if(percentage){
-            int count = getMatchesCountForScaleIndex(index);
-            if(count <= 0){
-                return BigDecimal.ZERO;
-            }
-            return yield
-                .divide(new BigDecimal(count), new MathContext(2))
-                .multiply(new BigDecimal("100"));
+            return percentage(yield, getMatchesCountForKey(key));
         } else {
             return yield;
         }
+    }
+    
+    private BigDecimal percentage(BigDecimal yield, int matchesCount){
+        if(matchesCount <= 0){
+            return BigDecimal.ZERO;
+        }
+        return yield
+            .divide(new BigDecimal(matchesCount), new MathContext(2))
+            .multiply(new BigDecimal("100"));
     }
     
     /**
@@ -265,15 +173,15 @@ public abstract class Yield {
      * @param toString
      * @return 
      */
-    protected String stringYield(Map<Integer, BigDecimal> toString){
+    protected String stringYield(Map<Object, BigDecimal> toString){
         StringBuilder sb = new StringBuilder();
-        for(Integer key : toString.keySet()){
-            BigDecimal bd = toString.get(key);
+        for(Entry<Object, BigDecimal> entry : toString.entrySet()){
+            Object key = entry.getKey();
             sb.append("{index=").append(key)
-                    .append(", yield=").append(bd)
-                    .append(", percentage=").append(getYieldForScaleIndexInner(toString,
-                            key, true))
-                    .append("%, count=").append(getMatchesCountForScaleIndex(key))
+                    .append(", yield=").append(entry.getValue())
+                    .append(", percentage=").append(percentage(entry.getValue(),
+                            getMatchesCountForKey(key)))
+                    .append("%, count=").append(getMatchesCountForKey(key))
                 .append("}");
         }
         return sb.toString();
@@ -294,6 +202,6 @@ public abstract class Yield {
      * @return 
      * @throws IllegalArgumentException ak nie je betPossibility podporovaná
      */
-    protected abstract Map<Integer, BigDecimal> getRequiredMap(BetPossibility betPossibility)
+    protected abstract Map<Object, BigDecimal> getRequiredMap(BetPossibility betPossibility)
             throws IllegalArgumentException;
 }

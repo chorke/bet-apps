@@ -1,8 +1,8 @@
 
 package chorke.bet.apps.core.match.sports;
 
-import chorke.bet.apps.core.CoreUtils.Winner;
 import chorke.bet.apps.core.CoreUtils.BettingSports;
+import chorke.bet.apps.core.CoreUtils.Winner;
 import chorke.bet.apps.core.match.score.PartialScore;
 import chorke.bet.apps.core.match.score.Score;
 

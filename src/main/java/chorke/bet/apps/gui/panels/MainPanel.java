@@ -10,6 +10,7 @@ import chorke.bet.apps.core.bets.BetDrawNoBet;
 import chorke.bet.apps.core.bets.BetOverUnder;
 import chorke.bet.apps.core.calculators.Yield;
 import chorke.bet.apps.core.calculators.Yield1x2Calculator;
+import chorke.bet.apps.core.calculators.Yield1x2Calculator.Key1x2;
 import chorke.bet.apps.core.calculators.YieldCalculator;
 import chorke.bet.apps.core.calculators.YieldProperties;
 import chorke.bet.apps.core.graphs.GraphBuilder;
@@ -17,7 +18,7 @@ import chorke.bet.apps.core.graphs.GraphBuilderYield1x2;
 import chorke.bet.apps.core.match.Match;
 import chorke.bet.apps.gui.Action;
 import chorke.bet.apps.gui.GuiUtils;
-import chorke.bet.apps.gui.Season;
+import chorke.bet.apps.gui.Session;
 import chorke.bet.apps.io.BetIOException;
 import chorke.bet.apps.io.LoadProperties;
 import java.awt.Color;
@@ -70,7 +71,7 @@ public class MainPanel extends JPanel{
     private LoadingPanel loadPanel;
     private NotesPanel notes;
     private DeletePanel deletePanel;
-    private Season season;
+    private Session session;
     
     private JButton dwnButton;
     private JButton loadButton;
@@ -93,16 +94,16 @@ public class MainPanel extends JPanel{
     /**
      * Vytvorí nový panel.
      * 
-     * @param season 
+     * @param session 
      * @throws IllegalArgumentException ak je season = null
      */
-    public MainPanel(Season season) {
-        if(season == null){
+    public MainPanel(Session session) {
+        if(session == null){
             throw new IllegalArgumentException("Season cannot be null.");
         }
-        this.season = season;
-        this.season.addActionAfterLoadPropertiesSet(new UpdateBetCompanies());
-        bundle = season.getDefaultBundle();
+        this.session = session;
+        this.session.addActionAfterLoadPropertiesSet(new UpdateBetCompanies());
+        bundle = session.getDefaultBundle();
         init();
     }
     
@@ -118,7 +119,7 @@ public class MainPanel extends JPanel{
         
         JScrollPane paneResults = new JScrollPane(statsResultsPanel);
         JScrollPane paneBetCompanies = new JScrollPane(betCompaniesPanel);
-        notes = new NotesPanel(season.getUser().getNotesFile());
+        notes = new NotesPanel(session.getUser().getNotesFile());
         JScrollPane paneNotes = new JScrollPane(notes);
         
         JLabel betCompLab = new JLabel(bundle.getString("betComp"));
@@ -191,7 +192,7 @@ public class MainPanel extends JPanel{
      * zahrnuté pri loadingu.
      */
     private void putBetCompaniestButtons(){
-        LoadProperties prop = season.getLoadProperties();
+        LoadProperties prop = session.getLoadProperties();
         if(prop == null){
             return;
         }
@@ -217,25 +218,24 @@ public class MainPanel extends JPanel{
      * Vytvorí panel s výsledkymi spočítaných štatistík. Panel obsahuje iba
      * celkový zisk.
      */
-    private void putYieldToStatsResulstPanel(){
+    private void putYieldToStatsResultsPanel(){
         prepareSeasonForGettingStats();
         Yield yield = getYield();
         if(yield != null){
-            List<BigDecimal> scls = season.getYieldProperties().getScale();
+            List<BigDecimal> scls = session.getYieldProperties().getScale();
             statsResultsPanel.removeAll();
             GroupLayout gl = new GroupLayout(statsResultsPanel);
             Group horizontal = gl.createSequentialGroup();
             Group vertical = gl.createParallelGroup();
             BigDecimal last = BigDecimal.ONE;
-            int idx = 0;
             for(BigDecimal bd : scls){
                 add(horizontal, vertical, 
                         last.toPlainString() + " - " + bd.toPlainString(),
-                        yield, idx++);
-                last = bd;
+                        yield, new Key1x2(last, bd));
+                last = bd.add(YieldCalculator.ZERO_POINT_ZERO_ONE);
             }
             add(horizontal, vertical, 
-                        last.toPlainString() + " +", yield, idx++);
+                        last.toPlainString() + " +", yield, new Key1x2(last, YieldCalculator.MAX_VALUE));
             gl.setAutoCreateContainerGaps(true);
             gl.setAutoCreateGaps(true);
             gl.setHorizontalGroup(horizontal);
@@ -264,8 +264,8 @@ public class MainPanel extends JPanel{
         for(JRadioButton rb : betTypesButtons){
             if(rb.isSelected()){
                 if(rb.getText().equals(bundle.getString(Bet1x2.class.getSimpleName()))){
-                    season.setCalculator(YC_1x2);
-                    season.setGraphBuilder(GB_1x2);
+                    session.setCalculator(YC_1x2);
+                    session.setGraphBuilder(GB_1x2);
                 } else if(rb.getText().equals(bundle.getString(BetAsianHandicap.class.getSimpleName()))){
                 } else if(rb.getText().equals(bundle.getString(BetBothTeamsToScore.class.getSimpleName()))){
                 } else if(rb.getText().equals(bundle.getString(BetDoubleChance.class.getSimpleName()))){
@@ -280,7 +280,7 @@ public class MainPanel extends JPanel{
     }
     
     /**
-     * Nastaví YieldProperties do {@link #season}. Berie aktuálne
+     * Nastaví YieldProperties do {@link #session}. Berie aktuálne
      * zvolenú škálu z {@link #scales} a zvolenú stávkovú spoločnosť.
      */
     private void setYieldProperties(){
@@ -302,18 +302,18 @@ public class MainPanel extends JPanel{
                 prop.setBetCompany(rb.getText());
             }
         }
-        season.setYieldProperties(prop);
+        session.setYieldProperties(prop);
     }
     
     /**
-     * Vráti celkový zisk z aktuálnych parametrov v {@link #season}.
+     * Vráti celkový zisk z aktuálnych parametrov v {@link #session}.
      * @return null ak nie sú nastavené parametre
      */
     @SuppressWarnings("unchecked")
     private Yield getYield(){
-        YieldCalculator calc = season.getCalculator();
-        Collection<Match> matches = season.getMatches();
-        YieldProperties prop = season.getYieldProperties();
+        YieldCalculator calc = session.getCalculator();
+        Collection<Match> matches = session.getMatches();
+        YieldProperties prop = session.getYieldProperties();
         if(calc != null && matches != null && prop != null){
             return calc.getOverallYield(matches, prop);
         }
@@ -333,14 +333,14 @@ public class MainPanel extends JPanel{
      * @param idx index na škále
      */
     private void add(Group horizontal, Group vertical,
-                String sclLabel, Yield yield, int idx){
+                String sclLabel, Yield yield, Object key){
         JPanel pan = new JPanel();
         JLabel scLab = new JLabel(sclLabel);
         GroupLayout gl = new GroupLayout(pan);
         Group gSeq = gl.createSequentialGroup().addComponent(scLab);
         Group gPar = gl.createParallelGroup().addComponent(scLab);
         for(BetPossibility bp : yield.getSupportedBetPossibilities()){
-            BigDecimal y = yield.getYieldForScaleIndex(bp, idx , true);
+            BigDecimal y = yield.getYieldForKey(bp, key , true);
             JLabel valLab = new JLabel(getBetPossString(bp) + y.toPlainString() + " %");
             valLab.setForeground(y.signum() > 0 ? Color.GREEN : Color.RED);
             gSeq.addComponent(valLab);
@@ -423,7 +423,7 @@ public class MainPanel extends JPanel{
         public void actionPerformed(ActionEvent e) {
             loadPanel = null;
             if(dwnPanel == null){
-                dwnPanel = new DownloadPanel(season);
+                dwnPanel = new DownloadPanel(session);
             }
             GuiUtils.getDefaultFrame(bundle.getString("download"), JFrame.DISPOSE_ON_CLOSE,
                     false, null, dwnPanel).setVisible(true);
@@ -455,7 +455,7 @@ public class MainPanel extends JPanel{
         public JFrame doYourJob() throws Exception {
             if(loadPanel == null){
                 try{
-                    loadPanel = new LoadingPanel(season);
+                    loadPanel = new LoadingPanel(session);
                 } catch (BetIOException ex){
                     loadPanel = null;
                     JOptionPane.showMessageDialog(null, bundle.getString("errLoadWindCreation")
@@ -508,7 +508,7 @@ public class MainPanel extends JPanel{
         @Override
         public JFrame doYourJob() throws Exception {
             prepareSeasonForGettingStats();
-            JScrollPane pane = new JScrollPane(new GraphsCollectingPanel(season));
+            JScrollPane pane = new JScrollPane(new GraphsCollectingPanel(session));
             pane.setPreferredSize(new Dimension(450, 300));
             return GuiUtils.getDefaultFrame(bundle.getString("graphs"), JFrame.DISPOSE_ON_CLOSE,
                     true, null, pane);
@@ -543,7 +543,7 @@ public class MainPanel extends JPanel{
         @Override
         public JFrame doYourJob() throws Exception {
             try{
-                deletePanel = new DeletePanel(season);
+                deletePanel = new DeletePanel(session);
             } catch (BetIOException ex){
                 deletePanel = null;
                 JOptionPane.showMessageDialog(null, bundle.getString("errDeleteWindCreation")
@@ -594,7 +594,7 @@ public class MainPanel extends JPanel{
 
         @Override
         public Void doYourJob() throws Exception {
-            putYieldToStatsResulstPanel();
+            putYieldToStatsResultsPanel();
             return null;
         }
 

@@ -8,22 +8,19 @@ import chorke.bet.apps.core.httpparsing.HTMLBetParser;
 import chorke.bet.apps.core.httpparsing.MultithreadHTMLBetParser;
 import chorke.bet.apps.core.match.Match;
 import chorke.bet.apps.gui.GuiUtils;
-import chorke.bet.apps.gui.Season;
+import chorke.bet.apps.gui.Session;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
@@ -34,13 +31,12 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.PlainDocument;
+import org.chorke.gui.utils.logging.GUIAppender;
 import org.chorke.gui.utils.panels.DateChooser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,22 +54,22 @@ public class DownloadPanel extends JPanel {
     private DateChooser by;
     private JButton downloadButton;
     
-    private Season season;
+    private Session session;
     
     private ResourceBundle bundle;
     
-    public DownloadPanel(Season season) {
-        if(season == null){
-            throw new IllegalArgumentException("Season cannot be null.");
+    public DownloadPanel(Session session) {
+        if(session == null){
+            throw new IllegalArgumentException("Session cannot be null.");
         }
-        this.season = season;
-        bundle = this.season.getDefaultBundle();
+        this.session = session;
+        bundle = this.session.getDefaultBundle();
         init();
     }
     
     private void init(){
-        from = new DateChooser(season.getDefaultLocale());
-        by = new DateChooser(season.getDefaultLocale());
+        from = new DateChooser(session.getDefaultLocale());
+        by = new DateChooser(session.getDefaultLocale());
         from.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED),
                 bundle.getString("from")));
         by.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED),
@@ -146,7 +142,7 @@ public class DownloadPanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent e) {
             Downloader d = new Downloader(from.getActualDate(), by.getActualDate(),
-                    BettingSports.values()[sportToDownload.getSelectedIndex()], season.getParser());
+                    BettingSports.values()[sportToDownload.getSelectedIndex()], session.getParser());
             d.execute();
         }
     }
@@ -188,11 +184,11 @@ public class DownloadPanel extends JPanel {
         /**
          * Textová oblasť pre výpis informácií o sťahovaní.
          */
-        private JTextArea infoTextArea;
-        /**
-         * Defaultný výstupný stream JVM pred začatím sťahovania.
-         */
-        private PrintStream defaultPrintStream;
+        private JTextPane infoTextPane;
+//        /**
+//         * Defaultný výstupný stream JVM pred začatím sťahovania.
+//         */
+//        private PrintStream defaultPrintStream;
         
         /**
          * Indikácia, že sa má zastaviť sťahovanie.
@@ -225,9 +221,6 @@ public class DownloadPanel extends JPanel {
             stop = false;
             hideWindows();
             downloadInfoWin = getDownloadInfoWindow();
-            PrintStream ps = new PrintStream(new TextAreaOutputStream(infoTextArea));
-            defaultPrintStream = System.out;
-            System.setOut(ps);
             downloadInfoWin.setVisible(true);
             allUndownloadedSports = new LinkedList<>();
             
@@ -239,7 +232,7 @@ public class DownloadPanel extends JPanel {
                 Calendar partEndDate = getNextPartEndDate(partStartDate);
                 betParser.setStartDate(partStartDate);
                 betParser.setEndDate(partEndDate);
-                betParser.setBetCompaniesBanList(season.getUser().getBetCompniesBanList());
+                betParser.setBetCompaniesBanList(session.getUser().getBetCompniesBanList());
                 Collection<Match> matches = betParser.getMatches();
                 matchesCount += matches.size();
                 matches.clear();
@@ -256,18 +249,17 @@ public class DownloadPanel extends JPanel {
          * @return 
          */
         private JFrame getDownloadInfoWindow(){
-            infoTextArea = new JTextArea();
-            infoTextArea.setEditable(false);
-            infoTextArea.setDocument(new LinesLimitedDocument(6000));
-            JScrollPane pane = new JScrollPane(infoTextArea);
+            infoTextPane = GUIAppender.getTextPane("DOWNLOAD_GUI");
+            infoTextPane.setText("");
+            JScrollPane pane = new JScrollPane(infoTextPane);
             pane.setPreferredSize(new Dimension(500, 500));
             JPanel mainInfoPanel = new JPanel();
             mainInfoPanel.setPreferredSize(new Dimension(500, 550));
-            JButton stopButtom = new JButton(bundle.getString("stop"));
-            stopButtom.addActionListener(new StopDownloading(this));
+            JButton stopButton = new JButton(bundle.getString("stop"));
+            stopButton.addActionListener(new StopDownloading(this));
             
             mainInfoPanel.add(pane);
-            mainInfoPanel.add(stopButtom);
+            mainInfoPanel.add(stopButton);
             
             return GuiUtils.getDefaultFrame(null, JFrame.DO_NOTHING_ON_CLOSE,
                     false, null, mainInfoPanel);
@@ -275,6 +267,11 @@ public class DownloadPanel extends JPanel {
         
         @Override
         protected void done() {
+            try{
+                get();
+            } catch (ExecutionException | InterruptedException | CancellationException ex){
+                LOGGER.error("Error while downloadind sports.", ex);
+            }
             if(downloadInfoWin != null){
                 downloadInfoWin.dispose();
             }
@@ -282,7 +279,6 @@ public class DownloadPanel extends JPanel {
             for(Window w : windows){
                 w.setVisible(windowsVisibility[i++]);
             }
-            System.setOut(defaultPrintStream);
             getDownloadResultsInfoWin().setVisible(true);
             LOGGER.warn("unsaved {" + betParser.getUnsavedMatches().size()
                 + "}: " + betParser.getUnsavedMatches());
@@ -298,7 +294,7 @@ public class DownloadPanel extends JPanel {
          * @return 
          */
         private JFrame getDownloadResultsInfoWin(){
-            JScrollPane pane = new JScrollPane(infoTextArea);
+            JScrollPane pane = new JScrollPane(infoTextPane);
             pane.setPreferredSize(new Dimension(500, 400));
             int collSize = betParser.getUndownloadedSports().size();
             JLabel undwnSportsLable = new JLabel(bundle.getString("undwnSports") + ": " + collSize);
@@ -453,83 +449,6 @@ public class DownloadPanel extends JPanel {
             if(option == 0){
                 if(downloader.betParser instanceof MultithreadHTMLBetParser){
                     ((MultithreadHTMLBetParser)downloader.betParser).stopThreads();
-                }
-            }
-        }
-    }
-    
-    /**
-     * OutputStream, ktorý svoj výstup zapisuje do JTextArea.
-     */
-    private class TextAreaOutputStream extends OutputStream{
-
-        private JTextArea textArea;
-
-        /**
-         * Vytvorí OutputStream, ktorý bude zapisovať výstup do textArea.
-         * @param textArea 
-         */
-        public TextAreaOutputStream(JTextArea textArea) {
-            this.textArea = textArea;
-        }
-        
-        @Override
-        public void write(int b) throws IOException {
-            boolean isCaretAtEnd = textArea.getCaretPosition() == textArea.getDocument().getLength();
-            textArea.append(new Character((char)b).toString());
-            if(isCaretAtEnd){
-                textArea.setCaretPosition(textArea.getDocument().getLength());
-            }
-        }
-
-        @Override
-        public void write(byte[] b, int off, int len) throws IOException {
-            boolean isCaretAtEnd = textArea.getCaretPosition() == textArea.getDocument().getLength();
-            textArea.append(new String(b, off, len, Charset.forName("UTF-8")));
-            if(isCaretAtEnd){
-                textArea.setCaretPosition(textArea.getDocument().getLength());
-            }
-        }
-    }
-    
-    /**
-     * Dokument s obmedzeným počtom riadkov. Každý nový pridaný riadok nad limit
-     * ostráni najstarší (teda prvý) riadok v dokumente.
-     * 
-     */
-    private class LinesLimitedDocument extends PlainDocument{
-
-        private int linesLimit;
-        private int linesCount = 0;
-        private List<String> linesShowed = new LinkedList<>();
-
-        public LinesLimitedDocument(int linesLimit) {
-            super();
-            this.linesLimit = linesLimit;
-        }
-        
-        @Override
-        public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
-            String lineSep = System.lineSeparator();
-            String[] lines = str.split("[" + lineSep + "]+");
-            if(lines.length > linesLimit){
-                linesShowed.clear();
-                remove(0, getLength());
-                int off = 0;
-                for(int i = lines.length - linesLimit; i < lines.length; i++){
-                    super.insertString(off, lines[i] + lineSep, a);
-                    off += lines[i].length();
-                }
-                linesCount = linesLimit;
-            } else {
-                for(String l : lines){
-                    if(linesCount >= linesLimit){
-                        remove(0, linesShowed.remove(0).length() + lineSep.length());
-                        linesCount--;
-                    }
-                    linesShowed.add(l);
-                    super.insertString(getLength(), l + lineSep, a);
-                    linesCount++;
                 }
             }
         }

@@ -15,23 +15,23 @@ public class Yield1x2 extends Yield{
     /**
      * Domáci. Index rozsahu a zisk.
      */
-    private Map<Integer, BigDecimal> home;
+    private Map<Object, BigDecimal> home;
     /**
      * Hostia. Index rozsahu a zisk.
      */
-    private Map<Integer, BigDecimal> guest;
+    private Map<Object, BigDecimal> guest;
     /**
      * Favorit. Index rozsahu a zisk.
      */
-    private Map<Integer, BigDecimal> favorit;
+    private Map<Object, BigDecimal> favorit;
     /**
      * Loser. Index rozsahu a zisk.
      */
-    private Map<Integer, BigDecimal> loser;
+    private Map<Object, BigDecimal> loser;
     /**
      * Remíza. Index rozsahu a zisk.
      */
-    private Map<Integer, BigDecimal> tie;
+    private Map<Object, BigDecimal> tie;
     
     public Yield1x2() {
         super();
@@ -42,25 +42,13 @@ public class Yield1x2 extends Yield{
         tie = new HashMap<>();
     }
 
-    /**
-     * {@inheritDoc}
-     * 
-     * Ak sú nastavované nové properties 
-     * (presnejšie {@code !this.properties.equals(properties)}),
-     * vyčistí aktuálne hodnoty ziskov.
-     * 
-     * @param properties 
-     */
     @Override
-    public void setProperties(YieldProperties properties) {
-        if(!this.properties.equals(properties)){
-            super.setProperties(properties);
-            home.clear();
-            guest.clear();
-            favorit.clear();
-            loser.clear();
-            tie.clear();
-        }
+    public void clear() {
+        home.clear();
+        guest.clear();
+        favorit.clear();
+        loser.clear();
+        tie.clear();
     }
 
     @Override
@@ -85,7 +73,7 @@ public class Yield1x2 extends Yield{
     }
 
     @Override
-    protected Map<Integer, BigDecimal> getRequiredMap(BetPossibility betPossibility)
+    protected Map<Object, BigDecimal> getRequiredMap(BetPossibility betPossibility)
                 throws IllegalArgumentException{
         switch(betPossibility){
             case Favorit:

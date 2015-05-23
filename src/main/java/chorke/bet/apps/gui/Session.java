@@ -25,7 +25,7 @@ import java.util.Set;
  * 
  * @author Chorke
  */
-public class Season implements IOTransferable{
+public class Session implements IOTransferable{
     
     private LoadProperties loadProperties;
     private Collection<Match> matches;

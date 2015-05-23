@@ -8,14 +8,15 @@ import chorke.bet.apps.core.CoreUtils.Periode;
 import chorke.bet.apps.core.bets.Bet1x2;
 import chorke.bet.apps.core.calculators.Yield1x2;
 import chorke.bet.apps.core.calculators.Yield1x2Calculator;
+import chorke.bet.apps.core.calculators.Yield1x2Calculator.Key1x2;
 import chorke.bet.apps.core.calculators.YieldProperties;
 import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  *
@@ -25,6 +26,8 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
     
     private YieldProperties properties;
     private Yield1x2Calculator calculator;
+    private Key1x2 key1;
+    private Key1x2 key2;
     
     @Override
     public void init(){
@@ -49,8 +52,12 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
                 new BigDecimal("1.65"), new BigDecimal("3.45"), new BigDecimal("1.76")));
         
         List<BigDecimal> scales = new LinkedList<>();
-        scales.add(new BigDecimal("1.58"));
+        BigDecimal sc = new BigDecimal("1.58");
+        scales.add(sc);
         properties = new YieldProperties(scales, "myCom");
+        
+        key1 = new Key1x2(BigDecimal.ONE, sc);
+        key2 = new Key1x2(sc.add(Yield1x2Calculator.ZERO_POINT_ZERO_ONE), Yield1x2Calculator.MAX_VALUE);
         
         calculator = new Yield1x2Calculator();
     }
@@ -58,25 +65,25 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
     @Test
     public void overallYieldTest(){
         Yield1x2 yield = calculator.getOverallYield(matches, properties);
-        assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 0, false),
+        assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key1, false),
                 new BigDecimal("0.31"));
-        assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 1, false),
+        assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key2, false),
                 new BigDecimal("-3"));
-        assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 0, false),
+        assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key1, false),
                 new BigDecimal("-2.33"));
-        assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 1, false),
+        assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key2, false),
                 new BigDecimal("-3"));
-        assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 0, false),
+        assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key1, false),
                 new BigDecimal("0.31"));
-        assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
+        assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key2, false),
                 new BigDecimal("-0.35"));
-        assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
+        assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key1, false),
                 new BigDecimal("-2.33"));
-        assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
+        assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key2, false),
                 new BigDecimal("-0.35"));
-        assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
+        assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key1, false),
                 new BigDecimal("-4"));
-        assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 1, false),
+        assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key2, false),
                 new BigDecimal("5.1"));
     }
     
@@ -85,51 +92,49 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
         Map<Calendar, Yield1x2> yields = calculator.getPeriodicYield(matches, properties, Periode.Year);
         assertEquals(yields.size(), 2);
         Yield1x2 yield;
-        int i = 0;
         for(Calendar c : yields.keySet()){
-            i++;
             yield = yields.get(c);
             if(c.get(Calendar.YEAR) == 2013){
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key1, false),
                         new BigDecimal("-0.23"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key2, false),
                         new BigDecimal("-2"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key1, false),
                         new BigDecimal("-1.33"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key2, false),
                         new BigDecimal("-2"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key1, false),
                         new BigDecimal("-0.23"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key2, false),
                         new BigDecimal("0.65"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key1, false),
                         new BigDecimal("-1.33"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key2, false),
                         new BigDecimal("0.65"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key1, false),
                         new BigDecimal("-3"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key2, false),
                         new BigDecimal("1.45"));
             } else if(c.get(Calendar.YEAR) == 2014){
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key1, false),
                         new BigDecimal("0.54"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key2, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key2, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key1, false),
                         new BigDecimal("0.54"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key2, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key2, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key2, false),
                         new BigDecimal("3.65"));
             } else {
                 fail("bad year " + c);
@@ -145,67 +150,67 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
         for(Calendar c : yields.keySet()){
             yield = yields.get(c);
             if(c.get(Calendar.MONTH) == 10 && c.get(Calendar.YEAR) == 2013){
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key1, false),
                         new BigDecimal("0.56"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key2, false),
                         new BigDecimal("0"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key2, false),
                         new BigDecimal("0"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key1, false),
                         new BigDecimal("0.56"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key2, false),
                         new BigDecimal("0"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key2, false),
                         new BigDecimal("0"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key2, false),
                         new BigDecimal("0"));
             } else if(c.get(Calendar.MONTH) == 11 && c.get(Calendar.YEAR) == 2013){
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key1, false),
                         new BigDecimal("-0.79"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key2, false),
                         new BigDecimal("-2"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key1, false),
                         new BigDecimal("-0.33"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key2, false),
                         new BigDecimal("-2"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key1, false),
                         new BigDecimal("-0.79"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key2, false),
                         new BigDecimal("0.65"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key1, false),
                         new BigDecimal("-0.33"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key2, false),
                         new BigDecimal("0.65"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key1, false),
                         new BigDecimal("-2"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key2, false),
                         new BigDecimal("1.45"));
             } else if(c.get(Calendar.MONTH) == 0 && c.get(Calendar.YEAR) == 2014){
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key1, false),
                         new BigDecimal("0.54"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key2, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key2, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key1, false),
                         new BigDecimal("0.54"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key2, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key2, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key2, false),
                         new BigDecimal("3.65"));
             } else {
                 fail("bad calendar " + c);
@@ -221,67 +226,67 @@ public class Yield1x2CalculatorTest extends MatchInitializer{
         for(Calendar c : yields.keySet()){
             yield = yields.get(c);
             if(c.get(Calendar.YEAR) == 2013 && c.get(Calendar.WEEK_OF_YEAR) == 48){
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key1, false),
                         new BigDecimal("0.56"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key2, false),
                         new BigDecimal("0"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key2, false),
                         new BigDecimal("0"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key1, false),
                         new BigDecimal("0.56"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key2, false),
                         new BigDecimal("0"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key2, false),
                         new BigDecimal("0"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key2, false),
                         new BigDecimal("0"));
             } else if(c.get(Calendar.YEAR) == 2013  && c.get(Calendar.WEEK_OF_YEAR) == 52){
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key1, false),
                         new BigDecimal("0.21"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key2, false),
                         new BigDecimal("-2"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key2, false),
                         new BigDecimal("-2"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key1, false),
                         new BigDecimal("0.21"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key2, false),
                         new BigDecimal("0.65"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key2, false),
                         new BigDecimal("0.65"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key1, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key2, false),
                         new BigDecimal("1.45"));
             } else if(c.get(Calendar.YEAR) == 2014  && c.get(Calendar.WEEK_OF_YEAR) == 1){
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key1, false),
                         new BigDecimal("-0.46"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Favorit, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Favorit, key2, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key1, false),
                         new BigDecimal("-0.33"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Guest, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Guest, key2, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key1, false),
                         new BigDecimal("-0.46"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Home, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Home, key2, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key1, false),
                         new BigDecimal("-0.33"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Loser, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Loser, key2, false),
                         new BigDecimal("-1"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 0, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key1, false),
                         new BigDecimal("-2"));
-                assertEqualsBigDecimal(yield.getYieldForScaleIndex(BetPossibility.Tie, 1, false),
+                assertEqualsBigDecimal(yield.getYieldForKey(BetPossibility.Tie, key2, false),
                         new BigDecimal("3.65"));
             } else {
                 if(!((c.get(Calendar.YEAR) == 2013  && c.get(Calendar.WEEK_OF_YEAR) == 49)

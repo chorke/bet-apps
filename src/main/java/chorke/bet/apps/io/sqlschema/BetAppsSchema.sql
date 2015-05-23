@@ -46,9 +46,9 @@ CREATE TABLE bet1x2
 (
   matchid integer NOT NULL,
   betcompany character varying(50) NOT NULL,
-  bet1 character varying(8),
-  betx character varying(8),
-  bet2 character varying(8),
+  bet1 numeric(7,2),
+  betx numeric(7,2),
+  bet2 numeric(7,2),
   CONSTRAINT "bet1x2ID" PRIMARY KEY (matchid, betcompany)
 )
 WITH (
@@ -62,9 +62,9 @@ CREATE TABLE betah
 (
   matchid integer NOT NULL,
   betcompany character varying(50) NOT NULL,
-  bet1 character varying(8),
-  bet2 character varying(8),
-  handicap character varying(8) NOT NULL,
+  bet1 numeric(7,2),
+  bet2 numeric(7,2),
+  handicap numeric(5,2) NOT NULL,
   description character varying(50) NOT NULL,
   CONSTRAINT "betAHID" PRIMARY KEY (matchid, betcompany, handicap, description)
 )
@@ -79,8 +79,8 @@ CREATE TABLE betbtts
 (
   matchid integer NOT NULL,
   betcompany character varying(50) NOT NULL,
-  yesbet character varying(8),
-  nobet character varying(8),
+  yesbet numeric(7,2),
+  nobet numeric(7,2),
   CONSTRAINT "betBTTSID" PRIMARY KEY (matchid, betcompany)
 )
 WITH (
@@ -94,9 +94,9 @@ CREATE TABLE betdc
 (
   matchid integer NOT NULL,
   betcompany character varying(50) NOT NULL,
-  bet1x character varying(8),
-  bet2x character varying(8),
-  bet12 character varying(8),
+  bet1x numeric(7,2),
+  bet2x numeric(7,2),
+  bet12 numeric(7,2),
   CONSTRAINT "betDCID" PRIMARY KEY (matchid, betcompany)
 )
 WITH (
@@ -110,8 +110,8 @@ CREATE TABLE betdnb
 (
   matchid integer NOT NULL,
   betcompany character varying(50) NOT NULL,
-  bet1 character varying(8),
-  bet2 character varying(8),
+  bet1 numeric(7,2),
+  bet2 numeric(7,2),
   CONSTRAINT "betDNBID" PRIMARY KEY (matchid, betcompany)
 )
 WITH (
@@ -125,9 +125,9 @@ CREATE TABLE betou
 (
   matchid integer NOT NULL,
   betcompany character varying(50) NOT NULL,
-  total character varying(8) NOT NULL,
-  overbet character varying(8),
-  underbet character varying(8),
+  total numeric(5,2) NOT NULL,
+  overbet numeric(7,2),
+  underbet numeric(7,2),
   description character varying(50) NOT NULL,
   CONSTRAINT "betOUID" PRIMARY KEY (matchid, betcompany, total, description)
 )

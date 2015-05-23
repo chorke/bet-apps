@@ -1,8 +1,6 @@
 package chorke.bet.apps.core.httpparsing;
 
 import chorke.bet.apps.core.CoreUtils.BettingSports;
-import chorke.bet.apps.core.match.Match;
-import chorke.bet.apps.core.match.MatchProperties;
 import chorke.bet.apps.core.Tuple;
 import chorke.bet.apps.core.bets.Bet1x2;
 import chorke.bet.apps.core.bets.BetAsianHandicap;
@@ -10,6 +8,8 @@ import chorke.bet.apps.core.bets.BetBothTeamsToScore;
 import chorke.bet.apps.core.bets.BetDoubleChance;
 import chorke.bet.apps.core.bets.BetDrawNoBet;
 import chorke.bet.apps.core.bets.BetOverUnder;
+import chorke.bet.apps.core.match.Match;
+import chorke.bet.apps.core.match.MatchProperties;
 import chorke.bet.apps.core.match.sports.Sport;
 import chorke.bet.apps.io.BetIOException;
 import chorke.bet.apps.io.BetIOManager;
@@ -22,13 +22,15 @@ import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.ListIterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Stiahne, rozparsuje a uloží stávky z web stránky. 
@@ -37,6 +39,8 @@ import org.jsoup.select.Elements;
  */
 public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser{
 
+    private static final Logger LOG = LoggerFactory.getLogger(BetexplorerComMultithreadParser.class);
+    
     private static final String STRING_URL = "http://www.betexplorer.com";
     private static final String RESULTS = "/results/";
     private static final String SOCCER = "soccer/";
@@ -477,7 +481,7 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
     }
 
     /**
-     * Skontorluje, či stávkové spoločnosť {@code betCompanyName} je zakázaná.
+     * Skontorluje, či stávková spoločnosť {@code betCompanyName} je zakázaná.
      * 
      * @param betCompanyName
      * @return 
@@ -521,8 +525,8 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
             Tuple<BettingSports, Calendar> tuple = getNextSportForDownload();
             TextingMatchCollector tmc = new TextingMatchCollector();
             while(tuple != null && !Thread.currentThread().isInterrupted()){
-                System.out.println("I {" + id + "} have " 
-                        + tuple.first + " " + tuple.second.get(Calendar.DATE));
+                LOG.info("Getting match info [{}]: {}, {}", id, tuple.first,
+                        tuple.second.get(Calendar.DATE));
                 tmc.setSport(tuple.first);
                 tmc.setDate(tuple.second);
                 matches.addAll(tmc.getMatchesList());
@@ -530,9 +534,9 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
             }
             TMCThreadIsDone(id);
             if(Thread.currentThread().isInterrupted()){
-                System.err.println("Interrupted TMC(" + id + ")");
+                LOG.info("Interrupted TMC({})", id);
             } else {
-                System.err.println("Done TMC(" + id + ")");
+                LOG.info("Done TMC({})", id);
             }
         }
         
@@ -580,22 +584,20 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
             MatchFromTextingMatchCollector mftmc = new MatchFromTextingMatchCollector();
             Match match;
             while(tm != null && !Thread.currentThread().isInterrupted()){
-                System.out.println("I {" + id + "} have " 
-                        + tm.match + "{" + tm.matchID + "}");
+                LOG.info("Getting match [{}]: [{}] {}.", id, tm.matchID, tm.match);
                 mftmc.setTextingMatch(tm);
                 try{
                     match = mftmc.parseMatchDetails();
                 } catch (Exception ex){
+                    LOG.debug("Error parsing match.", ex);
                     match = null;
-//                    ex.printStackTrace();
                 }
                 if(match != null && !match.getBets().isEmpty()){
                     if(manager != null){
                         try{
                             manager.saveMatch(match);
                         } catch (BetIOException ex){
-                            System.out.println(match);
-//                            ex.printStackTrace();
+                            LOG.warn("Unsaved match.", ex);
                             unsavedMatches.add(match);
                         }
                     }
@@ -605,9 +607,9 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
             }
             MFTMCThreadIsDone(id);
             if(Thread.currentThread().isInterrupted()){
-                System.err.println("Interrpupted MFTMC (" + id + ")");
+                LOG.info("Interrpupted MFTMC (" + id + ")");
             } else {
-                System.err.println("Done MFTMC (" + id + ")");
+                LOG.info("Done MFTMC (" + id + ")");
             }
         }
         
@@ -786,7 +788,7 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
         private Match parseMatchDetails(){
             Document doc;
             Elements tableRows;
-//            System.out.println(textingMatch);
+//            LOG.info(textingMatch);
             Match outputMatch = textingMatch.getMatch();
             for(String bt : betsType){
                 doc = docDwnl.getDocument(getURLForMatchDetails(textingMatch.matchID, bt));
@@ -861,14 +863,7 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
          * @see BetexplorerComMultithreadParser#setBetCompaniesBanList(java.util.Set)
          */
         private String getBetCompanyName(Element row){
-            StringBuilder builder = new StringBuilder();
-            for(byte b : row.select("th").first().text().getBytes()){
-                if(b > 0){
-                    builder.append((char)b);
-                }
-            }
-            builder.delete(builder.length() - 6, builder.length());
-            return checkBanList(builder.toString());
+            return row.select("th > a").first().ownText();
         }
         
         /**
@@ -877,12 +872,10 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
          * @param match 
          */
         private void process1x2Bet(Elements tableRows, Match match){
-            String name;
-            Elements bets;
             for(Element row : tableRows){
-                name = getBetCompanyName(row);
+                String name = getBetCompanyName(row);
                 if(name == null){ continue; }
-                bets = row.select("td");
+                Elements bets = row.select("td");
                 match.addBet(new Bet1x2(name,
                         parseNumber(bets.get(0).attr("data-odd")),
                         parseNumber(bets.get(1).attr("data-odd")), 
@@ -896,14 +889,13 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
          * @param match 
          */
         private void processOverUnderBet(Elements tableRows, Match match){
-            String name;
-            Elements bets;
             for(Element row : tableRows){
-                name = getBetCompanyName(row);
+                String name = getBetCompanyName(row);
                 if(name == null){ continue; }
-                bets = row.select("td");
-                if(bets.get(0).select(".doublepar").isEmpty()){
-                    String[] s = bets.get(0).select(".doublepar-w").first().text().split("[ ]+");
+                Elements bets = row.select("td");
+                Elements doublePar = bets.first().select(".doublepar");
+                if(doublePar.isEmpty()){
+                    String[] s = bets.first().select(".doublepar-w").first().text().split("[ ]+");
                     match.addBet(new BetOverUnder(name, 
                         parseNumber(s[0]),
                         parseNumber(bets.get(1).attr("data-odd")),
@@ -911,7 +903,7 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
                             s[1]));
                 } else {
                     match.addBet(new BetOverUnder(name, 
-                            parseNumber(bets.get(0).select(".doublepar").first().text()),
+                            parseNumber(doublePar.first().text()),
                             parseNumber(bets.get(1).attr("data-odd")),
                             parseNumber(bets.get(2).attr("data-odd")),
                             ""));
@@ -925,43 +917,29 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
          * @param match 
          */
         private void processAsianHandicapBet(Elements tableRows, Match match){
-            String name;
-            Elements bets;
-            String[] handicaps;
             for(Element row : tableRows){
-                name = getBetCompanyName(row);
+                String name = getBetCompanyName(row);
                 if(name == null){ continue; }
-                bets = row.select("td");
-                if(!bets.get(0).select(".doublepar").isEmpty()){
-                    handicaps = bets.get(0).select(".doublepar").first().text().split("[ ,]+");
-                    if(handicaps.length == 1){
-                        match.addBet(new BetAsianHandicap(name,
-                                parseNumber(bets.get(1).attr("data-odd")),
-                                parseNumber(bets.get(2).attr("data-odd")),
-                                parseNumber(handicaps[0]),
-                                ""));
-                    } else {
-                        match.addBet(new BetAsianHandicap(name,
-                                parseNumber(bets.get(1).attr("data-odd")),
-                                parseNumber(bets.get(2).attr("data-odd")),
-                                parseNumber(handicaps[0]).add(parseNumber(handicaps[1])).divide(new BigDecimal("2")),
-                                ""));
-                    }
+                Elements bets = row.select("td");
+                Elements doublePar = bets.first().select(".doublepar");
+                if(doublePar.isEmpty()){
+                    doublePar = bets.first().select(".doublepar-w");
+                }
+                String[] handicaps = doublePar.first().ownText().split("[ ,]+");
+                if(handicaps.length == 1){
+                    match.addBet(new BetAsianHandicap(name,
+                            parseNumber(bets.get(1).attr("data-odd")),
+                            parseNumber(bets.get(2).attr("data-odd")),
+                            parseNumber(handicaps[0]),
+                            ""));
                 } else {
-                    handicaps = bets.get(0).select(".doublepar-w").first().text().split("[ ,]+");
-                    if(handicaps.length == 2){
-                        match.addBet(new BetAsianHandicap(name,
-                                parseNumber(bets.get(1).attr("data-odd")),
-                                parseNumber(bets.get(2).attr("data-odd")),
-                                parseNumber(handicaps[0]),
-                                handicaps[1]));
-                    } else {
-                        match.addBet(new BetAsianHandicap(name,
-                                parseNumber(bets.get(1).attr("data-odd")),
-                                parseNumber(bets.get(2).attr("data-odd")),
-                                parseNumber(handicaps[0]).add(parseNumber(handicaps[1])).divide(new BigDecimal("2")),
-                                handicaps[2]));
-                    }
+                    match.addBet(new BetAsianHandicap(name,
+                            parseNumber(bets.get(1).attr("data-odd")),
+                            parseNumber(bets.get(2).attr("data-odd")),
+                            parseNumber(handicaps[0])
+                                    .add(parseNumber(handicaps[1]))
+                                    .divide(new BigDecimal("2")),
+                            ""));
                 }
             }
         }
@@ -972,12 +950,10 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
          * @param match 
          */
         private void processDrawNoBetBet(Elements tableRows, Match match){
-            String name;
-            Elements bets;
             for(Element row : tableRows){
-                name = getBetCompanyName(row);
+                String name = getBetCompanyName(row);
                 if(name == null){ continue; }
-                bets = row.select("td");
+                Elements bets = row.select("td");
                 match.addBet(new BetDrawNoBet(name,
                         parseNumber(bets.get(0).attr("data-odd")),
                         parseNumber(bets.get(1).attr("data-odd"))));
@@ -990,12 +966,10 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
          * @param match 
          */
         private void processDoubleChanceBet(Elements tableRows, Match match){
-            String name;
-            Elements bets;
             for(Element row : tableRows){
-                name = getBetCompanyName(row);
+                String name = getBetCompanyName(row);
                 if(name == null){ continue; }
-                bets = row.select("td");
+                Elements bets = row.select("td");
                 match.addBet(new BetDoubleChance(name,
                         parseNumber(bets.get(0).attr("data-odd")),
                         parseNumber(bets.get(1).attr("data-odd")), 
@@ -1009,12 +983,10 @@ public class BetexplorerComMultithreadParser implements MultithreadHTMLBetParser
          * @param match 
          */
         private void processBothTeamsToScoreBet(Elements tableRows, Match match){
-            String name;
-            Elements bets;
             for(Element row : tableRows){
-                name = getBetCompanyName(row);
+                String name = getBetCompanyName(row);
                 if(name == null){ continue; }
-                bets = row.select("td");
+                Elements bets = row.select("td");
                 match.addBet(new BetBothTeamsToScore(name,
                         parseNumber(bets.get(0).attr("data-odd")),
                         parseNumber(bets.get(1).attr("data-odd"))));

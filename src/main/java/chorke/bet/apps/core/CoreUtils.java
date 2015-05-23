@@ -4,7 +4,6 @@ package chorke.bet.apps.core;
 import chorke.bet.apps.core.bets.Bet;
 import chorke.bet.apps.io.BetIOManager;
 import java.io.File;
-import java.net.URISyntaxException;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
@@ -41,7 +40,7 @@ public class CoreUtils {
     /**
      * Možnosť stávky.
      */
-    public static enum BetPossibility {Home, Guest, Favorit, Loser, Tie};
+    public static enum BetPossibility {Home, Guest, Favorit, Loser, Tie, Over, Under};
     /**
      * Športy, na ktoré je možné staviť.
      */
@@ -123,18 +122,7 @@ public class CoreUtils {
      * @return zložku, v ktorej sa nachádza aplikáca
      */
     public static File getApplicationBaseDir(){
-        try{
-            return new File(CoreUtils.class
-                        .getProtectionDomain()
-                        .getCodeSource()
-                        .getLocation()
-                        .toURI())
-                    .getParentFile()
-                    .getParentFile();
-        } catch(URISyntaxException ex){
-            //nemalo by sa stať
-        }
-        return null;
+        return new File(System.getProperty("user.home"), "bet_app");
     }
     
     /**

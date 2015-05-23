@@ -1,8 +1,8 @@
 
 package chorke.bet.apps.io;
 
-import static chorke.bet.apps.BasicTests.collectionChecker;
 import static chorke.bet.apps.BasicTests.assertAreBothNull;
+import static chorke.bet.apps.BasicTests.collectionChecker;
 import chorke.bet.apps.core.CoreUtils.BettingSports;
 import chorke.bet.apps.core.bets.Bet;
 import chorke.bet.apps.core.bets.Bet1x2;
@@ -14,10 +14,6 @@ import chorke.bet.apps.core.bets.BetOverUnder;
 import chorke.bet.apps.core.match.Match;
 import chorke.bet.apps.core.match.MatchProperties;
 import chorke.bet.apps.core.match.sports.Sport;
-import chorke.bet.apps.io.BetIOException;
-import chorke.bet.apps.io.BetIOManager;
-import chorke.bet.apps.io.DBBetIOManager;
-import chorke.bet.apps.io.LoadProperties;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -39,9 +35,9 @@ import java.util.Map;
 import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  *
@@ -112,43 +108,43 @@ public class BetIOManagerTest {
             st.addBatch("CREATE TABLE bet1x2(" +
                 "matchid integer NOT NULL," +
                 "betcompany varchar(50) NOT NULL," +
-                "bet1 varchar(5)," +
-                "betx varchar(5)," +
-                "bet2 varchar(5)," +
+                "bet1 numeric(7,2)," +
+                "betx numeric(7,2)," +
+                "bet2 numeric(7,2)," +
                 "PRIMARY KEY (matchid, betcompany))");
             st.addBatch("CREATE TABLE betah(" +
                 "matchid integer NOT NULL," +
                 "betcompany varchar(50) NOT NULL," +
-                "bet1 varchar(5)," +
-                "bet2 varchar(5)," +
-                "handicap varchar(7) NOT NULL," +
+                "bet1 numeric(7,2)," +
+                "bet2 numeric(7,2)," +
+                "handicap numeric(5,2) NOT NULL," +
                 "description varchar(20) NOT NULL," +
                 "PRIMARY KEY (matchid, betcompany, handicap, description))");
             st.addBatch("CREATE TABLE betbtts(" +
                 "matchid integer NOT NULL," +
                 "betcompany varchar(50) NOT NULL," +
-                "yesbet varchar(5)," +
-                "nobet varchar(5)," +
+                "yesbet numeric(7,2)," +
+                "nobet numeric(7,2)," +
                 "PRIMARY KEY (matchid, betcompany))");
             st.addBatch("CREATE TABLE betdc(" +
                 "matchid integer NOT NULL," +
                 "betcompany varchar(50) NOT NULL," +
-                "bet1x varchar(5)," +
-                "bet2x varchar(5)," +
-                "bet12 varchar(5)," +
+                "bet1x numeric(7,2)," +
+                "bet2x numeric(7,2)," +
+                "bet12 numeric(7,2)," +
                 "PRIMARY KEY (matchid, betcompany))");
             st.addBatch("CREATE TABLE betdnb(" +
                 "matchid integer NOT NULL," +
                 "betcompany varchar(50) NOT NULL," +
-                "bet1 varchar(5)," +
-                "bet2 varchar(5)," +
+                "bet1 numeric(7,2)," +
+                "bet2 numeric(7,2)," +
                 "PRIMARY KEY (matchid, betcompany))");
             st.addBatch("CREATE TABLE betou(" +
                 "matchid integer NOT NULL," +
                 "betcompany varchar(50) NOT NULL," +
-                "total varchar(6) NOT NULL," +
-                "overbet varchar(5)," +
-                "underbet varchar(5)," +
+                "total numeric(5,2) NOT NULL," +
+                "overbet numeric(7,2)," +
+                "underbet numeric(7,2)," +
                 "description varchar(50) NOT NULL," +
                 "PRIMARY KEY (matchid, betcompany, total, description))");
             st.executeBatch();

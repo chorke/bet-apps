@@ -4,6 +4,8 @@ package chorke.bet.apps.core.httpparsing;
 import java.io.IOException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Stiahne document z webu.
@@ -11,6 +13,8 @@ import org.jsoup.nodes.Document;
  */
 public class DocumentDownloader {
 
+    private static final Logger LOG = LoggerFactory.getLogger(DocumentDownloader.class);
+    
     /**
      * Aktuálne 5
      */
@@ -29,8 +33,8 @@ public class DocumentDownloader {
             try{
                 return Jsoup.connect(url).timeout(CONNECTION_TIMEOUT).get();
             } catch (IOException ex){
-                System.err.println("Time out [" + i + "] by connecting: " + url);
-                System.err.println(ex);
+                LOG.warn("Time out [{}] by connecting: {}.", i, url);
+                LOG.warn("Time out exception.", ex);
             }
         }
         return null;
